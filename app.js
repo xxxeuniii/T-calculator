@@ -5,7 +5,6 @@ const STAMP_TAX_RATE = 0.0005;
 const fields = {
   costPrice: document.querySelector("#costPrice"),
   totalShares: document.querySelector("#totalShares"),
-  marketPrice: document.querySelector("#marketPrice"),
   tradeShares: document.querySelector("#tradeShares"),
   sellPrice: document.querySelector("#sellPrice"),
   buyBackPrice: document.querySelector("#buyBackPrice"),
@@ -57,8 +56,6 @@ function getModeText() {
       netLabel: "本次反T净收益",
       sellLabel: "反T卖出价",
       buyLabel: "反T买入价",
-      sellPlaceholder: "例如 11.30",
-      buyPlaceholder: "例如 10.90",
       emptyFormula: "反T净收益 = (反T卖出价 - 反T买入价) × 做T股数 - 买卖佣金 - 印花税",
       actionText: "反T：先买入，后卖出",
     };
@@ -68,8 +65,6 @@ function getModeText() {
     netLabel: "本次正T净收益",
     sellLabel: "做T卖出价",
     buyLabel: "接回价",
-    sellPlaceholder: "例如 11.30",
-    buyPlaceholder: "例如 10.90",
     emptyFormula: "正T净收益 = (做T卖出价 - 接回价) × 做T股数 - 买卖佣金 - 印花税",
     actionText: "正T：先卖出，后接回",
   };
@@ -80,8 +75,6 @@ function renderModeText() {
   output.netProfitLabel.textContent = text.netLabel;
   labels.sellPrice.textContent = text.sellLabel;
   labels.buyPrice.textContent = text.buyLabel;
-  fields.sellPrice.placeholder = text.sellPlaceholder;
-  fields.buyBackPrice.placeholder = text.buyPlaceholder;
 }
 
 function setEmptyState() {
@@ -105,7 +98,6 @@ function calculateCommission(amount) {
 function calculate() {
   const costPrice = readNumber(fields.costPrice);
   const totalShares = readNumber(fields.totalShares);
-  const marketPrice = readNumber(fields.marketPrice);
   const tradeShares = readNumber(fields.tradeShares);
   const sellPrice = readNumber(fields.sellPrice);
   const buyBackPrice = readNumber(fields.buyBackPrice);
@@ -127,7 +119,6 @@ function calculate() {
   const originalCostAmount = costPrice * totalShares;
   const newCostPrice = totalShares ? (originalCostAmount - netProfit) / totalShares : 0;
   const costReduction = costPrice && totalShares ? costPrice - newCostPrice : 0;
-  const currentProfit = marketPrice && totalShares ? (marketPrice - costPrice) * totalShares : null;
   const isGain = netProfit >= 0;
 
   output.netProfit.textContent = formatter.format(netProfit);
@@ -140,13 +131,11 @@ function calculate() {
   output.costReduction.textContent = totalShares ? `${priceFormatter.format(costReduction)} 元/股` : "--";
   output.primaryResult.classList.toggle("loss", !isGain);
 
-  const currentText = currentProfit === null ? "" : ` 当前参考浮动盈亏约 ${formatter.format(currentProfit)}。`;
   const modeText = getModeText();
   output.formulaBox.textContent =
     `(${priceFormatter.format(sellPrice)} - ${priceFormatter.format(buyBackPrice)}) × ${tradeShares} - ${formatter.format(totalCommission)}佣金 - ${formatter.format(stampTax)}印花税 = ${formatter.format(netProfit)}。` +
     ` ${modeText.actionText}，卖出金额收印花税。` +
-    ` 完成同等股数买卖后，持仓股数不变，净收益会把整体成本约降低 ${priceFormatter.format(costReduction)} 元/股。` +
-    currentText;
+    ` 完成同等股数买卖后，持仓股数不变，净收益会把整体成本约降低 ${priceFormatter.format(costReduction)} 元/股。`;
 }
 
 modeTabs.forEach((tab) => {

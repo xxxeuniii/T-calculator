@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#0f7b55" />
+    <meta name="theme-color" content="#2f2b24" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-title" content="做T计算器" />
     <title>做T收益计算器</title>
@@ -24,32 +24,27 @@
           <div class="field-grid">
             <label class="field">
               <span>持仓成本价</span>
-              <input id="costPrice" type="number" min="0" step="0.001" placeholder="例如 10.50" inputmode="decimal" />
+              <input id="costPrice" type="number" min="0" step="0.001" inputmode="decimal" />
             </label>
 
             <label class="field">
               <span>持仓股数</span>
-              <input id="totalShares" type="number" min="0" step="100" placeholder="例如 5000" inputmode="numeric" />
-            </label>
-
-            <label class="field">
-              <span>当前/参考卖出价</span>
-              <input id="marketPrice" type="number" min="0" step="0.001" placeholder="可选，例如 11.20" inputmode="decimal" />
+              <input id="totalShares" type="number" min="0" step="100" inputmode="numeric" />
             </label>
 
             <label class="field highlight-field trade-field">
               <span>做T股数</span>
-              <input id="tradeShares" type="number" min="0" step="100" placeholder="例如 1000" inputmode="numeric" />
+              <input id="tradeShares" type="number" min="0" step="100" inputmode="numeric" />
             </label>
 
             <label class="field highlight-field sell-field">
               <span id="sellPriceLabel">做T卖出价</span>
-              <input id="sellPrice" type="number" min="0" step="0.001" placeholder="例如 11.30" inputmode="decimal" />
+              <input id="sellPrice" type="number" min="0" step="0.001" inputmode="decimal" />
             </label>
 
             <label class="field highlight-field buy-field">
               <span id="buyPriceLabel">接回价</span>
-              <input id="buyBackPrice" type="number" min="0" step="0.001" placeholder="例如 10.90" inputmode="decimal" />
+              <input id="buyBackPrice" type="number" min="0" step="0.001" inputmode="decimal" />
             </label>
           </div>
 
