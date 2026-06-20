@@ -59,8 +59,8 @@ function getModeText() {
       buyLabel: "反T买入价",
       sellPlaceholder: "例如 11.30",
       buyPlaceholder: "例如 10.90",
-      emptyFormula: "反T净收益 = (卖出价 - 买入价) × 做T股数 - 买卖佣金 - 印花税",
-      actionText: "反T先买后卖",
+      emptyFormula: "反T净收益 = (反T卖出价 - 反T买入价) × 做T股数 - 买卖佣金 - 印花税",
+      actionText: "反T：先买入，后卖出",
     };
   }
 
@@ -71,7 +71,7 @@ function getModeText() {
     sellPlaceholder: "例如 11.30",
     buyPlaceholder: "例如 10.90",
     emptyFormula: "正T净收益 = (做T卖出价 - 接回价) × 做T股数 - 买卖佣金 - 印花税",
-    actionText: "正T先卖后买",
+    actionText: "正T：先卖出，后接回",
   };
 }
 
@@ -145,7 +145,7 @@ function calculate() {
   output.formulaBox.textContent =
     `(${priceFormatter.format(sellPrice)} - ${priceFormatter.format(buyBackPrice)}) × ${tradeShares} - ${formatter.format(totalCommission)}佣金 - ${formatter.format(stampTax)}印花税 = ${formatter.format(netProfit)}。` +
     ` ${modeText.actionText}，卖出金额收印花税。` +
-    ` 若接回同等股数，持仓股数不变，净收益会把整体成本约降低 ${priceFormatter.format(costReduction)} 元/股。` +
+    ` 完成同等股数买卖后，持仓股数不变，净收益会把整体成本约降低 ${priceFormatter.format(costReduction)} 元/股。` +
     currentText;
 }
 
