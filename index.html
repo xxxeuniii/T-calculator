@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#0f7b55" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="做T计算器" />
+    <title>做T收益计算器</title>
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="icon" href="icon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="calculator" aria-label="做T收益计算器">
+        <form class="panel input-panel" id="calculatorForm">
+          <button class="ghost-button clear-button" type="reset">清空</button>
+
+          <div class="field-grid">
+            <label class="field">
+              <span>持仓成本价</span>
+              <input id="costPrice" type="number" min="0" step="0.001" placeholder="例如 10.50" inputmode="decimal" />
+            </label>
+
+            <label class="field">
+              <span>持仓股数</span>
+              <input id="totalShares" type="number" min="0" step="100" placeholder="例如 5000" inputmode="numeric" />
+            </label>
+
+            <label class="field">
+              <span>当前/参考卖出价</span>
+              <input id="marketPrice" type="number" min="0" step="0.001" placeholder="可选，例如 11.20" inputmode="decimal" />
+            </label>
+
+            <label class="field highlight-field">
+              <span>做T股数</span>
+              <input id="tradeShares" type="number" min="0" step="100" placeholder="例如 1000" inputmode="numeric" />
+            </label>
+
+            <label class="field highlight-field">
+              <span>做T卖出价</span>
+              <input id="sellPrice" type="number" min="0" step="0.001" placeholder="例如 11.30" inputmode="decimal" />
+            </label>
+
+            <label class="field highlight-field">
+              <span>接回价</span>
+              <input id="buyBackPrice" type="number" min="0" step="0.001" placeholder="例如 10.90" inputmode="decimal" />
+            </label>
+          </div>
+
+          <div class="fee-row" aria-label="手续费说明">
+            <span>佣金：万三，买卖双向，单笔最低 5 元</span>
+            <span>印花税：卖出金额的 0.05%</span>
+          </div>
+        </form>
+
+        <section class="panel result-panel" aria-live="polite">
+          <div class="primary-result">
+            <span>本次做T净收益</span>
+            <strong id="netProfit">--</strong>
+          </div>
+
+          <div class="metrics">
+            <div class="metric">
+              <span>价差收益</span>
+              <strong id="spreadProfit">--</strong>
+            </div>
+            <div class="metric">
+              <span>总佣金</span>
+              <strong id="totalCommission">--</strong>
+            </div>
+            <div class="metric">
+              <span>卖出佣金</span>
+              <strong id="sellCommission">--</strong>
+            </div>
+            <div class="metric">
+              <span>买入佣金</span>
+              <strong id="buyCommission">--</strong>
+            </div>
+            <div class="metric">
+              <span>印花税</span>
+              <strong id="stampTax">--</strong>
+            </div>
+            <div class="metric">
+              <span>做T后新成本价</span>
+              <strong id="newCostPrice">--</strong>
+            </div>
+            <div class="metric">
+              <span>成本降低</span>
+              <strong id="costReduction">--</strong>
+            </div>
+          </div>
+
+          <div class="formula-box" id="formulaBox">
+            净收益 = (做T卖出价 - 接回价) × 做T股数 - 买卖佣金 - 印花税
+          </div>
+        </section>
+      </section>
+    </main>
+
+    <script src="app.js"></script>
+    <script>
+      if ("serviceWorker" in navigator) {
+        window.addEventListener("load", () => {
+          navigator.serviceWorker.register("./service-worker.js");
+        });
+      }
+    </script>
+  </body>
+</html>

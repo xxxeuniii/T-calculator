@@ -1,0 +1,17 @@
+{
+  "name": "做T收益计算器",
+  "short_name": "做T计算器",
+  "description": "输入成本价、股数、做T卖出价和接回价，计算扣除手续费后的做T收益。",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#f6f3e9",
+  "theme_color": "#0f7b55",
+  "icons": [
+    {
+      "src": "./icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
