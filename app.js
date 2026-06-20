@@ -12,6 +12,7 @@ const fields = {
 };
 
 const output = {
+  netProfitLabel: document.querySelector("#netProfitLabel"),
   netProfit: document.querySelector("#netProfit"),
   spreadProfit: document.querySelector("#spreadProfit"),
   totalCommission: document.querySelector("#totalCommission"),
@@ -23,6 +24,15 @@ const output = {
   formulaBox: document.querySelector("#formulaBox"),
   primaryResult: document.querySelector(".primary-result"),
 };
+
+const labels = {
+  sellPrice: document.querySelector("#sellPriceLabel"),
+  buyPrice: document.querySelector("#buyPriceLabel"),
+};
+
+const modeTabs = document.querySelectorAll(".mode-tab");
+const calculatorForm = document.querySelector("#calculatorForm");
+let currentMode = "positive";
 
 const formatter = new Intl.NumberFormat("zh-CN", {
   style: "currency",
@@ -41,7 +51,41 @@ function readNumber(input) {
   return Number.isFinite(value) ? value : 0;
 }
 
+function getModeText() {
+  if (currentMode === "reverse") {
+    return {
+      netLabel: "本次反T净收益",
+      sellLabel: "反T卖出价",
+      buyLabel: "反T买入价",
+      sellPlaceholder: "例如 11.30",
+      buyPlaceholder: "例如 10.90",
+      emptyFormula: "反T净收益 = (卖出价 - 买入价) × 做T股数 - 买卖佣金 - 印花税",
+      actionText: "反T先买后卖",
+    };
+  }
+
+  return {
+    netLabel: "本次正T净收益",
+    sellLabel: "做T卖出价",
+    buyLabel: "接回价",
+    sellPlaceholder: "例如 11.30",
+    buyPlaceholder: "例如 10.90",
+    emptyFormula: "正T净收益 = (做T卖出价 - 接回价) × 做T股数 - 买卖佣金 - 印花税",
+    actionText: "正T先卖后买",
+  };
+}
+
+function renderModeText() {
+  const text = getModeText();
+  output.netProfitLabel.textContent = text.netLabel;
+  labels.sellPrice.textContent = text.sellLabel;
+  labels.buyPrice.textContent = text.buyLabel;
+  fields.sellPrice.placeholder = text.sellPlaceholder;
+  fields.buyBackPrice.placeholder = text.buyPlaceholder;
+}
+
 function setEmptyState() {
+  const text = getModeText();
   output.netProfit.textContent = "--";
   output.spreadProfit.textContent = "--";
   output.totalCommission.textContent = "--";
@@ -50,7 +94,7 @@ function setEmptyState() {
   output.stampTax.textContent = "--";
   output.newCostPrice.textContent = "--";
   output.costReduction.textContent = "--";
-  output.formulaBox.textContent = "净收益 = (做T卖出价 - 接回价) × 做T股数 - 买卖佣金 - 印花税";
+  output.formulaBox.textContent = text.emptyFormula;
   output.primaryResult.classList.remove("loss");
 }
 
@@ -97,18 +141,35 @@ function calculate() {
   output.primaryResult.classList.toggle("loss", !isGain);
 
   const currentText = currentProfit === null ? "" : ` 当前参考浮动盈亏约 ${formatter.format(currentProfit)}。`;
+  const modeText = getModeText();
   output.formulaBox.textContent =
     `(${priceFormatter.format(sellPrice)} - ${priceFormatter.format(buyBackPrice)}) × ${tradeShares} - ${formatter.format(totalCommission)}佣金 - ${formatter.format(stampTax)}印花税 = ${formatter.format(netProfit)}。` +
+    ` ${modeText.actionText}，卖出金额收印花税。` +
     ` 若接回同等股数，持仓股数不变，净收益会把整体成本约降低 ${priceFormatter.format(costReduction)} 元/股。` +
     currentText;
 }
+
+modeTabs.forEach((tab) => {
+  tab.addEventListener("click", () => {
+    currentMode = tab.dataset.mode;
+    calculatorForm.dataset.mode = currentMode;
+    modeTabs.forEach((item) => {
+      const isActive = item === tab;
+      item.classList.toggle("active", isActive);
+      item.setAttribute("aria-selected", String(isActive));
+    });
+    renderModeText();
+    calculate();
+  });
+});
 
 Object.values(fields).forEach((field) => {
   field.addEventListener("input", calculate);
 });
 
-document.querySelector("#calculatorForm").addEventListener("reset", () => {
+calculatorForm.addEventListener("reset", () => {
   window.setTimeout(setEmptyState, 0);
 });
 
+renderModeText();
 setEmptyState();

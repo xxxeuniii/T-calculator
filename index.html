@@ -14,7 +14,11 @@
   <body>
     <main class="app-shell">
       <section class="calculator" aria-label="做T收益计算器">
-        <form class="panel input-panel" id="calculatorForm">
+        <form class="panel input-panel" id="calculatorForm" data-mode="positive">
+          <div class="mode-tabs" role="tablist" aria-label="做T类型">
+            <button class="mode-tab active" type="button" role="tab" aria-selected="true" data-mode="positive">正T</button>
+            <button class="mode-tab" type="button" role="tab" aria-selected="false" data-mode="reverse">反T</button>
+          </div>
           <button class="ghost-button clear-button" type="reset">清空</button>
 
           <div class="field-grid">
@@ -33,18 +37,18 @@
               <input id="marketPrice" type="number" min="0" step="0.001" placeholder="可选，例如 11.20" inputmode="decimal" />
             </label>
 
-            <label class="field highlight-field">
+            <label class="field highlight-field trade-field">
               <span>做T股数</span>
               <input id="tradeShares" type="number" min="0" step="100" placeholder="例如 1000" inputmode="numeric" />
             </label>
 
-            <label class="field highlight-field">
-              <span>做T卖出价</span>
+            <label class="field highlight-field sell-field">
+              <span id="sellPriceLabel">做T卖出价</span>
               <input id="sellPrice" type="number" min="0" step="0.001" placeholder="例如 11.30" inputmode="decimal" />
             </label>
 
-            <label class="field highlight-field">
-              <span>接回价</span>
+            <label class="field highlight-field buy-field">
+              <span id="buyPriceLabel">接回价</span>
               <input id="buyBackPrice" type="number" min="0" step="0.001" placeholder="例如 10.90" inputmode="decimal" />
             </label>
           </div>
@@ -57,7 +61,7 @@
 
         <section class="panel result-panel" aria-live="polite">
           <div class="primary-result">
-            <span>本次做T净收益</span>
+            <span id="netProfitLabel">本次正T净收益</span>
             <strong id="netProfit">--</strong>
           </div>
 
