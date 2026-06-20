@@ -1,16 +1,16 @@
 :root {
   color-scheme: light;
-  --ink: #25221d;
-  --muted: #746f66;
-  --paper: #f5f0e7;
-  --panel: #fffaf1;
-  --line: #ded4c4;
-  --accent: #b88432;
-  --accent-strong: #6f4b16;
-  --loss: #474b53;
-  --gain-bg: #f3e5ca;
-  --loss-bg: #e9e7e2;
-  --shadow: 0 24px 70px rgba(48, 42, 32, 0.14);
+  --ink: #17211a;
+  --muted: #677267;
+  --paper: #f6f3e9;
+  --panel: #fffdf5;
+  --line: #d9d1bc;
+  --accent: #0f7b55;
+  --accent-strong: #075f41;
+  --loss: #b63030;
+  --gain-bg: #e5f5df;
+  --loss-bg: #f8e2df;
+  --shadow: 0 24px 70px rgba(45, 54, 37, 0.14);
 }
 
 * {
@@ -23,8 +23,8 @@ body {
   color: var(--ink);
   font-family: "Microsoft YaHei", "PingFang SC", "Noto Sans SC", sans-serif;
   background:
-    radial-gradient(circle at 16% 12%, rgba(184, 132, 50, 0.18), transparent 30%),
-    linear-gradient(135deg, #f6f1e8 0%, #eee9df 52%, #faf6ed 100%);
+    radial-gradient(circle at 16% 12%, rgba(15, 123, 85, 0.16), transparent 30%),
+    linear-gradient(135deg, #f7f2e2 0%, #eef4e5 52%, #f4ead6 100%);
 }
 
 button,
@@ -47,9 +47,9 @@ input {
 
 .panel {
   position: relative;
-  border: 1px solid rgba(70, 60, 45, 0.18);
+  border: 1px solid rgba(86, 97, 73, 0.2);
   border-radius: 8px;
-  background: rgba(255, 250, 241, 0.9);
+  background: rgba(255, 253, 245, 0.88);
   box-shadow: var(--shadow);
   backdrop-filter: blur(18px);
 }
@@ -91,16 +91,16 @@ input {
 .ghost-button:hover {
   border-color: var(--accent);
   color: var(--accent-strong);
-  background: rgba(184, 132, 50, 0.1);
+  background: rgba(15, 123, 85, 0.07);
 }
 
 .mode-tabs {
   display: inline-flex;
   gap: 4px;
-  border: 1px solid rgba(191, 178, 156, 0.86);
+  border: 1px solid rgba(217, 209, 188, 0.86);
   border-radius: 999px;
   padding: 4px;
-  background: rgba(245, 240, 231, 0.78);
+  background: rgba(246, 243, 233, 0.76);
 }
 
 .mode-tab {
@@ -117,8 +117,8 @@ input {
 
 .mode-tab.active {
   color: #f8fff5;
-  background: #2f2b24;
-  box-shadow: 0 8px 18px rgba(47, 43, 36, 0.2);
+  background: var(--accent-strong);
+  box-shadow: 0 8px 18px rgba(15, 123, 85, 0.18);
 }
 
 .field-grid {
@@ -173,12 +173,12 @@ input {
 
 .field input:focus {
   border-color: var(--accent);
-  box-shadow: 0 0 0 4px rgba(184, 132, 50, 0.18);
+  box-shadow: 0 0 0 4px rgba(15, 123, 85, 0.13);
   transform: translateY(-1px);
 }
 
 .highlight-field input {
-  background: #fffaf0;
+  background: #fbfff7;
 }
 
 .fee-row {
@@ -189,11 +189,11 @@ input {
 }
 
 .fee-row span {
-  border: 1px dashed rgba(184, 132, 50, 0.34);
+  border: 1px dashed rgba(15, 123, 85, 0.35);
   border-radius: 999px;
   padding: 8px 12px;
   color: var(--accent-strong);
-  background: rgba(243, 229, 202, 0.72);
+  background: rgba(229, 245, 223, 0.7);
   font-size: 14px;
   font-weight: 700;
 }
@@ -222,7 +222,7 @@ input {
   color: #f8fff5;
   background:
     linear-gradient(135deg, rgba(255, 255, 255, 0.12), transparent 40%),
-    #2f2b24;
+    #0c6245;
 }
 
 .primary-result span {
@@ -272,11 +272,11 @@ input {
 
 .formula-box {
   margin-top: 14px;
-  border: 1px solid rgba(184, 132, 50, 0.24);
+  border: 1px solid rgba(15, 123, 85, 0.18);
   border-radius: 8px;
   padding: 14px 16px;
   color: var(--muted);
-  background: rgba(255, 249, 238, 0.86);
+  background: rgba(246, 243, 233, 0.86);
   line-height: 1.7;
 }
 
