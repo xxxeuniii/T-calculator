@@ -410,12 +410,12 @@ function ContractCalculator({ addHistory, prefill }) {
         </View>
 
         <View style={styles.metrics}>
+          <ProfitMetric value={result?.entryPrice && result?.quantity ? result.estimatedProfit : undefined} />
           <Metric label="方向" value={sideText} />
           <Metric label="激活价格" value={result ? formatUsdt(result.activationPrice) : "--"} />
           <Metric label="成本价" value={result?.entryPrice ? formatUsdt(result.entryPrice) : "--"} />
           <Metric label="回调率" value={result ? `${result.callbackRate}%` : "--"} />
           <Metric label="回调价差" value={result ? formatUsdt(result.callbackAmount) : "--"} />
-          <ProfitMetric value={result?.entryPrice && result?.quantity ? result.estimatedProfit : undefined} />
           <Metric label="数量" value={form.quantity ? `${form.quantity} USDT` : "--"} />
         </View>
 
