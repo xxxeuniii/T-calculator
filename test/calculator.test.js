@@ -22,6 +22,7 @@ assert.equal(Number(result.newCostPrice.toFixed(3)), 10.423);
 
 const longTrailing = calculateTrailingContract({
   side: "long",
+  entryPrice: "63800",
   activationPrice: "64000",
   callbackRate: "0.1",
   quantity: "1412.4",
@@ -30,14 +31,18 @@ const longTrailing = calculateTrailingContract({
 assert.ok(longTrailing);
 assert.equal(Number(longTrailing.expectedPrice.toFixed(2)), 63936);
 assert.equal(Number(longTrailing.callbackAmount.toFixed(2)), 64);
+assert.equal(Number(longTrailing.estimatedProfit.toFixed(2)), 3.01);
 
 const shortTrailing = calculateTrailingContract({
   side: "short",
+  entryPrice: "64172.5",
   activationPrice: "64000",
   callbackRate: "0.1",
+  quantity: "1408",
 });
 
 assert.ok(shortTrailing);
 assert.equal(Number(shortTrailing.expectedPrice.toFixed(2)), 64064);
+assert.equal(Number(shortTrailing.estimatedProfit.toFixed(2)), 2.38);
 
 console.log("calculator tests passed");

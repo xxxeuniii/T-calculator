@@ -1,6 +1,7 @@
 node_modules/
 .expo/
 dist/
+dist-check/
 build/
 *.log
 npm-debug.log*

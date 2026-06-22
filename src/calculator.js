@@ -48,6 +48,7 @@ function calculateTrade(values) {
 }
 
 function calculateTrailingContract(values) {
+  const entryPrice = toNumber(values.entryPrice);
   const activationPrice = toNumber(values.activationPrice);
   const callbackRate = toNumber(values.callbackRate);
   const quantity = toNumber(values.quantity);
@@ -63,15 +64,24 @@ function calculateTrailingContract(values) {
       ? activationPrice * (1 + callbackDecimal)
       : activationPrice * (1 - callbackDecimal);
   const callbackAmount = Math.abs(activationPrice - expectedPrice);
+  const profitRate = entryPrice
+    ? side === "short"
+      ? (entryPrice - expectedPrice) / entryPrice
+      : (expectedPrice - entryPrice) / entryPrice
+    : 0;
+  const estimatedProfit = quantity && entryPrice ? quantity * profitRate : 0;
 
   return {
     side,
+    entryPrice,
     activationPrice,
     callbackRate,
     callbackAmount,
     expectedPrice,
     quantity,
     notionalValue: quantity,
+    profitRate,
+    estimatedProfit,
   };
 }
 
