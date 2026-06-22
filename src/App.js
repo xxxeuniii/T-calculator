@@ -455,7 +455,18 @@ function HistoryScreen({ history, clearHistory, onSelectHistory }) {
               <Text style={styles.historyName}>{item.title}</Text>
               <Text style={styles.historySummary}>{item.summary}</Text>
             </View>
-            <Text style={styles.historyDetail}>{item.detail}</Text>
+            <View style={styles.historyDetail}>
+              {Array.isArray(item.detail) ? (
+                item.detail.map((item, index) => (
+                  <View key={index} style={styles.historyDetailRow}>
+                    <Text style={styles.historyDetailLabel}>{item.label}</Text>
+                    <Text style={styles.historyDetailValue}>{item.value}</Text>
+                  </View>
+                ))
+              ) : (
+                <Text style={styles.historyDetailLabel}>{item.detail}</Text>
+              )}
+            </View>
           </Pressable>
         ))
       )}
@@ -486,7 +497,7 @@ export default function App() {
       type: "合约",
       title: "做多",
       summary: "预计止盈价 67,932.00 USDT",
-      detail: "成本价 60,000.00 USDT，激活价 68,000.00 USDT，回调率 0.1%，数量 300 USDT",
+      detail: [{label: "成本价", value: "60,000.00 USDT"}, {label: "激活价", value: "68,000.00 USDT"}, {label: "回调率", value: "0.1%"}, {label: "数量", value: "300 USDT"}],
       time: "06/22 14:48",
     },
     {
@@ -498,7 +509,7 @@ export default function App() {
       type: "合约",
       title: "做空",
       summary: "预计止盈价 37,886.00 USDT",
-      detail: "成本价 42,000.00 USDT，激活价 38,000.00 USDT，回调率 0.3%，数量 500 USDT",
+      detail: [{label: "成本价", value: "42,000.00 USDT"}, {label: "激活价", value: "38,000.00 USDT"}, {label: "回调率", value: "0.3%"}, {label: "数量", value: "500 USDT"}],
       time: "06/22 14:35",
     },
     {
@@ -510,7 +521,7 @@ export default function App() {
       type: "股票",
       title: "正T",
       summary: "净收益 ¥214.40",
-      detail: "卖出价 29.30，接回价 28.80，股数 500",
+      detail: [{label: "卖出价", value: "29.30"}, {label: "接回价", value: "28.80"}, {label: "股数", value: "500"}],
       time: "06/22 10:22",
     },
     {
@@ -522,7 +533,7 @@ export default function App() {
       type: "股票",
       title: "反T",
       summary: "净收益 ¥156.85",
-      detail: "买入价 33.50，卖出价 34.10，股数 300",
+      detail: [{label: "买入价", value: "33.50"}, {label: "卖出价", value: "34.10"}, {label: "股数", value: "300"}],
       time: "06/21 15:45",
     },
     {
@@ -534,7 +545,7 @@ export default function App() {
       type: "合约",
       title: "做多",
       summary: "预计止盈价 61,690.00 USDT",
-      detail: "成本价 58,000.00 USDT，激活价 62,000.00 USDT，回调率 0.5%，数量 200 USDT",
+      detail: [{label: "成本价", value: "58,000.00 USDT"}, {label: "激活价", value: "62,000.00 USDT"}, {label: "回调率", value: "0.5%"}, {label: "数量", value: "200 USDT"}],
       time: "06/21 09:30",
     },
   ]);
@@ -992,10 +1003,22 @@ const styles = StyleSheet.create({
   },
   historyDetail: {
     color: palette.muted,
-    fontSize: 14,
-    lineHeight: 22,
-    padding: 10,
-    backgroundColor: "#f8f8f8",
-    borderRadius: 6,
+    fontSize: 13,
+    lineHeight: 18,
+  },
+  historyDetailRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 6,
+  },
+  historyDetailLabel: {
+    color: palette.muted,
+    fontSize: 13,
+  },
+  historyDetailValue: {
+    color: palette.ink,
+    fontSize: 13,
+    fontWeight: "600",
   },
 });
