@@ -501,68 +501,7 @@ export default function App() {
   const isDesktop = Platform.OS === "web" && screenWidth >= 768;
   const [screen, setScreen] = useState("trade");
   const [menuOpen, setMenuOpen] = useState(false);
-  const [history, setHistory] = useState([
-    {
-      id: "mock1",
-      screen: "contract",
-      side: "long",
-      form: { entryPrice: "60000", callbackRate: "0.1", quantity: "300", activationPrice: "68000" },
-      isProfit: true,
-      type: "合约",
-      title: "做多",
-      summary: "预计止盈价：67,932.00 USDT",
-      detail: [{label: "成本价", value: "60,000.00 USDT"}, {label: "激活价", value: "68,000.00 USDT"}, {label: "回调率", value: "0.1%"}, {label: "数量", value: "300 USDT"}],
-      time: "06/22 14:48",
-    },
-    {
-      id: "mock2",
-      screen: "contract",
-      side: "short",
-      form: { entryPrice: "42000", callbackRate: "0.3", quantity: "500", activationPrice: "38000" },
-      isProfit: false,
-      type: "合约",
-      title: "做空",
-      summary: "预计止盈价：37,886.00 USDT",
-      detail: [{label: "成本价", value: "42,000.00 USDT"}, {label: "激活价", value: "38,000.00 USDT"}, {label: "回调率", value: "0.3%"}, {label: "数量", value: "500 USDT"}],
-      time: "06/22 14:35",
-    },
-    {
-      id: "mock3",
-      screen: "trade",
-      mode: "positive",
-      form: { costPrice: "28.50", totalShares: "2000", tradeShares: "500", sellPrice: "29.30", buyPrice: "28.80" },
-      isProfit: true,
-      type: "股票",
-      title: "正T",
-      summary: "净收益：¥214.40",
-      detail: [{label: "卖出价", value: "29.30"}, {label: "接回价", value: "28.80"}, {label: "股数", value: "500"}],
-      time: "06/22 10:22",
-    },
-    {
-      id: "mock4",
-      screen: "trade",
-      mode: "reverse",
-      form: { costPrice: "35.20", totalShares: "1500", tradeShares: "300", sellPrice: "34.10", buyPrice: "33.50" },
-      isProfit: true,
-      type: "股票",
-      title: "反T",
-      summary: "净收益：¥156.85",
-      detail: [{label: "买入价", value: "33.50"}, {label: "卖出价", value: "34.10"}, {label: "股数", value: "300"}],
-      time: "06/21 15:45",
-    },
-    {
-      id: "mock5",
-      screen: "contract",
-      side: "long",
-      form: { entryPrice: "58000", callbackRate: "0.5", quantity: "200", activationPrice: "62000" },
-      isProfit: true,
-      type: "合约",
-      title: "做多",
-      summary: "预计止盈价：61,690.00 USDT",
-      detail: [{label: "成本价", value: "58,000.00 USDT"}, {label: "激活价", value: "62,000.00 USDT"}, {label: "回调率", value: "0.5%"}, {label: "数量", value: "200 USDT"}],
-      time: "06/21 09:30",
-    },
-  ]);
+  const [history, setHistory] = useState([]);
   const [tradePrefill, setTradePrefill] = useState(null);
   const [contractPrefill, setContractPrefill] = useState(null);
 
