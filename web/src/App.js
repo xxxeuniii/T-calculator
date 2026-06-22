@@ -239,8 +239,12 @@ function TradeCalculator({ addHistory, prefill, isDesktop }) {
       isProfit: result.netProfit > 0,
       type: "股票",
       title: mode === "positive" ? "正T" : "反T",
-      summary: `${modeText.netLabel} ${formatCurrency(result.netProfit)}`,
-      detail: `${modeText.sellLabel} ${form.sellPrice}，${modeText.buyLabel} ${form.buyPrice}，做T股数 ${form.tradeShares}`,
+      summary: `${modeText.netLabel}：${formatCurrency(result.netProfit)}`,
+      detail: [
+        { label: modeText.sellLabel, value: form.sellPrice },
+        { label: modeText.buyLabel, value: form.buyPrice },
+        { label: "做T股数", value: form.tradeShares },
+      ],
     });
   }
 
@@ -364,8 +368,13 @@ function ContractCalculator({ addHistory, prefill, isDesktop }) {
       isProfit: result.estimatedProfit > 0,
       type: "合约",
       title: sideText,
-      summary: `预计止盈价 ${formatUsdt(result.expectedPrice)}`,
-      detail: `成本价 ${formatUsdt(result.entryPrice)}，激活价 ${formatUsdt(result.activationPrice)}，回调率 ${result.callbackRate}%，数量 ${form.quantity || "--"} USDT`,
+      summary: `预计止盈价：${formatUsdt(result.expectedPrice)}`,
+      detail: [
+        { label: "成本价", value: formatUsdt(result.entryPrice) },
+        { label: "激活价", value: formatUsdt(result.activationPrice) },
+        { label: "回调率", value: `${result.callbackRate}%` },
+        { label: "数量", value: `${form.quantity || "--"} USDT` },
+      ],
     });
   }
 
