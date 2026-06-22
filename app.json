@@ -15,7 +15,7 @@
     "android": {
       "package": "com.tcalculator.app",
       "adaptiveIcon": {
-        "backgroundColor": "#0f7b55"
+        "backgroundColor": "#151515"
       }
     },
     "web": {

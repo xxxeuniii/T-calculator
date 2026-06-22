@@ -242,6 +242,7 @@ function TradeCalculator({ addHistory, prefill }) {
         </View>
 
         <View style={styles.feeRow}>
+          <Text style={styles.feeChip}>{modeText.actionText}</Text>
           <Text style={styles.feeChip}>佣金：万三，买卖双向，单笔最低 5 元</Text>
           <Text style={styles.feeChip}>印花税：卖出金额的 0.05%</Text>
         </View>
@@ -249,8 +250,8 @@ function TradeCalculator({ addHistory, prefill }) {
 
       <View style={styles.resultPanel}>
         <View style={[styles.primaryResult, result && (result.isGain ? styles.primaryGain : styles.primaryLoss)]}>
-          <Text style={[styles.primaryLabel, result?.isGain ? styles.primaryGainText : null]}>{modeText.netLabel}</Text>
-          <Text style={[styles.primaryValue, result?.isGain ? styles.primaryGainAmount : null]}>{formatCurrency(result?.netProfit)}</Text>
+          <Text style={styles.primaryLabel}>{modeText.netLabel}</Text>
+          <Text style={styles.primaryValue}>{formatCurrency(result?.netProfit)}</Text>
         </View>
 
         <View style={styles.metrics}>
@@ -573,14 +574,18 @@ const styles = StyleSheet.create({
     width: 132,
     borderWidth: 1,
     borderColor: "#e6e6e6",
-    borderRadius: 0,
+    borderRadius: 12,
     padding: 6,
     backgroundColor: palette.panel,
-    elevation: 0,
+    shadowColor: "#151515",
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.08,
+    shadowRadius: 18,
+    elevation: 6,
   },
   menuItem: {
-    borderRadius: 0,
-    paddingVertical: 11,
+    borderRadius: 8,
+    paddingVertical: 12,
     paddingHorizontal: 12,
   },
   menuItemActive: {
@@ -742,12 +747,7 @@ const styles = StyleSheet.create({
     backgroundColor: palette.ink,
   },
   primaryGain: {
-    position: "relative",
-    borderWidth: 1,
-    borderColor: "rgba(211, 47, 47, 0.2)",
-    borderLeftWidth: 5,
-    borderLeftColor: palette.profitRed,
-    backgroundColor: "#fffafa",
+    backgroundColor: palette.profitRed,
   },
   primaryLoss: {
     backgroundColor: palette.lossGreen,
@@ -762,12 +762,6 @@ const styles = StyleSheet.create({
     fontSize: 34,
     lineHeight: 40,
     fontWeight: "900",
-  },
-  primaryGainText: {
-    color: palette.ink,
-  },
-  primaryGainAmount: {
-    color: palette.ink,
   },
   metrics: {
     flexDirection: "row",
@@ -859,8 +853,8 @@ const styles = StyleSheet.create({
     backgroundColor: "#ffffff",
   },
   historyProfitItem: {
-    borderColor: "rgba(182, 48, 48, 0.42)",
-    backgroundColor: "rgba(182, 48, 48, 0.06)",
+    borderColor: "rgba(211, 47, 47, 0.55)",
+    backgroundColor: "#ffffff",
   },
   historyItemTop: {
     flexDirection: "row",
