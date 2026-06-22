@@ -95,8 +95,8 @@ jobs:
             exit 1
           fi
 
-          WEB_PORT="$WEB_PORT" $COMPOSE up -d --build --remove-orphans
-          WEB_PORT="$WEB_PORT" $COMPOSE ps
+          WEB_PORT="$WEB_PORT" sudo $COMPOSE up -d --build --remove-orphans
+          WEB_PORT="$WEB_PORT" sudo $COMPOSE ps
           REMOTE
 
       - name: Smoke test
