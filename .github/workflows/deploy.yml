@@ -41,6 +41,9 @@ jobs:
       - name: Build web app
         run: cd web && npm run build:web
 
+      - name: Install backend dependencies
+        run: pip install -r service/backend/requirements.txt
+
       - name: Validate backend
         run: |
           python -m compileall service/backend/app service/backend/tests
