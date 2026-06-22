@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import {
+  Dimensions,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -596,7 +597,8 @@ export default function App() {
       <StatusBar barStyle="dark-content" backgroundColor={palette.paper} />
       <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={styles.keyboardView}>
         <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
-          <View style={styles.appHeader}>
+          <View style={styles.mainContainer}>
+            <View style={styles.appHeader}>
             <Pressable onPress={() => setMenuOpen((open) => !open)} style={styles.menuButton}>
               <Text style={styles.menuIcon}>☰</Text>
             </Pressable>
@@ -620,11 +622,15 @@ export default function App() {
           {screen === "trade" && <TradeCalculator addHistory={addHistory} prefill={tradePrefill} />}
           {screen === "contract" && <ContractCalculator addHistory={addHistory} prefill={contractPrefill} />}
           {screen === "history" && <HistoryScreen history={history} clearHistory={() => setHistory([])} onSelectHistory={selectHistory} />}
+          </View>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
+
+const { width: screenWidth } = Dimensions.get("window");
+const isDesktop = screenWidth >= 768;
 
 const styles = StyleSheet.create({
   safeArea: {
@@ -635,9 +641,13 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    padding: 0,
-    paddingBottom: 32,
+    padding: isDesktop ? 24 : 0,
+    paddingBottom: isDesktop ? 48 : 32,
     gap: 0,
+    alignItems: isDesktop ? "center" : "stretch",
+  },
+  mainContainer: {
+    width: isDesktop ? Math.min(screenWidth - 48, 500) : "100%",
   },
   appHeader: {
     minHeight: 38,
