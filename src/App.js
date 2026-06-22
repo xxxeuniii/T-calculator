@@ -241,17 +241,18 @@ function TradeCalculator({ addHistory, prefill }) {
   }
 
   return (
-    <>
-      <View style={styles.panel}>
-        <View style={styles.topRow}>
-          <Segment
-            value={mode}
-            onChange={setMode}
-            items={[
-              { label: "正T", value: "positive" },
-              { label: "反T", value: "reverse" },
-            ]}
-          />
+    <View style={styles.panelContainer}>
+      <View style={styles.panelColumn}>
+        <View style={styles.panel}>
+          <View style={styles.topRow}>
+            <Segment
+              value={mode}
+              onChange={setMode}
+              items={[
+                { label: "正T", value: "positive" },
+                { label: "反T", value: "reverse" },
+              ]}
+            />
           <Pressable onPress={clearForm} style={styles.clearButton}>
             <Text style={styles.clearText}>清空</Text>
           </Pressable>
@@ -280,7 +281,9 @@ function TradeCalculator({ addHistory, prefill }) {
           <Text style={styles.feeChip}>印花税：卖出金额的 0.05%</Text>
         </View>
       </View>
+      </View>
 
+      <View style={styles.panelColumn}>
       <View style={styles.resultPanel}>
         <View style={[styles.primaryResult, result && (result.isGain ? styles.primaryGain : styles.primaryLoss)]}>
           <Text style={styles.primaryLabel}>{modeText.netLabel}</Text>
@@ -302,7 +305,8 @@ function TradeCalculator({ addHistory, prefill }) {
           <Text style={styles.confirmText}>确认并存入历史</Text>
         </Pressable>
       </View>
-    </>
+      </View>
+    </View>
   );
 }
 
@@ -597,8 +601,7 @@ export default function App() {
       <StatusBar barStyle="dark-content" backgroundColor={palette.paper} />
       <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={styles.keyboardView}>
         <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
-          <View style={styles.mainContainer}>
-            <View style={styles.appHeader}>
+          <View style={styles.appHeader}>
             <Pressable onPress={() => setMenuOpen((open) => !open)} style={styles.menuButton}>
               <Text style={styles.menuIcon}>☰</Text>
             </Pressable>
@@ -619,9 +622,10 @@ export default function App() {
             )}
           </View>
 
-          {screen === "trade" && <TradeCalculator addHistory={addHistory} prefill={tradePrefill} />}
-          {screen === "contract" && <ContractCalculator addHistory={addHistory} prefill={contractPrefill} />}
-          {screen === "history" && <HistoryScreen history={history} clearHistory={() => setHistory([])} onSelectHistory={selectHistory} />}
+          <View style={styles.mainContainer}>
+            {screen === "trade" && <TradeCalculator addHistory={addHistory} prefill={tradePrefill} />}
+            {screen === "contract" && <ContractCalculator addHistory={addHistory} prefill={contractPrefill} />}
+            {screen === "history" && <HistoryScreen history={history} clearHistory={() => setHistory([])} onSelectHistory={selectHistory} />}
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -644,10 +648,24 @@ const styles = StyleSheet.create({
     padding: isDesktop ? 24 : 0,
     paddingBottom: isDesktop ? 48 : 32,
     gap: 0,
-    alignItems: isDesktop ? "center" : "stretch",
+    alignItems: "stretch",
   },
   mainContainer: {
-    width: isDesktop ? Math.min(screenWidth - 48, 500) : "100%",
+    flexDirection: isDesktop ? "row" : "column",
+    flexWrap: "wrap",
+    gap: isDesktop ? 20 : 0,
+    paddingHorizontal: isDesktop ? "10%" : 0,
+  },
+  panelColumn: {
+    flex: isDesktop ? 1 : 0,
+    minWidth: isDesktop ? 300 : "100%",
+    maxWidth: isDesktop ? 400 : "100%",
+  },
+  panelContainer: {
+    flexDirection: isDesktop ? "row" : "column",
+    flexWrap: "wrap",
+    gap: isDesktop ? 20 : 0,
+    paddingHorizontal: isDesktop ? "10%" : 0,
   },
   appHeader: {
     minHeight: 38,
