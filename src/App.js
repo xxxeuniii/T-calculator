@@ -193,6 +193,18 @@ function TradeCalculator({ addHistory, prefill }) {
     });
   }
 
+  function stepTradeShares(delta) {
+    const current = Number(form.tradeShares) || 0;
+    const next = Math.max(0, current + delta);
+    updateField("tradeShares", next.toString());
+  }
+
+  function stepTotalShares(delta) {
+    const current = Number(form.totalShares) || 0;
+    const next = Math.max(0, current + delta);
+    updateField("totalShares", next.toString());
+  }
+
   function saveTrade() {
     if (!result) return;
     addHistory({
@@ -226,8 +238,8 @@ function TradeCalculator({ addHistory, prefill }) {
 
         <View style={styles.fieldGrid}>
           <Field label="持仓成本价" value={form.costPrice} onChangeText={(value) => updateField("costPrice", value)} />
-          <Field label="持仓股数" value={form.totalShares} onChangeText={(value) => updateField("totalShares", value)} keyboardType="number-pad" />
-          <Field label="做T股数" value={form.tradeShares} onChangeText={(value) => updateField("tradeShares", value)} keyboardType="number-pad" />
+          <StepField label="持仓股数" value={form.totalShares} onChangeText={(value) => updateField("totalShares", value)} onStepDown={() => stepTotalShares(-100)} onStepUp={() => stepTotalShares(100)} />
+          <StepField label="做T股数" value={form.tradeShares} onChangeText={(value) => updateField("tradeShares", value)} onStepDown={() => stepTradeShares(-100)} onStepUp={() => stepTradeShares(100)} />
           {mode === "reverse" ? (
             <>
               <Field label={modeText.buyLabel} value={form.buyPrice} onChangeText={(value) => updateField("buyPrice", value)} />
