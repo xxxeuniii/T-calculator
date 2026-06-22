@@ -53,7 +53,7 @@ function readNumber(input) {
 function getModeText() {
   if (currentMode === "reverse") {
     return {
-      netLabel: "本次反T净收益",
+      netLabel: "反T净收益",
       sellLabel: "反T卖出价",
       buyLabel: "反T买入价",
       emptyFormula: "反T净收益 = (反T卖出价 - 反T买入价) × 做T股数 - 买卖佣金 - 印花税",

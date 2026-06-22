@@ -67,7 +67,7 @@ function getTradeModeText(mode) {
   }
 
   return {
-    netLabel: "本次正T净收益",
+    netLabel: "正T净收益",
     sellLabel: "做T卖出价",
     buyLabel: "接回价",
     emptyFormula: "正T净收益 = (做T卖出价 - 接回价) × 做T股数 - 买卖佣金 - 印花税",
