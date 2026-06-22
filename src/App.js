@@ -451,9 +451,15 @@ function HistoryScreen({ history, clearHistory, onSelectHistory }) {
               <Text style={styles.historyType}>{item.type}</Text>
               <Text style={styles.historyTime}>{item.time}</Text>
             </View>
-            <View style={styles.historyNameRow}>
-              <Text style={styles.historyName}>{item.title}</Text>
-              <Text style={styles.historySummary}>{item.summary}</Text>
+            <View style={styles.historyMainRow}>
+              <View style={styles.historyDirection}>
+                <Text style={styles.historyDirectionLabel}>方向：</Text>
+                <Text style={styles.historyDirectionValue}>{item.title}</Text>
+              </View>
+              <View style={styles.historySummaryContainer}>
+                <Text style={styles.historySummaryLabel}>{item.summary.split('：')[0]}：</Text>
+                <Text style={styles.historySummaryValue}>{item.summary.split('：')[1]}</Text>
+              </View>
             </View>
             <View style={styles.historyDetail}>
               {Array.isArray(item.detail) ? (
@@ -972,6 +978,43 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     marginBottom: 8,
+  },
+  historyMainRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 12,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "#f0f0f0",
+  },
+  historyDirection: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+  },
+  historyDirectionLabel: {
+    color: palette.muted,
+    fontSize: 14,
+  },
+  historyDirectionValue: {
+    color: palette.ink,
+    fontSize: 16,
+    fontWeight: "700",
+  },
+  historySummaryContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+  },
+  historySummaryLabel: {
+    color: palette.muted,
+    fontSize: 14,
+  },
+  historySummaryValue: {
+    color: palette.ink,
+    fontSize: 16,
+    fontWeight: "900",
   },
   historyNameRow: {
     flexDirection: "row",
