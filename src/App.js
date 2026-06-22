@@ -366,48 +366,51 @@ function ContractCalculator({ addHistory, prefill }) {
   }
 
   return (
-    <>
-      <View style={styles.panel}>
-        <View style={styles.topRow}>
-          <Segment
-            value={side}
-            onChange={setSide}
-            items={[
-              { label: "做多", value: "long" },
-              { label: "做空", value: "short" },
-            ]}
-          />
-          <Pressable onPress={clearForm} style={styles.clearButton}>
-            <Text style={styles.clearText}>清空</Text>
-          </Pressable>
-        </View>
-
-        <View style={styles.fieldGrid}>
-          <Field label="成本价（USDT）" value={form.entryPrice} onChangeText={(value) => updateField("entryPrice", value)} />
-          <StepField
-            label="回调率（%）"
-            value={form.callbackRate}
-            onChangeText={(value) => updateField("callbackRate", value)}
-            onStepDown={() => stepRate(-0.1)}
-            onStepUp={() => stepRate(0.1)}
-          />
-          <View style={styles.quickRates}>
-            {["0.1", "0.3", "0.5", "1"].map((rate) => (
-              <Pressable key={rate} onPress={() => quickRate(rate)} style={styles.quickRate}>
-                <Text style={styles.quickRateText}>{rate}%</Text>
-              </Pressable>
-            ))}
+    <View style={styles.panelContainer}>
+      <View style={styles.panelColumn}>
+        <View style={styles.panel}>
+          <View style={styles.topRow}>
+            <Segment
+              value={side}
+              onChange={setSide}
+              items={[
+                { label: "做多", value: "long" },
+                { label: "做空", value: "short" },
+              ]}
+            />
+            <Pressable onPress={clearForm} style={styles.clearButton}>
+              <Text style={styles.clearText}>清空</Text>
+            </Pressable>
           </View>
-          <Field label="数量（USDT）" value={form.quantity} onChangeText={(value) => updateField("quantity", value)} />
-          <Field label="激活价格（USDT）" value={form.activationPrice} onChangeText={(value) => updateField("activationPrice", value)} />
-        </View>
 
-        <View style={styles.feeRow}>
-          <Text style={styles.feeChip}>移动止盈止损</Text>
-          <Text style={styles.feeChip}>预计价按激活价和回调率估算</Text>
+          <View style={styles.fieldGrid}>
+            <Field label="成本价（USDT）" value={form.entryPrice} onChangeText={(value) => updateField("entryPrice", value)} />
+            <StepField
+              label="回调率（%）"
+              value={form.callbackRate}
+              onChangeText={(value) => updateField("callbackRate", value)}
+              onStepDown={() => stepRate(-0.1)}
+              onStepUp={() => stepRate(0.1)}
+            />
+            <View style={styles.quickRates}>
+              {["0.1", "0.3", "0.5", "1"].map((rate) => (
+                <Pressable key={rate} onPress={() => quickRate(rate)} style={styles.quickRate}>
+                  <Text style={styles.quickRateText}>{rate}%</Text>
+                </Pressable>
+              ))}
+            </View>
+            <Field label="数量（USDT）" value={form.quantity} onChangeText={(value) => updateField("quantity", value)} />
+            <Field label="激活价格（USDT）" value={form.activationPrice} onChangeText={(value) => updateField("activationPrice", value)} />
+          </View>
+
+          <View style={styles.feeRow}>
+            <Text style={styles.feeChip}>移动止盈止损</Text>
+            <Text style={styles.feeChip}>预计价按激活价和回调率估算</Text>
+          </View>
         </View>
       </View>
 
+      <View style={styles.panelColumn}>
       <View style={styles.resultPanel}>
         <View style={styles.primaryResult}>
           <Text style={styles.primaryLabel}>预计止盈价</Text>
@@ -429,7 +432,8 @@ function ContractCalculator({ addHistory, prefill }) {
           <Text style={styles.confirmText}>确认并存入历史</Text>
         </Pressable>
       </View>
-    </>
+      </View>
+    </View>
   );
 }
 
