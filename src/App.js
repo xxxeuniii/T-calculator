@@ -232,7 +232,7 @@ function TradeCalculator({ addHistory, prefill }) {
       mode,
       form,
       isProfit: result.netProfit > 0,
-      type: "做T",
+      type: "股票",
       title: mode === "positive" ? "正T" : "反T",
       summary: `${modeText.netLabel} ${formatCurrency(result.netProfit)}`,
       detail: `${modeText.sellLabel} ${form.sellPrice}，${modeText.buyLabel} ${form.buyPrice}，做T股数 ${form.tradeShares}`,
@@ -451,8 +451,10 @@ function HistoryScreen({ history, clearHistory, onSelectHistory }) {
               <Text style={styles.historyType}>{item.type}</Text>
               <Text style={styles.historyTime}>{item.time}</Text>
             </View>
-            <Text style={styles.historyName}>{item.title}</Text>
-            <Text style={styles.historySummary}>{item.summary}</Text>
+            <View style={styles.historyNameRow}>
+              <Text style={styles.historyName}>{item.title}</Text>
+              <Text style={styles.historySummary}>{item.summary}</Text>
+            </View>
             <Text style={styles.historyDetail}>{item.detail}</Text>
           </Pressable>
         ))
@@ -474,7 +476,68 @@ function getScreenLabel(screen) {
 export default function App() {
   const [screen, setScreen] = useState("trade");
   const [menuOpen, setMenuOpen] = useState(false);
-  const [history, setHistory] = useState([]);
+  const [history, setHistory] = useState([
+    {
+      id: "mock1",
+      screen: "contract",
+      side: "long",
+      form: { entryPrice: "60000", callbackRate: "0.1", quantity: "300", activationPrice: "68000" },
+      isProfit: true,
+      type: "合约",
+      title: "做多 跟踪委托",
+      summary: "预计止盈价 67,932.00 USDT",
+      detail: "成本价 60,000.00 USDT，激活价 68,000.00 USDT，回调率 0.1%，数量 300 USDT",
+      time: "06/22 14:48",
+    },
+    {
+      id: "mock2",
+      screen: "contract",
+      side: "short",
+      form: { entryPrice: "42000", callbackRate: "0.3", quantity: "500", activationPrice: "38000" },
+      isProfit: false,
+      type: "合约",
+      title: "做空 跟踪委托",
+      summary: "预计止盈价 37,886.00 USDT",
+      detail: "成本价 42,000.00 USDT，激活价 38,000.00 USDT，回调率 0.3%，数量 500 USDT",
+      time: "06/22 14:35",
+    },
+    {
+      id: "mock3",
+      screen: "trade",
+      mode: "positive",
+      form: { costPrice: "28.50", totalShares: "2000", tradeShares: "500", sellPrice: "29.30", buyPrice: "28.80" },
+      isProfit: true,
+      type: "股票",
+      title: "正T",
+      summary: "正T净收益 ¥214.40",
+      detail: "卖出价 29.30，接回价 28.80，股数 500",
+      time: "06/22 10:22",
+    },
+    {
+      id: "mock4",
+      screen: "trade",
+      mode: "reverse",
+      form: { costPrice: "35.20", totalShares: "1500", tradeShares: "300", sellPrice: "34.10", buyPrice: "33.50" },
+      isProfit: true,
+      type: "股票",
+      title: "反T",
+      summary: "反T净收益 ¥156.85",
+      detail: "买入价 33.50，卖出价 34.10，股数 300",
+      time: "06/21 15:45",
+    },
+    {
+      id: "mock5",
+      screen: "contract",
+      side: "long",
+      form: { entryPrice: "58000", callbackRate: "0.5", quantity: "200", activationPrice: "62000" },
+      isProfit: true,
+      type: "合约",
+      title: "做多 跟踪委托",
+      summary: "预计止盈价 61,690.00 USDT",
+      detail: "成本价 58,000.00 USDT，激活价 62,000.00 USDT，回调率 0.5%，数量 200 USDT",
+      time: "06/21 09:30",
+    },
+  ]);
   const [tradePrefill, setTradePrefill] = useState(null);
   const [contractPrefill, setContractPrefill] = useState(null);
 
@@ -877,45 +940,62 @@ const styles = StyleSheet.create({
     lineHeight: 22,
   },
   historyItem: {
-    borderWidth: 1,
+    borderWidth: 0,
     borderColor: "rgba(217, 209, 188, 0.8)",
-    borderRadius: 7,
-    padding: 14,
-    marginBottom: 10,
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
     backgroundColor: "#ffffff",
+    shadowColor: "#151515",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.06,
+    shadowRadius: 12,
+    elevation: 4,
   },
   historyProfitItem: {
-    borderColor: "rgba(211, 47, 47, 0.55)",
     backgroundColor: "#ffffff",
+    borderWidth: 0,
   },
   historyItemTop: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 6,
+    marginBottom: 8,
+  },
+  historyNameRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 8,
   },
   historyType: {
-    color: palette.ink,
-    fontSize: 12,
-    fontWeight: "900",
+    color: palette.muted,
+    fontSize: 11,
+    fontWeight: "700",
   },
   historyTime: {
     color: palette.muted,
-    fontSize: 12,
+    fontSize: 11,
+    opacity: 0.7,
   },
   historyName: {
     color: palette.ink,
-    fontSize: 17,
-    fontWeight: "900",
-    marginBottom: 4,
+    fontSize: 15,
+    fontWeight: "800",
+    marginBottom: 6,
   },
   historySummary: {
     color: palette.ink,
-    fontWeight: "800",
-    marginBottom: 4,
+    fontSize: 16,
+    fontWeight: "900",
+    marginBottom: 8,
   },
   historyDetail: {
     color: palette.muted,
-    lineHeight: 20,
+    fontSize: 14,
+    lineHeight: 22,
+    padding: 10,
+    backgroundColor: "#f8f8f8",
+    borderRadius: 6,
   },
 });
