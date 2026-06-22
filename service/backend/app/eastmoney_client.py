@@ -92,9 +92,74 @@ def _first_number(row: dict[str, Any] | None, keys: tuple[str, ...]) -> float | 
     return None
 
 
+def calculate_valuation_method(assets: dict[str, float | None]) -> dict[str, Any]:
+    investment_real_estate = assets.get("investment_real_estate") or 0
+    construction_in_progress = assets.get("construction_in_progress") or 0
+    fixed_asset = assets.get("fixed_asset") or 0
+    total_assets = assets.get("total_assets") or 0
+    heavy_asset_sum = investment_real_estate + construction_in_progress + fixed_asset
+
+    if total_assets <= 0:
+        return {
+            "heavy_asset_sum": heavy_asset_sum,
+            "asset_ratio": None,
+            "method": "UNKNOWN",
+            "method_name": "无法判断",
+            "rule": "(投资性房地产+在建工程+固定资产)/总资产，>40% 使用市盈率估值法，<=40% 使用市销率估值法",
+        }
+
+    asset_ratio = heavy_asset_sum / total_assets * 100
+    use_pe = asset_ratio > 40
+    return {
+        "heavy_asset_sum": heavy_asset_sum,
+        "asset_ratio": round(asset_ratio, 4),
+        "method": "PE" if use_pe else "PS",
+        "method_name": "市盈率估值法" if use_pe else "市销率估值法",
+        "rule": "(投资性房地产+在建工程+固定资产)/总资产，>40% 使用市盈率估值法，<=40% 使用市销率估值法",
+    }
+
+
+def calculate_composite_revenue_growth(
+    historical_reports: list[dict[str, Any]],
+    latest_report: dict[str, Any],
+) -> dict[str, Any]:
+    annual_growths = [
+        row["total_revenue_yoy"]
+        for row in historical_reports
+        if isinstance(row.get("total_revenue_yoy"), (int, float))
+    ]
+    latest_yoy = latest_report.get("total_revenue_yoy")
+    growths_for_composite = list(annual_growths)
+    if isinstance(latest_yoy, (int, float)):
+        growths_for_composite.append(latest_yoy)
+
+    historical_avg = sum(annual_growths) / len(annual_growths) if annual_growths else None
+    composite = sum(growths_for_composite) / len(growths_for_composite) if growths_for_composite else None
+
+    revenues = [
+        row["total_revenue"]
+        for row in sorted(historical_reports, key=lambda item: item.get("year") or 0)
+        if isinstance(row.get("total_revenue"), (int, float)) and row["total_revenue"] > 0
+    ]
+    cagr = None
+    if len(revenues) >= 2:
+        years = len(revenues) - 1
+        cagr = ((revenues[-1] / revenues[0]) ** (1 / years) - 1) * 100
+
+    return {
+        "historical_revenue_growths": annual_growths,
+        "historical_average_revenue_growth": round(historical_avg, 4) if historical_avg is not None else None,
+        "latest_revenue_yoy": latest_yoy,
+        "five_year_revenue_cagr": round(cagr, 4) if cagr is not None else None,
+        "composite_revenue_growth": round(composite, 4) if composite is not None else None,
+        "rule": "综合复合营收增速 = 近五年年报营收同比增速与最新报告营收同比增速的算术平均",
+    }
+
+
 class EastmoneyClient:
     def __init__(self, timeout: int = 12) -> None:
         self.session = requests.Session()
+        self.session.trust_env = False
         self.timeout = timeout
         self.session.headers.update(
             {
@@ -113,7 +178,7 @@ class EastmoneyClient:
         quote = self.fetch_quote(identity)
         all_reports = self.fetch_main_indicators(identity, quarterly=True)
         annual_reports = self.fetch_main_indicators(identity, quarterly=False)
-        balance_rows = self.fetch_datacenter_report(identity, "RPT_DMSK_FN_BALANCE", page_size=120)
+        balance_rows = self.fetch_datacenter_report(identity, "RPT_F10_FINANCE_GBALANCE", page_size=120)
 
         latest_report = self.select_latest_published_report(all_reports, as_of)
         if not latest_report:
@@ -127,19 +192,34 @@ class EastmoneyClient:
         annual_history = self.select_annual_history(annual_reports, years)
         last_year_report = annual_history[0] if annual_history else None
         latest_balance = self.find_report_by_date(balance_rows, latest_report_date)
+        basic = self.map_quote(quote, identity)
+        latest_report_data = self.map_latest_report(latest_report, latest_balance)
+        annual_history_data = [self.map_annual_report(row) for row in annual_history]
+        last_year_data = self.map_last_year(last_year_report)
+        valuation_method = calculate_valuation_method(latest_report_data["assets"])
+        composite_growth = calculate_composite_revenue_growth(annual_history_data, latest_report_data)
 
         return {
             "stock_code": identity.secucode,
             "as_of": as_of.isoformat(),
-            "basic": self.map_quote(quote, identity),
-            "last_year": self.map_last_year(last_year_report),
-            "latest_report": self.map_latest_report(latest_report, latest_balance),
+            "basic": basic,
+            "last_year": last_year_data,
+            "latest_report": latest_report_data,
             "historical_years": years,
-            "historical_reports": [self.map_annual_report(row) for row in annual_history],
+            "historical_reports": annual_history_data,
+            "valuation_method": valuation_method,
+            "composite_growth": composite_growth,
+            "valuation_inputs": {
+                "total_market_value": basic.get("total_market_value"),
+                "latest_eps": latest_report_data.get("eps"),
+                "last_year_eps": last_year_data.get("eps") if last_year_data else None,
+                "total_share": basic.get("total_share"),
+                "close_price": basic.get("close_price"),
+            },
             "source": {
                 "quote": "push2.eastmoney.com/api/qt/stock/get",
                 "main_indicators": "emweb.securities.eastmoney.com/PC_HSF10/NewFinanceAnalysis/ZYZBAjaxNew",
-                "balance_sheet": "datacenter.eastmoney.com/securities/api/data/v1/get RPT_DMSK_FN_BALANCE",
+                "balance_sheet": "datacenter.eastmoney.com/securities/api/data/v1/get RPT_F10_FINANCE_GBALANCE",
             },
         }
 
@@ -148,11 +228,10 @@ class EastmoneyClient:
             "secid": identity.secid,
             "fields": "f57,f58,f43,f84,f116,f127",
         }
-        response = self.session.get(
+        response = self._get(
             EASTMONEY_QUOTE_URL,
             params=params,
             headers={"Referer": "https://quote.eastmoney.com/"},
-            timeout=self.timeout,
         )
         payload = self._json(response)
         if payload.get("rc") != 0 or not payload.get("data"):
@@ -164,11 +243,10 @@ class EastmoneyClient:
             "type": "0" if quarterly else "1",
             "code": identity.eastmoney_code,
         }
-        response = self.session.get(
+        response = self._get(
             EASTMONEY_F10_URL,
             params=params,
             headers={"Referer": "https://emweb.securities.eastmoney.com/"},
-            timeout=self.timeout,
         )
         payload = self._json(response)
         data = payload.get("data")
@@ -188,11 +266,7 @@ class EastmoneyClient:
             f"&filter={filter_text}&pageNumber=1&pageSize={page_size}"
             "&sortColumns=REPORT_DATE&sortTypes=-1"
         )
-        response = self.session.get(
-            url,
-            headers={"Referer": "https://data.eastmoney.com/"},
-            timeout=self.timeout,
-        )
+        response = self._get(url, headers={"Referer": "https://data.eastmoney.com/"})
         payload = self._json(response)
         if not payload.get("success"):
             raise EastmoneyError(f"{report_name} request failed for {identity.secucode}: {payload}")
@@ -243,6 +317,7 @@ class EastmoneyClient:
         return {
             "report_date": row.get("REPORT_DATE"),
             "eps": _as_float(row.get("EPSJB")),
+            "book_value_per_share": _as_float(row.get("BPS")),
             "total_revenue": _as_float(row.get("TOTALOPERATEREVE")),
             "net_profit": _as_float(row.get("PARENTNETPROFIT")),
         }
@@ -254,6 +329,7 @@ class EastmoneyClient:
             "report_type": main_row.get("REPORT_TYPE"),
             "notice_date": main_row.get("NOTICE_DATE"),
             "eps": _as_float(main_row.get("EPSJB")),
+            "book_value_per_share": _as_float(main_row.get("BPS")),
             "total_revenue": _as_float(main_row.get("TOTALOPERATEREVE")),
             "total_revenue_yoy": _as_float(main_row.get("TOTALOPERATEREVETZ")),
             "net_profit": _as_float(main_row.get("PARENTNETPROFIT")),
@@ -281,6 +357,7 @@ class EastmoneyClient:
             "year": int(row["REPORT_YEAR"]) if str(row.get("REPORT_YEAR", "")).isdigit() else None,
             "report_date": row.get("REPORT_DATE"),
             "eps": _as_float(row.get("EPSJB")),
+            "book_value_per_share": _as_float(row.get("BPS")),
             "total_revenue": _as_float(row.get("TOTALOPERATEREVE")),
             "total_revenue_yoy": _as_float(row.get("TOTALOPERATEREVETZ")),
             "net_profit": _as_float(row.get("PARENTNETPROFIT")),
@@ -299,3 +376,9 @@ class EastmoneyClient:
         if not isinstance(payload, dict):
             raise EastmoneyError(f"eastmoney response is not an object: {payload!r}")
         return payload
+
+    def _get(self, url: str, **kwargs: Any) -> requests.Response:
+        try:
+            return self.session.get(url, timeout=self.timeout, **kwargs)
+        except requests.RequestException as exc:
+            raise EastmoneyError(f"eastmoney request failed: {exc}") from exc

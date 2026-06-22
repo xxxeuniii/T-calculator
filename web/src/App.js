@@ -56,6 +56,30 @@ function formatUsdt(value) {
   return value === null || value === undefined ? "--" : `${usdtFormatter.format(value)} USDT`;
 }
 
+function formatNumber(value, digits = 2) {
+  return typeof value === "number" && Number.isFinite(value) ? value.toFixed(digits) : "--";
+}
+
+function formatDate(value) {
+  return value ? String(value).slice(0, 10) : "--";
+}
+
+function formatHundredMillion(value) {
+  return typeof value === "number" && Number.isFinite(value) ? `${(value / 100000000).toFixed(2)} 亿元` : "--";
+}
+
+function getApiBaseUrl() {
+  if (Platform.OS === "web" && typeof window !== "undefined") {
+    const { protocol, hostname, port } = window.location;
+    const isLocalFrontend = hostname === "localhost" || hostname === "127.0.0.1";
+    if (isLocalFrontend && port !== "8000") {
+      return "http://127.0.0.1:8000";
+    }
+    return "";
+  }
+  return "http://127.0.0.1:8000";
+}
+
 function getTradeModeText(mode) {
   if (mode === "reverse") {
     return {
@@ -441,36 +465,43 @@ function ValuationScreen({ isDesktop }) {
   const [stockCode, setStockCode] = useState("");
   const [stockInfo, setStockInfo] = useState(null);
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const stockDatabase = {
-    "600519": { name: "贵州茅台", price: 1680.00, eps: 58.75, bookValue: 225.68, dividend: 25.91, earnings: 736.82 },
-    "000858": { name: "五粮液", price: 152.50, eps: 6.32, bookValue: 34.85, dividend: 3.78, earnings: 275.70 },
-    "601318": { name: "中国平安", price: 48.20, eps: 4.88, bookValue: 52.35, dividend: 2.20, earnings: 147.46 },
-    "000001": { name: "平安银行", price: 12.85, eps: 1.62, bookValue: 16.35, dividend: 0.45, earnings: 45.51 },
-    "600036": { name: "招商银行", price: 35.60, eps: 4.32, bookValue: 34.88, dividend: 1.73, earnings: 169.42 },
-    "000651": { name: "格力电器", price: 42.80, eps: 4.56, bookValue: 26.85, dividend: 2.40, earnings: 200.50 },
-    "002594": { name: "比亚迪", price: 256.80, eps: 5.28, bookValue: 48.56, dividend: 0.60, earnings: 42.34 },
-    "601899": { name: "紫金矿业", price: 15.20, eps: 0.68, bookValue: 4.85, dividend: 0.25, earnings: 200.60 },
-    "300750": { name: "宁德时代", price: 185.50, eps: 8.56, bookValue: 45.32, dividend: 2.52, earnings: 35.80 },
-    "601398": { name: "工商银行", price: 5.18, eps: 0.98, bookValue: 8.56, dividend: 0.35, earnings: 360.48 },
-  };
-
-  const hotStocks = ["600519", "000858", "601318", "000001", "600036", "000651", "002594", "601899"];
+  const hotStocks = [
+    { code: "600519", name: "贵州茅台" },
+    { code: "000858", name: "五粮液" },
+    { code: "601318", name: "中国平安" },
+    { code: "000001", name: "平安银行" },
+    { code: "600036", name: "招商银行" },
+    { code: "000651", name: "格力电器" },
+    { code: "002594", name: "比亚迪" },
+    { code: "601899", name: "紫金矿业" },
+  ];
 
   const result = useMemo(() => {
     if (!stockInfo) return null;
-    
-    const { price, eps, bookValue, dividend, earnings } = stockInfo;
+
+    const price = stockInfo.basic?.close_price;
+    const eps = stockInfo.last_year?.eps;
+    const bookValue = stockInfo.latest_report?.book_value_per_share || stockInfo.last_year?.book_value_per_share;
+    const totalMarketValue = stockInfo.basic?.total_market_value;
+    const totalShare = stockInfo.basic?.total_share;
 
     return {
-      pe: eps > 0 ? (price / eps).toFixed(2) : "--",
-      pb: bookValue > 0 ? (price / bookValue).toFixed(2) : "--",
-      dividendYield: price > 0 && dividend > 0 ? ((dividend / price) * 100).toFixed(2) : "--",
-      marketCap: earnings > 0 && eps > 0 ? ((earnings / eps) * price / 10000).toFixed(2) : "--",
+      pe: price > 0 && eps > 0 ? (price / eps).toFixed(2) : "--",
+      pb: price > 0 && bookValue > 0 ? (price / bookValue).toFixed(2) : "--",
+      marketCap: totalMarketValue > 0 ? (totalMarketValue / 100000000).toFixed(2) : "--",
+      totalShare: totalShare > 0 ? (totalShare / 100000000).toFixed(2) : "--",
     };
   }, [stockInfo]);
 
-  function searchStock(code) {
+  const latestAssets = stockInfo?.latest_report?.assets || {};
+  const annualReports = stockInfo?.historical_reports || [];
+  const valuationMethod = stockInfo?.valuation_method || {};
+  const compositeGrowth = stockInfo?.composite_growth || {};
+  const valuationInputs = stockInfo?.valuation_inputs || {};
+
+  async function searchStock(code) {
     const trimmedCode = code.trim();
     if (!trimmedCode) {
       setError("");
@@ -478,13 +509,22 @@ function ValuationScreen({ isDesktop }) {
       return;
     }
 
-    const stock = stockDatabase[trimmedCode];
-    if (stock) {
-      setStockInfo(stock);
+    setLoading(true);
+    setError("");
+
+    try {
+      const response = await fetch(`${getApiBaseUrl()}/api/v1/stocks/${encodeURIComponent(trimmedCode)}/valuation-source`);
+      const payload = await response.json();
+      if (!response.ok || !payload.success) {
+        throw new Error(payload.detail || "后端数据请求失败");
+      }
+      setStockInfo(payload.data);
       setError("");
-    } else {
+    } catch (err) {
       setStockInfo(null);
-      setError("未找到该股票，请输入正确的股票代码");
+      setError(err?.message || "后端数据请求失败，请确认后端服务已启动");
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -513,6 +553,7 @@ function ValuationScreen({ isDesktop }) {
               onChangeText={(value) => setStockCode(value)}
               onSubmitEditing={() => searchStock(stockCode)}
               keyboardType="numeric"
+              editable={!loading}
             />
           </View>
           <Pressable
@@ -525,10 +566,12 @@ function ValuationScreen({ isDesktop }) {
               alignItems: "center",
               justifyContent: "center",
               alignSelf: "flex-end",
+              opacity: loading ? 0.65 : 1,
             }}
             onPress={() => searchStock(stockCode)}
+            disabled={loading}
           >
-            <Text style={{ color: "#fff", fontSize: 14, fontWeight: "500" }}>查询</Text>
+            <Text style={{ color: "#fff", fontSize: 14, fontWeight: "500" }}>{loading ? "查询中" : "查询"}</Text>
           </Pressable>
         </View>
 
@@ -538,19 +581,20 @@ function ValuationScreen({ isDesktop }) {
 
         <Text style={{ fontSize: 14, color: "#666", marginBottom: 8 }}>热门股票</Text>
         <View style={{ flexWrap: "wrap", flexDirection: "row", gap: 8 }}>
-          {hotStocks.map((code) => (
+          {hotStocks.map((stock) => (
             <Pressable
-              key={code}
+              key={stock.code}
               style={{
                 paddingHorizontal: 12,
                 paddingVertical: 6,
                 backgroundColor: "#f5f5f5",
                 borderRadius: 999,
               }}
-              onPress={() => selectHotStock(code)}
+              onPress={() => selectHotStock(stock.code)}
+              disabled={loading}
             >
               <Text style={{ fontSize: 13, color: "#333" }}>
-                {code} ({stockDatabase[code]?.name})
+                {stock.code} ({stock.name})
               </Text>
             </Pressable>
           ))}
@@ -562,44 +606,72 @@ function ValuationScreen({ isDesktop }) {
           <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
             <View>
               <Text style={{ fontSize: 18, fontWeight: "600", color: "#333" }}>
-                {stockInfo.name} ({stockCode})
+                {stockInfo.basic?.stock_name || stockInfo.stock_code} ({stockInfo.stock_code})
               </Text>
               <Text style={{ fontSize: 14, color: "#666", marginTop: 2 }}>
-                当前股价：¥{stockInfo.price.toFixed(2)}
+                当前股价：¥{formatNumber(stockInfo.basic?.close_price)}
+              </Text>
+              <Text style={{ fontSize: 12, color: "#888", marginTop: 2 }}>
+                最新财报：{formatDate(stockInfo.latest_report?.report_date)} {stockInfo.latest_report?.report_type || ""}
               </Text>
             </View>
           </View>
 
           <View style={styles.primaryResult}>
-            <Text style={styles.primaryLabel}>估值指标</Text>
-            <Text style={styles.primaryValue}>{result?.pe || "--"}</Text>
-          </View>
-
-          <View style={styles.metrics}>
-            <Metric label="市盈率 (PE)" value={result?.pe || "--"} />
-            <Metric label="市净率 (PB)" value={result?.pb || "--"} />
-            <Metric label="股息率" value={result?.dividendYield ? `${result.dividendYield}%` : "--"} />
-            <Metric label="市值（亿元）" value={result?.marketCap || "--"} />
-          </View>
-
-          <View style={{ marginTop: 12, padding: 12, backgroundColor: "#f9f9f9", borderRadius: 8 }}>
-            <Text style={{ fontSize: 13, color: "#666", lineHeight: 1.8 }}>
-              <Text style={{ fontWeight: "500", color: "#333" }}>财务数据：</Text>{"\n"}
-              每股收益(EPS)：¥{stockInfo.eps.toFixed(2)} {"\n"}
-              每股净资产：¥{stockInfo.bookValue.toFixed(2)} {"\n"}
-              每股股息：¥{stockInfo.dividend.toFixed(2)} {"\n"}
-              净利润：{stockInfo.earnings.toFixed(2)}亿元
+            <Text style={styles.primaryLabel}>估值方法</Text>
+            <Text style={styles.primaryValue}>{valuationMethod.method || "--"}</Text>
+            <Text style={{ color: "rgba(248, 255, 245, 0.78)", marginTop: 6, fontWeight: "700" }}>
+              {valuationMethod.method_name || "--"}
             </Text>
           </View>
 
+          <View style={styles.metrics}>
+            <Metric label="重资产占比" value={valuationMethod.asset_ratio !== null && valuationMethod.asset_ratio !== undefined ? `${formatNumber(valuationMethod.asset_ratio)}%` : "--"} />
+            <Metric label="综合营收增速" value={compositeGrowth.composite_revenue_growth !== null && compositeGrowth.composite_revenue_growth !== undefined ? `${formatNumber(compositeGrowth.composite_revenue_growth)}%` : "--"} />
+            <Metric label="总股本（亿股）" value={result?.totalShare || "--"} />
+            <Metric label="总市值（亿元）" value={result?.marketCap || "--"} />
+          </View>
+
+          <View style={{ marginTop: 12, padding: 12, backgroundColor: "#f9f9f9", borderRadius: 8 }}>
+            <Text style={{ fontSize: 13, color: "#666", lineHeight: 22 }}>
+              <Text style={{ fontWeight: "500", color: "#333" }}>资产负债表：</Text>{"\n"}
+              投资性房地产：{formatHundredMillion(latestAssets.investment_real_estate)}{"\n"}
+              在建工程：{formatHundredMillion(latestAssets.construction_in_progress)}{"\n"}
+              固定资产：{formatHundredMillion(latestAssets.fixed_asset)}{"\n"}
+              总资产：{formatHundredMillion(latestAssets.total_assets)}{"\n\n"}
+              <Text style={{ fontWeight: "500", color: "#333" }}>利润表（最新财报）：</Text>{"\n"}
+              营业总收入：{formatHundredMillion(stockInfo.latest_report?.total_revenue)}{"\n"}
+              最新营收同比：{formatNumber(stockInfo.latest_report?.total_revenue_yoy)}%{"\n"}
+              归母净利润：{formatHundredMillion(stockInfo.latest_report?.net_profit)}{"\n"}
+              归母净利润同比：{formatNumber(stockInfo.latest_report?.net_profit_yoy)}%{"\n\n"}
+              <Text style={{ fontWeight: "500", color: "#333" }}>财务基本面：</Text>{"\n"}
+              总股本：{formatNumber((valuationInputs.total_share || 0) / 100000000)} 亿股{"\n"}
+              最新每股收益：¥{formatNumber(valuationInputs.latest_eps)}{"\n"}
+              上一年每股收益：¥{formatNumber(valuationInputs.last_year_eps)}{"\n"}
+              总市值：{formatHundredMillion(valuationInputs.total_market_value)}{"\n"}
+              当前股价：¥{formatNumber(valuationInputs.close_price)}
+            </Text>
+          </View>
+
+          {annualReports.length > 0 ? (
+            <View style={{ marginTop: 12, padding: 12, backgroundColor: "#fff", borderWidth: 1, borderColor: "#eeeeee", borderRadius: 8 }}>
+              <Text style={{ fontSize: 13, color: "#333", fontWeight: "600", marginBottom: 8 }}>历史利润表（{stockInfo.historical_years?.join("、")}）</Text>
+              {annualReports.map((item) => (
+                <Text key={item.report_date} style={{ fontSize: 13, color: "#666", lineHeight: 22 }}>
+                  {item.year}：营收 {formatHundredMillion(item.total_revenue)}，归母净利润 {formatHundredMillion(item.net_profit)}
+                </Text>
+              ))}
+            </View>
+          ) : null}
+
           <Text style={styles.formula}>
-            市盈率 = 当前股价 / 每股收益 (EPS)
+            数据来源：东方财富接口，经后端实时拉取，不写入数据库
 {"\n"}
-            市净率 = 当前股价 / 每股净资产
+            估值方法：{valuationMethod.rule || "--"}
 {"\n"}
-            股息率 = 每股股息 / 当前股价 × 100%
+            综合增速：{compositeGrowth.rule || "--"}
 {"\n"}
-            市值 = (净利润 / EPS) × 当前股价
+            历史年报窗口：{stockInfo.historical_years?.join("、") || "--"}
           </Text>
         </View>
       ) : (
