@@ -157,8 +157,8 @@ function TradeCalculator({ addHistory, prefill }) {
   const [mode, setMode] = useState("positive");
   const [form, setForm] = useState({
     costPrice: "",
-    totalShares: "",
-    tradeShares: "",
+    totalShares: "200",
+    tradeShares: "100",
     sellPrice: "",
     buyPrice: "",
   });
@@ -183,11 +183,19 @@ function TradeCalculator({ addHistory, prefill }) {
     setForm((current) => ({ ...current, [key]: value }));
   }
 
+  function handleCostPriceChange(value) {
+    updateField("costPrice", value);
+    if (value) {
+      updateField("sellPrice", value);
+      updateField("buyPrice", value);
+    }
+  }
+
   function clearForm() {
     setForm({
       costPrice: "",
-      totalShares: "",
-      tradeShares: "",
+      totalShares: "200",
+      tradeShares: "100",
       sellPrice: "",
       buyPrice: "",
     });
@@ -203,6 +211,18 @@ function TradeCalculator({ addHistory, prefill }) {
     const current = Number(form.totalShares) || 0;
     const next = Math.max(0, current + delta);
     updateField("totalShares", next.toString());
+  }
+
+  function stepSellPrice(delta) {
+    const current = Number(form.sellPrice) || 0;
+    const next = Math.max(0, current + delta);
+    updateField("sellPrice", next.toFixed(2));
+  }
+
+  function stepBuyPrice(delta) {
+    const current = Number(form.buyPrice) || 0;
+    const next = Math.max(0, current + delta);
+    updateField("buyPrice", next.toFixed(2));
   }
 
   function saveTrade() {
@@ -237,18 +257,18 @@ function TradeCalculator({ addHistory, prefill }) {
         </View>
 
         <View style={styles.fieldGrid}>
-          <Field label="持仓成本价" value={form.costPrice} onChangeText={(value) => updateField("costPrice", value)} />
+          <Field label="持仓成本价" value={form.costPrice} onChangeText={handleCostPriceChange} />
           <StepField label="持仓股数" value={form.totalShares} onChangeText={(value) => updateField("totalShares", value)} onStepDown={() => stepTotalShares(-100)} onStepUp={() => stepTotalShares(100)} />
           <StepField label="做T股数" value={form.tradeShares} onChangeText={(value) => updateField("tradeShares", value)} onStepDown={() => stepTradeShares(-100)} onStepUp={() => stepTradeShares(100)} />
           {mode === "reverse" ? (
             <>
-              <Field label={modeText.buyLabel} value={form.buyPrice} onChangeText={(value) => updateField("buyPrice", value)} />
-              <Field label={modeText.sellLabel} value={form.sellPrice} onChangeText={(value) => updateField("sellPrice", value)} />
+              <StepField label={modeText.buyLabel} value={form.buyPrice} onChangeText={(value) => updateField("buyPrice", value)} onStepDown={() => stepBuyPrice(-0.01)} onStepUp={() => stepBuyPrice(0.01)} />
+              <StepField label={modeText.sellLabel} value={form.sellPrice} onChangeText={(value) => updateField("sellPrice", value)} onStepDown={() => stepSellPrice(-0.01)} onStepUp={() => stepSellPrice(0.01)} />
             </>
           ) : (
             <>
-              <Field label={modeText.sellLabel} value={form.sellPrice} onChangeText={(value) => updateField("sellPrice", value)} />
-              <Field label={modeText.buyLabel} value={form.buyPrice} onChangeText={(value) => updateField("buyPrice", value)} />
+              <StepField label={modeText.sellLabel} value={form.sellPrice} onChangeText={(value) => updateField("sellPrice", value)} onStepDown={() => stepSellPrice(-0.01)} onStepUp={() => stepSellPrice(0.01)} />
+              <StepField label={modeText.buyLabel} value={form.buyPrice} onChangeText={(value) => updateField("buyPrice", value)} onStepDown={() => stepBuyPrice(-0.01)} onStepUp={() => stepBuyPrice(0.01)} />
             </>
           )}
         </View>
