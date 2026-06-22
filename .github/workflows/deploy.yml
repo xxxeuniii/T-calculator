@@ -15,7 +15,8 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      DEPLOY_PATH: /opt/apps/t-calculator/current
+      DEPLOY_PATH: ${{ secrets.SERVER_DEPLOY_PATH || '/opt/apps/t-calculator' }}
+      WEB_PORT: ${{ secrets.SERVER_WEB_PORT || '80' }}
 
     steps:
       - name: Checkout
@@ -26,7 +27,12 @@ jobs:
         with:
           node-version: 24
 
-      - name: Install dependencies
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install frontend dependencies
         run: cd web && npm ci
 
       - name: Run calculator tests
@@ -35,29 +41,66 @@ jobs:
       - name: Build web app
         run: cd web && npm run build:web
 
+      - name: Validate backend
+        run: |
+          python -m compileall service/backend/app service/backend/tests
+          PYTHONPATH=service/backend python -c "from tests.test_report_window import test_quarter_report_uses_previous_five_full_years, test_annual_report_uses_report_year_as_latest_full_year; test_quarter_report_uses_previous_five_full_years(); test_annual_report_uses_report_year_as_latest_full_year()"
+
       - name: Configure SSH
         env:
           SSH_PRIVATE_KEY: ${{ secrets.SERVER_SSH_KEY }}
           SERVER_HOST: ${{ secrets.SERVER_HOST }}
+          SERVER_USER: ${{ secrets.SERVER_USER }}
         run: |
           test -n "$SSH_PRIVATE_KEY"
           test -n "$SERVER_HOST"
+          test -n "$SERVER_USER"
           mkdir -p ~/.ssh
           printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
           ssh-keyscan -H "$SERVER_HOST" >> ~/.ssh/known_hosts
 
-      - name: Deploy to server
+      - name: Sync project to server
         env:
           SERVER_HOST: ${{ secrets.SERVER_HOST }}
           SERVER_USER: ${{ secrets.SERVER_USER }}
         run: |
-          SERVER_USER="${SERVER_USER:-ubuntu}"
           ssh -i ~/.ssh/deploy_key "$SERVER_USER@$SERVER_HOST" "mkdir -p '$DEPLOY_PATH'"
-          rsync -az --delete -e "ssh -i ~/.ssh/deploy_key" dist/ "$SERVER_USER@$SERVER_HOST:$DEPLOY_PATH/"
+          rsync -az --delete \
+            --exclude '.git' \
+            --exclude '.qwen' \
+            --exclude 'web/node_modules' \
+            --exclude 'web/dist' \
+            --exclude 'service/backend/.venv' \
+            -e "ssh -i ~/.ssh/deploy_key" \
+            ./ "$SERVER_USER@$SERVER_HOST:$DEPLOY_PATH/"
+
+      - name: Deploy with Docker Compose
+        env:
+          SERVER_HOST: ${{ secrets.SERVER_HOST }}
+          SERVER_USER: ${{ secrets.SERVER_USER }}
+        run: |
+          ssh -i ~/.ssh/deploy_key "$SERVER_USER@$SERVER_HOST" "DEPLOY_PATH='$DEPLOY_PATH' WEB_PORT='$WEB_PORT' bash -s" <<'REMOTE'
+          set -euo pipefail
+          cd "$DEPLOY_PATH"
+          if docker compose version >/dev/null 2>&1; then
+            COMPOSE="docker compose"
+          elif command -v docker-compose >/dev/null 2>&1; then
+            COMPOSE="docker-compose"
+          else
+            echo "Docker Compose is not installed on the server." >&2
+            exit 1
+          fi
+
+          WEB_PORT="$WEB_PORT" $COMPOSE up -d --build --remove-orphans
+          WEB_PORT="$WEB_PORT" $COMPOSE ps
+          REMOTE
 
       - name: Smoke test
         env:
           SERVER_HOST: ${{ secrets.SERVER_HOST }}
+          SERVER_PUBLIC_BASE_URL: ${{ secrets.SERVER_PUBLIC_BASE_URL }}
         run: |
-          curl --fail --silent --show-error "http://$SERVER_HOST/t-calculator/" >/dev/null
+          BASE_URL="${SERVER_PUBLIC_BASE_URL:-http://$SERVER_HOST}"
+          curl --fail --silent --show-error "$BASE_URL/t-calculator/" >/dev/null
+          curl --fail --silent --show-error "$BASE_URL/api/health" >/dev/null

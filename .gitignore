@@ -1,4 +1,8 @@
 node_modules/
+__pycache__/
+*.py[cod]
+.venv/
+service/backend/.venv/
 .expo/
 dist/
 dist-check/
