@@ -1,9 +1,0 @@
-.git
-.github
-.qwen
-**/__pycache__
-**/*.pyc
-**/.venv
-web/node_modules
-web/dist
-*.log
