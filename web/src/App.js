@@ -538,7 +538,7 @@ function ValuationScreen({ isDesktop }) {
       <View style={{ ...styles.panel, paddingTop: 12 }}>
         <View style={{ flexDirection: "row", gap: 8, marginBottom: 12 }}>
           <View style={{ flex: 1 }}>
-            <Text style={{ fontSize: 14, color: "#666", marginBottom: 4 }}>股票代码</Text>
+            <Text style={{ fontSize: 14, color: "#666", marginBottom: 4 }}></Text>
             <TextInput
               style={{
                 height: 40,
@@ -831,7 +831,7 @@ function PriceLookupScreen({ isDesktop }) {
       <View style={{ ...styles.panel, paddingTop: 12 }}>
         <View style={{ flexDirection: "row", gap: 8, marginBottom: 12 }}>
           <View style={{ flex: 1 }}>
-            <Text style={{ fontSize: 14, color: "#666", marginBottom: 4 }}>股票代码</Text>
+            <Text style={{ fontSize: 14, color: "#666", marginBottom: 4 }}></Text>
             <TextInput
               style={{
                 height: 40,
