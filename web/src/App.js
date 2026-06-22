@@ -14,6 +14,7 @@ import {
 } from "react-native";
 
 const { calculateTrade, calculateTrailingContract } = require("./calculator");
+const { getStockPrice, getBalanceSheetAssets, getIncomeStatement, getValuationMethod, getFinancialData, getCompoundGrowth } = require("./eastmoneyClient");
 
 const palette = {
   ink: "#151515",
@@ -69,15 +70,7 @@ function formatHundredMillion(value) {
 }
 
 function getApiBaseUrl() {
-  if (Platform.OS === "web" && typeof window !== "undefined") {
-    const { protocol, hostname, port } = window.location;
-    const isLocalFrontend = hostname === "localhost" || hostname === "127.0.0.1";
-    if (isLocalFrontend && port !== "8000") {
-      return "http://127.0.0.1:8000";
-    }
-    return "";
-  }
-  return "http://127.0.0.1:8000";
+  return "";
 }
 
 function getTradeModeText(mode) {
@@ -493,16 +486,13 @@ function ValuationScreen({ isDesktop }) {
     setLoading(true);
     setError("");
 
-    const apiBase = getApiBaseUrl();
-    const encodedCode = encodeURIComponent(trimmedCode);
-
     const promises = [
-      fetch(`${apiBase}/api/v1/stocks/${encodedCode}/price`).then(r => r.json()).catch(() => ({ success: false })),
-      fetch(`${apiBase}/api/v1/stocks/${encodedCode}/balance-sheet/assets`).then(r => r.json()).catch(() => ({ success: false })),
-      fetch(`${apiBase}/api/v1/stocks/${encodedCode}/income-statement`).then(r => r.json()).catch(() => ({ success: false })),
-      fetch(`${apiBase}/api/v1/stocks/${encodedCode}/valuation-method`).then(r => r.json()).catch(() => ({ success: false })),
-      fetch(`${apiBase}/api/v1/stocks/${encodedCode}/financial-data`).then(r => r.json()).catch(() => ({ success: false })),
-      fetch(`${apiBase}/api/v1/stocks/${encodedCode}/compound-growth`).then(r => r.json()).catch(() => ({ success: false })),
+      getStockPrice(trimmedCode),
+      getBalanceSheetAssets(trimmedCode),
+      getIncomeStatement(trimmedCode),
+      getValuationMethod(trimmedCode),
+      getFinancialData(trimmedCode),
+      getCompoundGrowth(trimmedCode),
     ];
 
     const [pricePayload, balancePayload, incomePayload, valuationPayload, financialPayload, growthPayload] = await Promise.all(promises);
@@ -525,7 +515,7 @@ function ValuationScreen({ isDesktop }) {
     if (errors.length > 0 && errors.length < 6) {
       setError(`部分数据获取失败: ${errors.join("、")}`);
     } else if (errors.length === 6) {
-      setError("所有数据获取失败，请检查后端服务");
+      setError("所有数据获取失败，请检查网络连接");
     } else {
       setError("");
     }
@@ -796,18 +786,14 @@ function PriceLookupScreen({ isDesktop }) {
     setLoading(true);
     setError("");
     try {
-      const [priceResponse, assetsResponse] = await Promise.all([
-        fetch(`${getApiBaseUrl()}/api/v1/stocks/${encodeURIComponent(trimmedCode)}/price`),
-        fetch(`${getApiBaseUrl()}/api/v1/stocks/${encodeURIComponent(trimmedCode)}/balance-sheet/assets`),
-      ]);
       const [pricePayload, assetsPayload] = await Promise.all([
-        priceResponse.json(),
-        assetsResponse.json(),
+        getStockPrice(trimmedCode),
+        getBalanceSheetAssets(trimmedCode),
       ]);
-      if (!priceResponse.ok || !pricePayload.success) {
+      if (!pricePayload.success) {
         throw new Error(pricePayload.detail || "当前股价请求失败");
       }
-      if (!assetsResponse.ok || !assetsPayload.success) {
+      if (!assetsPayload.success) {
         throw new Error(assetsPayload.detail || "资产负债表请求失败");
       }
       setQuote(pricePayload.data);
@@ -815,7 +801,7 @@ function PriceLookupScreen({ isDesktop }) {
     } catch (err) {
       setQuote(null);
       setBalanceAssets(null);
-      setError(err?.message || "当前股价请求失败，请确认本地后端已启动");
+      setError(err?.message || "当前股价请求失败，请检查网络连接");
     } finally {
       setLoading(false);
     }
