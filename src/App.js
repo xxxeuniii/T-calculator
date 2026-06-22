@@ -432,7 +432,6 @@ function HistoryScreen({ history, clearHistory, onSelectHistory }) {
   return (
     <View style={styles.resultPanel}>
       <View style={styles.historyHeader}>
-        <Text style={styles.historyTitle}>历史记录</Text>
         <Pressable onPress={clearHistory} style={styles.clearButton}>
           <Text style={styles.clearText}>清空</Text>
         </Pressable>
@@ -481,7 +480,7 @@ function HistoryScreen({ history, clearHistory, onSelectHistory }) {
 const screenOptions = [
   { label: "股票", value: "trade" },
   { label: "合约", value: "contract" },
-  { label: "", value: "history" },
+  { label: "历史", value: "history" },
 ];
 
 function getScreenLabel(screen) {
