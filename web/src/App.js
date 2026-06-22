@@ -13,8 +13,10 @@ import {
   View,
 } from "react-native";
 
+import PriceLookupScreen from "./screens/PriceLookupScreen";
+
 const { calculateTrade, calculateTrailingContract } = require("./calculator");
-const { getStockPrice, getBalanceSheetAssets, getIncomeStatement, getValuationMethod, getFinancialData, getCompoundGrowth } = require("./eastmoneyClient");
+const { getStockPrice, getBalanceSheetAssets, getIncomeStatement, getValuationMethod, getFinancialData, getCompoundGrowth, getStockPrediction } = require("./eastmoneyClient");
 
 const palette = {
   ink: "#151515",
@@ -462,6 +464,7 @@ function ValuationScreen({ isDesktop }) {
   const [valuationMethod, setValuationMethod] = useState(null);
   const [financialData, setFinancialData] = useState(null);
   const [compoundGrowth, setCompoundGrowth] = useState(null);
+  const [prediction, setPrediction] = useState(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -480,6 +483,7 @@ function ValuationScreen({ isDesktop }) {
       setValuationMethod(null);
       setFinancialData(null);
       setCompoundGrowth(null);
+      setPrediction(null);
       return;
     }
 
@@ -493,9 +497,10 @@ function ValuationScreen({ isDesktop }) {
       getValuationMethod(trimmedCode),
       getFinancialData(trimmedCode),
       getCompoundGrowth(trimmedCode),
+      getStockPrediction(trimmedCode),
     ];
 
-    const [pricePayload, balancePayload, incomePayload, valuationPayload, financialPayload, growthPayload] = await Promise.all(promises);
+    const [pricePayload, balancePayload, incomePayload, valuationPayload, financialPayload, growthPayload, predictionPayload] = await Promise.all(promises);
 
     setQuote(pricePayload.success ? pricePayload.data : null);
     setBalanceAssets(balancePayload.success ? balancePayload.data : null);
@@ -503,6 +508,7 @@ function ValuationScreen({ isDesktop }) {
     setValuationMethod(valuationPayload.success ? valuationPayload.data : null);
     setFinancialData(financialPayload.success ? financialPayload.data : null);
     setCompoundGrowth(growthPayload.success ? growthPayload.data : null);
+    setPrediction(predictionPayload.success ? predictionPayload.data : null);
 
     const errors = [];
     if (!pricePayload.success) errors.push("股价");
@@ -511,10 +517,11 @@ function ValuationScreen({ isDesktop }) {
     if (!valuationPayload.success) errors.push("估值方法");
     if (!financialPayload.success) errors.push("财务数据");
     if (!growthPayload.success) errors.push("复合增速");
+    if (!predictionPayload.success) errors.push("预测股价");
 
-    if (errors.length > 0 && errors.length < 6) {
+    if (errors.length > 0 && errors.length < 7) {
       setError(`部分数据获取失败: ${errors.join("、")}`);
-    } else if (errors.length === 6) {
+    } else if (errors.length === 7) {
       setError("所有数据获取失败，请检查网络连接");
     } else {
       setError("");
@@ -522,6 +529,11 @@ function ValuationScreen({ isDesktop }) {
 
     setLoading(false);
   }
+
+  const historicalYears = (financialData?.historical_reports || [])
+    .map((item) => formatDate(item.report_date).slice(0, 4))
+    .filter((year) => year && year !== "--");
+  const historicalDataTitle = historicalYears.length > 0 ? `历史数据 (${historicalYears.join("-")})` : "历史数据";
 
   return (
     <View style={{ width: isDesktop ? "100%" : "100%", paddingHorizontal: isDesktop ? "8%" : 12 }}>
@@ -675,7 +687,7 @@ function ValuationScreen({ isDesktop }) {
             </View>
 
             <View>
-              <Text style={{ fontSize: 12, color: "#888", marginBottom: 8 }}>历史数据 (2025-2021)</Text>
+              <Text style={{ fontSize: 12, color: "#888", marginBottom: 8 }}>{historicalDataTitle}</Text>
               <View style={{ borderWidth: 1, borderColor: "#e6e6e6", borderRadius: 6, overflow: "hidden" }}>
                 <View style={{ flexDirection: "row", backgroundColor: "#f5f5f5", padding: 8 }}>
                   <Text style={{ flex: 2, fontSize: 12, fontWeight: "500", color: "#666" }}>报告日期</Text>
@@ -739,6 +751,91 @@ function ValuationScreen({ isDesktop }) {
             </View>
           </View>
 
+          <View style={{ marginTop: 12, padding: 12, backgroundColor: "#fff", borderRadius: 8, borderWidth: 1, borderColor: "#e6e6e6" }}>
+            <Text style={{ fontSize: 14, fontWeight: "600", color: "#333", marginBottom: 12 }}>
+              {prediction ? `预测${prediction.predicted_year}年股价` : "预测股价"}
+            </Text>
+
+            <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingVertical: 6 }}>
+              <Text style={{ fontSize: 13, color: "#666" }}>基准年({prediction?.base_year || '--'}年)营收</Text>
+              <Text style={{ fontSize: 13, color: "#333" }}>{prediction?.revenue_base != null ? `${prediction.revenue_base} 亿` : "--"}</Text>
+            </View>
+
+            <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingVertical: 6 }}>
+              <Text style={{ fontSize: 13, color: "#666" }}>营收复合增速</Text>
+              <Text style={{ fontSize: 14, fontWeight: "600", color: prediction?.revenue_cagr >= 0 ? "#e53935" : "#52c41a" }}>
+                {prediction?.revenue_cagr != null ? `${prediction.revenue_cagr >= 0 ? '+' : ''}${prediction.revenue_cagr}%` : "--"}
+              </Text>
+            </View>
+
+            <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingVertical: 6 }}>
+              <Text style={{ fontSize: 13, color: "#666" }}>预测{prediction?.predicted_year || '--'}年营收</Text>
+              <Text style={{ fontSize: 13, color: "#333" }}>{prediction?.predicted_revenue != null ? `${prediction.predicted_revenue} 亿` : "--"}</Text>
+            </View>
+
+            <View style={{ height: 1, backgroundColor: "#e6e6e6", marginTop: 8, marginBottom: 8 }} />
+
+            <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingVertical: 6 }}>
+              <Text style={{ fontSize: 13, color: "#666" }}>基准年({prediction?.base_year || '--'}年)净利润</Text>
+              <Text style={{ fontSize: 13, color: "#333" }}>{prediction?.net_profit_base != null ? `${prediction.net_profit_base} 亿` : "--"}</Text>
+            </View>
+
+            <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingVertical: 6 }}>
+              <Text style={{ fontSize: 13, color: "#666" }}>净利复合增速</Text>
+              <Text style={{ fontSize: 14, fontWeight: "600", color: prediction?.profit_cagr >= 0 ? "#e53935" : "#52c41a" }}>
+                {prediction?.profit_cagr != null ? `${prediction.profit_cagr >= 0 ? '+' : ''}${prediction.profit_cagr}%` : "--"}
+              </Text>
+            </View>
+
+            <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingVertical: 6 }}>
+              <Text style={{ fontSize: 13, color: "#666" }}>预测{prediction?.predicted_year || '--'}年净利润</Text>
+              <Text style={{ fontSize: 13, color: "#333" }}>{prediction?.predicted_net_profit != null ? `${prediction.predicted_net_profit} 亿` : "--"}</Text>
+            </View>
+
+            <View style={{ height: 1, backgroundColor: "#e6e6e6", marginTop: 8, marginBottom: 8 }} />
+
+            <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingVertical: 6 }}>
+              <Text style={{ fontSize: 13, color: "#666" }}>市销率 PS</Text>
+              <Text style={{ fontSize: 13, color: "#333" }}>{prediction?.ps_ratio != null ? prediction.ps_ratio : "--"}</Text>
+            </View>
+
+            <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingVertical: 6 }}>
+              <Text style={{ fontSize: 13, color: "#666" }}>市盈率 PE</Text>
+              <Text style={{ fontSize: 13, color: "#333" }}>{prediction?.pe_ratio != null ? prediction.pe_ratio : "--"}</Text>
+            </View>
+
+            <View style={{ height: 1, backgroundColor: "#e6e6e6", marginTop: 8, marginBottom: 8 }} />
+
+            <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingVertical: 6 }}>
+              <Text style={{ fontSize: 13, color: "#666" }}>PS法预测{prediction?.predicted_year || '--'}年股价</Text>
+              <Text style={{ fontSize: 16, fontWeight: "700", color: "#e53935" }}>
+                {prediction?.predicted_price_ps != null ? `¥${prediction.predicted_price_ps}` : "--"}
+              </Text>
+            </View>
+
+            <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingVertical: 6 }}>
+              <Text style={{ fontSize: 13, color: "#666" }}>PE法预测{prediction?.predicted_year || '--'}年股价</Text>
+              <Text style={{ fontSize: 16, fontWeight: "700", color: "#e53935" }}>
+                {prediction?.predicted_price_pe != null ? `¥${prediction.predicted_price_pe}` : "--"}
+              </Text>
+            </View>
+
+            <View style={{ height: 1, backgroundColor: "#e6e6e6", marginTop: 8, marginBottom: 8 }} />
+
+            <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingVertical: 6 }}>
+              <Text style={{ fontSize: 13, color: "#666" }}>当前股价</Text>
+              <Text style={{ fontSize: 13, color: "#333" }}>{prediction?.current_price != null ? `¥${prediction.current_price}` : "--"}</Text>
+            </View>
+
+            <View style={{ marginTop: 8, padding: 8, backgroundColor: "#f5f5f5", borderRadius: 6 }}>
+              <Text style={{ fontSize: 12, color: "#666", lineHeight: 18 }}>
+                公式说明：{"\n"}
+                PS法：((总市值/基准年营收)×预测年营收)/总股本{"\n"}
+                PE法：(预测年净利润×市盈率)/总股本
+              </Text>
+            </View>
+          </View>
+
           <Text style={styles.formula}>
             数据来源：东方财富接口，经后端实时拉取，不写入数据库
 {"\n"}
@@ -758,6 +855,7 @@ function ValuationScreen({ isDesktop }) {
   );
 }
 
+/*
 function PriceLookupScreen({ isDesktop }) {
   const [stockCode, setStockCode] = useState("");
   const [quote, setQuote] = useState(null);
@@ -904,6 +1002,7 @@ function PriceLookupScreen({ isDesktop }) {
     </View>
   );
 }
+*/
 
 function HistoryScreen({ history, clearHistory, onSelectHistory, isDesktop }) {
   return (
@@ -957,7 +1056,7 @@ function HistoryScreen({ history, clearHistory, onSelectHistory, isDesktop }) {
 const screenOptions = [
   { label: "股票", value: "trade" },
   { label: "合约", value: "contract" },
-  { label: "估值", value: "valuation" },
+  // { label: "估值", value: "valuation" },
   { label: "历史", value: "history" },
 ];
 
@@ -968,7 +1067,7 @@ function getScreenLabel(screen) {
 export default function App() {
   const { width: screenWidth } = useWindowDimensions();
   const isDesktop = Platform.OS === "web" && screenWidth >= 768;
-  const [screen, setScreen] = useState("valuation");
+  const [screen, setScreen] = useState("trade");
   const [menuOpen, setMenuOpen] = useState(false);
   const [history, setHistory] = useState([]);
   const [tradePrefill, setTradePrefill] = useState(null);
@@ -1048,7 +1147,7 @@ export default function App() {
           }}>
             {screen === "trade" && <TradeCalculator addHistory={addHistory} prefill={tradePrefill} isDesktop={isDesktop} />}
             {screen === "contract" && <ContractCalculator addHistory={addHistory} prefill={contractPrefill} isDesktop={isDesktop} />}
-            {screen === "valuation" && <ValuationScreen isDesktop={isDesktop} />}
+            {screen === "valuation" && <PriceLookupScreen isDesktop={isDesktop} />}
             {screen === "history" && <HistoryScreen history={history} clearHistory={() => setHistory([])} onSelectHistory={selectHistory} isDesktop={isDesktop} />}
           </View>
         </ScrollView>
@@ -1477,3 +1576,4 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
 });
+

@@ -513,6 +513,7 @@ class EastmoneyClient:
     def _json(response: requests.Response) -> dict[str, Any]:
         try:
             response.raise_for_status()
+            response.encoding = "utf-8"
             payload = response.json()
         except Exception as exc:
             raise EastmoneyError(f"eastmoney response is not valid JSON: {exc}") from exc
