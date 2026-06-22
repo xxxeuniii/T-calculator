@@ -481,7 +481,7 @@ function HistoryScreen({ history, clearHistory, onSelectHistory }) {
 const screenOptions = [
   { label: "股票", value: "trade" },
   { label: "合约", value: "contract" },
-  { label: "历史", value: "history" },
+  { label: "", value: "history" },
 ];
 
 function getScreenLabel(screen) {
