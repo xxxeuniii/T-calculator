@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import {
-  Dimensions,
+  useWindowDimensions,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -154,7 +154,7 @@ function Segment({ items, value, onChange }) {
   );
 }
 
-function TradeCalculator({ addHistory, prefill }) {
+function TradeCalculator({ addHistory, prefill, isDesktop }) {
   const [mode, setMode] = useState("positive");
   const [form, setForm] = useState({
     costPrice: "",
@@ -241,8 +241,8 @@ function TradeCalculator({ addHistory, prefill }) {
   }
 
   return (
-    <View style={styles.panelContainer}>
-      <View style={styles.panelColumn}>
+    <>
+      <View style={{ width: isDesktop ? "48%" : "100%", maxWidth: isDesktop ? 420 : "100%" }}>
         <View style={styles.panel}>
           <View style={styles.topRow}>
             <Segment
@@ -253,64 +253,64 @@ function TradeCalculator({ addHistory, prefill }) {
                 { label: "反T", value: "reverse" },
               ]}
             />
-          <Pressable onPress={clearForm} style={styles.clearButton}>
-            <Text style={styles.clearText}>清空</Text>
+            <Pressable onPress={clearForm} style={styles.clearButton}>
+              <Text style={styles.clearText}>清空</Text>
+            </Pressable>
+          </View>
+
+          <View style={styles.fieldGrid}>
+            <Field label="持仓成本价" value={form.costPrice} onChangeText={handleCostPriceChange} />
+            <StepField label="持仓股数" value={form.totalShares} onChangeText={(value) => updateField("totalShares", value)} onStepDown={() => stepTotalShares(-100)} onStepUp={() => stepTotalShares(100)} />
+            <StepField label="做T股数" value={form.tradeShares} onChangeText={(value) => updateField("tradeShares", value)} onStepDown={() => stepTradeShares(-100)} onStepUp={() => stepTradeShares(100)} />
+            {mode === "reverse" ? (
+              <>
+                <StepField label={modeText.buyLabel} value={form.buyPrice} onChangeText={(value) => updateField("buyPrice", value)} onStepDown={() => stepBuyPrice(-0.01)} onStepUp={() => stepBuyPrice(0.01)} />
+                <StepField label={modeText.sellLabel} value={form.sellPrice} onChangeText={(value) => updateField("sellPrice", value)} onStepDown={() => stepSellPrice(-0.01)} onStepUp={() => stepSellPrice(0.01)} />
+              </>
+            ) : (
+              <>
+                <StepField label={modeText.sellLabel} value={form.sellPrice} onChangeText={(value) => updateField("sellPrice", value)} onStepDown={() => stepSellPrice(-0.01)} onStepUp={() => stepSellPrice(0.01)} />
+                <StepField label={modeText.buyLabel} value={form.buyPrice} onChangeText={(value) => updateField("buyPrice", value)} onStepDown={() => stepBuyPrice(-0.01)} onStepUp={() => stepBuyPrice(0.01)} />
+              </>
+            )}
+          </View>
+
+          <View style={styles.feeRow}>
+            <Text style={styles.feeChip}>{modeText.actionText}</Text>
+            <Text style={styles.feeChip}>佣金：万三，买卖双向，单笔最低 5 元</Text>
+            <Text style={styles.feeChip}>印花税：卖出金额的 0.05%</Text>
+          </View>
+        </View>
+      </View>
+
+      <View style={{ width: isDesktop ? "48%" : "100%", maxWidth: isDesktop ? 420 : "100%" }}>
+        <View style={styles.resultPanel}>
+          <View style={[styles.primaryResult, result && (result.isGain ? styles.primaryGain : styles.primaryLoss)]}>
+            <Text style={styles.primaryLabel}>{modeText.netLabel}</Text>
+            <Text style={styles.primaryValue}>{formatCurrency(result?.netProfit)}</Text>
+          </View>
+
+          <View style={styles.metrics}>
+            <Metric label="价差收益" value={formatCurrency(result?.spreadProfit)} />
+            <Metric label="做T后新成本价" value={result ? formatPrice(result.newCostPrice) : "--"} />
+            <Metric label="成本降低" value={result ? formatPrice(result.costReduction) : "--"} />
+            <Metric label="总佣金" value={formatCurrency(result?.totalCommission)} />
+            <Metric label="卖出佣金" value={formatCurrency(result?.sellCommission)} />
+            <Metric label="买入佣金" value={formatCurrency(result?.buyCommission)} />
+            <Metric label="印花税" value={formatCurrency(result?.stampTax)} />
+          </View>
+
+          <Text style={styles.formula}>{formulaText}</Text>
+          <Pressable onPress={saveTrade} style={[styles.confirmButton, !result && styles.disabledButton]}>
+            <Text style={styles.confirmText}>确认并存入历史</Text>
           </Pressable>
         </View>
-
-        <View style={styles.fieldGrid}>
-          <Field label="持仓成本价" value={form.costPrice} onChangeText={handleCostPriceChange} />
-          <StepField label="持仓股数" value={form.totalShares} onChangeText={(value) => updateField("totalShares", value)} onStepDown={() => stepTotalShares(-100)} onStepUp={() => stepTotalShares(100)} />
-          <StepField label="做T股数" value={form.tradeShares} onChangeText={(value) => updateField("tradeShares", value)} onStepDown={() => stepTradeShares(-100)} onStepUp={() => stepTradeShares(100)} />
-          {mode === "reverse" ? (
-            <>
-              <StepField label={modeText.buyLabel} value={form.buyPrice} onChangeText={(value) => updateField("buyPrice", value)} onStepDown={() => stepBuyPrice(-0.01)} onStepUp={() => stepBuyPrice(0.01)} />
-              <StepField label={modeText.sellLabel} value={form.sellPrice} onChangeText={(value) => updateField("sellPrice", value)} onStepDown={() => stepSellPrice(-0.01)} onStepUp={() => stepSellPrice(0.01)} />
-            </>
-          ) : (
-            <>
-              <StepField label={modeText.sellLabel} value={form.sellPrice} onChangeText={(value) => updateField("sellPrice", value)} onStepDown={() => stepSellPrice(-0.01)} onStepUp={() => stepSellPrice(0.01)} />
-              <StepField label={modeText.buyLabel} value={form.buyPrice} onChangeText={(value) => updateField("buyPrice", value)} onStepDown={() => stepBuyPrice(-0.01)} onStepUp={() => stepBuyPrice(0.01)} />
-            </>
-          )}
-        </View>
-
-        <View style={styles.feeRow}>
-          <Text style={styles.feeChip}>{modeText.actionText}</Text>
-          <Text style={styles.feeChip}>佣金：万三，买卖双向，单笔最低 5 元</Text>
-          <Text style={styles.feeChip}>印花税：卖出金额的 0.05%</Text>
-        </View>
       </View>
-      </View>
-
-      <View style={styles.panelColumn}>
-      <View style={styles.resultPanel}>
-        <View style={[styles.primaryResult, result && (result.isGain ? styles.primaryGain : styles.primaryLoss)]}>
-          <Text style={styles.primaryLabel}>{modeText.netLabel}</Text>
-          <Text style={styles.primaryValue}>{formatCurrency(result?.netProfit)}</Text>
-        </View>
-
-        <View style={styles.metrics}>
-          <Metric label="价差收益" value={formatCurrency(result?.spreadProfit)} />
-          <Metric label="做T后新成本价" value={result ? formatPrice(result.newCostPrice) : "--"} />
-          <Metric label="成本降低" value={result ? formatPrice(result.costReduction) : "--"} />
-          <Metric label="总佣金" value={formatCurrency(result?.totalCommission)} />
-          <Metric label="卖出佣金" value={formatCurrency(result?.sellCommission)} />
-          <Metric label="买入佣金" value={formatCurrency(result?.buyCommission)} />
-          <Metric label="印花税" value={formatCurrency(result?.stampTax)} />
-        </View>
-
-        <Text style={styles.formula}>{formulaText}</Text>
-        <Pressable onPress={saveTrade} style={[styles.confirmButton, !result && styles.disabledButton]}>
-          <Text style={styles.confirmText}>确认并存入历史</Text>
-        </Pressable>
-      </View>
-      </View>
-    </View>
+    </>
   );
 }
 
-function ContractCalculator({ addHistory, prefill }) {
+function ContractCalculator({ addHistory, prefill, isDesktop }) {
   const [side, setSide] = useState("long");
   const [form, setForm] = useState({
     entryPrice: "",
@@ -366,8 +366,8 @@ function ContractCalculator({ addHistory, prefill }) {
   }
 
   return (
-    <View style={styles.panelContainer}>
-      <View style={styles.panelColumn}>
+    <>
+      <View style={{ width: isDesktop ? "48%" : "100%", maxWidth: isDesktop ? 420 : "100%" }}>
         <View style={styles.panel}>
           <View style={styles.topRow}>
             <Segment
@@ -410,36 +410,36 @@ function ContractCalculator({ addHistory, prefill }) {
         </View>
       </View>
 
-      <View style={styles.panelColumn}>
-      <View style={styles.resultPanel}>
-        <View style={styles.primaryResult}>
-          <Text style={styles.primaryLabel}>预计止盈价</Text>
-          <Text style={styles.primaryValue}>{result ? formatUsdt(result.expectedPrice) : "--"}</Text>
-        </View>
+      <View style={{ width: isDesktop ? "48%" : "100%", maxWidth: isDesktop ? 420 : "100%" }}>
+        <View style={styles.resultPanel}>
+          <View style={styles.primaryResult}>
+            <Text style={styles.primaryLabel}>预计止盈价</Text>
+            <Text style={styles.primaryValue}>{result ? formatUsdt(result.expectedPrice) : "--"}</Text>
+          </View>
 
-        <View style={styles.metrics}>
-          <ProfitMetric value={result?.entryPrice && result?.quantity ? result.estimatedProfit : undefined} />
-          <Metric label="方向" value={sideText} />
-          <Metric label="激活价格" value={result ? formatUsdt(result.activationPrice) : "--"} />
-          <Metric label="成本价" value={result?.entryPrice ? formatUsdt(result.entryPrice) : "--"} />
-          <Metric label="回调率" value={result ? `${result.callbackRate}%` : "--"} />
-          <Metric label="回调价差" value={result ? formatUsdt(result.callbackAmount) : "--"} />
-          <Metric label="数量" value={form.quantity ? `${form.quantity} USDT` : "--"} />
-        </View>
+          <View style={styles.metrics}>
+            <ProfitMetric value={result?.entryPrice && result?.quantity ? result.estimatedProfit : undefined} />
+            <Metric label="方向" value={sideText} />
+            <Metric label="激活价格" value={result ? formatUsdt(result.activationPrice) : "--"} />
+            <Metric label="成本价" value={result?.entryPrice ? formatUsdt(result.entryPrice) : "--"} />
+            <Metric label="回调率" value={result ? `${result.callbackRate}%` : "--"} />
+            <Metric label="回调价差" value={result ? formatUsdt(result.callbackAmount) : "--"} />
+            <Metric label="数量" value={form.quantity ? `${form.quantity} USDT` : "--"} />
+          </View>
 
-        <Text style={styles.formula}>{description}</Text>
-        <Pressable onPress={saveContract} style={[styles.confirmButton, !result && styles.disabledButton]}>
-          <Text style={styles.confirmText}>确认并存入历史</Text>
-        </Pressable>
+          <Text style={styles.formula}>{description}</Text>
+          <Pressable onPress={saveContract} style={[styles.confirmButton, !result && styles.disabledButton]}>
+            <Text style={styles.confirmText}>确认并存入历史</Text>
+          </Pressable>
+        </View>
       </View>
-      </View>
-    </View>
+    </>
   );
 }
 
-function HistoryScreen({ history, clearHistory, onSelectHistory }) {
+function HistoryScreen({ history, clearHistory, onSelectHistory, isDesktop }) {
   return (
-    <View style={styles.resultPanel}>
+    <View style={{ ...styles.resultPanel, paddingHorizontal: isDesktop ? "8%" : 0 }}>
       <View style={styles.historyHeader}>
         <Pressable onPress={clearHistory} style={styles.clearButton}>
           <Text style={styles.clearText}>清空</Text>
@@ -449,38 +449,38 @@ function HistoryScreen({ history, clearHistory, onSelectHistory }) {
       {history.length === 0 ? (
         <Text style={styles.emptyText}>还没有记录。做T或合约页点“确认并存入历史”后会出现在这里。</Text>
       ) : (
-        history.map((item) => (
-          <Pressable
-            key={item.id}
-            onPress={() => onSelectHistory(item)}
-            style={[styles.historyItem, item.isProfit && styles.historyProfitItem]}
-          >
-            <View style={styles.historyItemTop}>
-              <Text style={styles.historyType}>{item.type}</Text>
-              <Text style={styles.historyTime}>{item.time}</Text>
-            </View>
-            <View style={styles.historyDetail}>
-              <View style={styles.historyDetailRow}>
-                <Text style={styles.historyDetailLabel}>方向</Text>
-                <Text style={styles.historyDetailValue}>{item.title}</Text>
+        <View style={{ flexDirection: isDesktop ? "row" : "column", flexWrap: "wrap", gap: isDesktop ? 24 : 0 }}>
+          {history.map((item) => (
+            <Pressable
+              key={item.id}
+              onPress={() => onSelectHistory(item)}
+              style={[{ width: isDesktop ? "48%" : "100%", maxWidth: isDesktop ? 420 : "100%" }, styles.historyItem, item.isProfit && styles.historyProfitItem]}
+            >
+              <View style={styles.historyItemTop}>
+                <Text style={styles.historyType}>{item.type}</Text>
+                <Text style={styles.historyTime}>{item.time}</Text>
               </View>
-              <View style={styles.historyDetailRow}>
-                <Text style={styles.historyDetailLabel}>{item.summary.split('：')[0]}</Text>
-                <Text style={styles.historySummaryValue}>{item.summary.split('：')[1]}</Text>
+              <View style={styles.historyDetail}>
+                <View style={styles.historyDetailRow}>
+                  <Text style={styles.historyDetailLabel}>方向</Text>
+                  <Text style={styles.historyDetailValue}>{item.title}</Text>
+                </View>
+                <View style={styles.historyDetailRow}>
+                  <Text style={styles.historyDetailLabel}>{item.summary.split('：')[0]}</Text>
+                  <Text style={styles.historySummaryValue}>{item.summary.split('：')[1]}</Text>
+                </View>
+                {Array.isArray(item.detail) && (
+                  item.detail.map((detailItem, index) => (
+                    <View key={index} style={styles.historyDetailRow}>
+                      <Text style={styles.historyDetailLabel}>{detailItem.label}</Text>
+                      <Text style={styles.historyDetailValue}>{detailItem.value}</Text>
+                    </View>
+                  ))
+                )}
               </View>
-              {Array.isArray(item.detail) ? (
-                item.detail.map((item, index) => (
-                  <View key={index} style={styles.historyDetailRow}>
-                    <Text style={styles.historyDetailLabel}>{item.label}</Text>
-                    <Text style={styles.historyDetailValue}>{item.value}</Text>
-                  </View>
-                ))
-              ) : (
-                <Text style={styles.historyDetailLabel}>{item.detail}</Text>
-              )}
-            </View>
-          </Pressable>
-        ))
+            </Pressable>
+          ))}
+        </View>
       )}
     </View>
   );
@@ -497,6 +497,8 @@ function getScreenLabel(screen) {
 }
 
 export default function App() {
+  const { width: screenWidth } = useWindowDimensions();
+  const isDesktop = Platform.OS === "web" && screenWidth >= 768;
   const [screen, setScreen] = useState("trade");
   const [menuOpen, setMenuOpen] = useState(false);
   const [history, setHistory] = useState([
@@ -626,19 +628,25 @@ export default function App() {
             )}
           </View>
 
-          <View style={styles.mainContainer}>
-            {screen === "trade" && <TradeCalculator addHistory={addHistory} prefill={tradePrefill} />}
-            {screen === "contract" && <ContractCalculator addHistory={addHistory} prefill={contractPrefill} />}
-            {screen === "history" && <HistoryScreen history={history} clearHistory={() => setHistory([])} onSelectHistory={selectHistory} />}
+          <View style={{
+            flexDirection: isDesktop ? "row" : "column",
+            gap: isDesktop ? 24 : 0,
+            paddingHorizontal: isDesktop ? "4%" : 0,
+            paddingTop: isDesktop ? 24 : 0,
+            justifyContent: isDesktop ? "center" : "flex-start",
+            maxWidth: isDesktop ? 900 : "100%",
+            marginLeft: isDesktop ? "auto" : 0,
+            marginRight: isDesktop ? "auto" : 0,
+          }}>
+            {screen === "trade" && <TradeCalculator addHistory={addHistory} prefill={tradePrefill} isDesktop={isDesktop} />}
+            {screen === "contract" && <ContractCalculator addHistory={addHistory} prefill={contractPrefill} isDesktop={isDesktop} />}
+            {screen === "history" && <HistoryScreen history={history} clearHistory={() => setHistory([])} onSelectHistory={selectHistory} isDesktop={isDesktop} />}
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
-
-const { width: screenWidth } = Dimensions.get("window");
-const isDesktop = screenWidth >= 768;
 
 const styles = StyleSheet.create({
   safeArea: {
@@ -649,27 +657,25 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    padding: isDesktop ? 24 : 0,
-    paddingBottom: isDesktop ? 48 : 32,
+    padding: 0,
+    paddingBottom: 32,
     gap: 0,
     alignItems: "stretch",
   },
   mainContainer: {
-    flexDirection: isDesktop ? "row" : "column",
-    flexWrap: "wrap",
-    gap: isDesktop ? 20 : 0,
-    paddingHorizontal: isDesktop ? "10%" : 0,
+    flexDirection: "column",
+    gap: 0,
+    paddingHorizontal: 0,
+    paddingTop: 0,
   },
   panelColumn: {
-    flex: isDesktop ? 1 : 0,
-    minWidth: isDesktop ? 300 : "100%",
-    maxWidth: isDesktop ? 400 : "100%",
+    width: "100%",
   },
   panelContainer: {
-    flexDirection: isDesktop ? "row" : "column",
+    flexDirection: "column",
     flexWrap: "wrap",
-    gap: isDesktop ? 20 : 0,
-    paddingHorizontal: isDesktop ? "10%" : 0,
+    gap: 0,
+    paddingHorizontal: 0,
   },
   appHeader: {
     minHeight: 38,
