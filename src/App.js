@@ -439,7 +439,7 @@ function ContractCalculator({ addHistory, prefill, isDesktop }) {
 
 function HistoryScreen({ history, clearHistory, onSelectHistory, isDesktop }) {
   return (
-    <View style={{ ...styles.resultPanel, paddingHorizontal: isDesktop ? "8%" : 0 }}>
+    <View style={{ ...styles.resultPanel, paddingHorizontal: isDesktop ? "8%" : 12 }}>
       <View style={styles.historyHeader}>
         <Pressable onPress={clearHistory} style={styles.clearButton}>
           <Text style={styles.clearText}>清空</Text>
