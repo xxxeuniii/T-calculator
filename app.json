@@ -1,0 +1,25 @@
+{
+  "expo": {
+    "name": "做T计算器",
+    "slug": "t-calculator",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.tcalculator.app"
+    },
+    "android": {
+      "package": "com.tcalculator.app",
+      "adaptiveIcon": {
+        "backgroundColor": "#0f7b55"
+      }
+    },
+    "web": {
+      "bundler": "metro"
+    }
+  }
+}
