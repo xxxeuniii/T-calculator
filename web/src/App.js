@@ -514,7 +514,17 @@ export default function App() {
   const isDesktop = Platform.OS === "web" && screenWidth >= 768;
   const [screen, setScreen] = useState("trade");
   const [menuOpen, setMenuOpen] = useState(false);
-  const [history, setHistory] = useState([]);
+  
+  const loadHistory = () => {
+    try {
+      const saved = localStorage.getItem("tradeHistory");
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  };
+  
+  const [history, setHistory] = useState(loadHistory);
   const [tradePrefill, setTradePrefill] = useState(null);
   const [contractPrefill, setContractPrefill] = useState(null);
 
@@ -526,19 +536,28 @@ export default function App() {
       minute: "2-digit",
     });
 
-    setHistory((current) => [
-      {
-        ...record,
-        id: `${Date.now()}-${current.length}`,
-        time,
-      },
-      ...current,
-    ]);
+    setHistory((current) => {
+      const newHistory = [
+        {
+          ...record,
+          id: `${Date.now()}-${current.length}`,
+          time,
+        },
+        ...current,
+      ];
+      localStorage.setItem("tradeHistory", JSON.stringify(newHistory));
+      return newHistory;
+    });
   }
 
   function chooseScreen(value) {
     setScreen(value);
     setMenuOpen(false);
+  }
+
+  function clearHistory() {
+    setHistory([]);
+    localStorage.removeItem("tradeHistory");
   }
 
   function selectHistory(item) {
@@ -592,7 +611,7 @@ export default function App() {
           }}>
             {screen === "trade" && <TradeCalculator addHistory={addHistory} prefill={tradePrefill} isDesktop={isDesktop} />}
             {screen === "contract" && <ContractCalculator addHistory={addHistory} prefill={contractPrefill} isDesktop={isDesktop} />}
-            {screen === "history" && <HistoryScreen history={history} clearHistory={() => setHistory([])} onSelectHistory={selectHistory} isDesktop={isDesktop} />}
+            {screen === "history" && <HistoryScreen history={history} clearHistory={clearHistory} onSelectHistory={selectHistory} isDesktop={isDesktop} />}
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
