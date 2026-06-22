@@ -462,75 +462,75 @@ function ContractCalculator({ addHistory, prefill, isDesktop }) {
 }
 
 function ValuationScreen({ isDesktop }) {
-  const [stockCode, setStockCode] = useState("");
-  const [stockInfo, setStockInfo] = useState(null);
+  const [stockCode, setStockCode] = useState("000681");
+  const [quote, setQuote] = useState(null);
+  const [balanceAssets, setBalanceAssets] = useState(null);
+  const [incomeStatement, setIncomeStatement] = useState(null);
+  const [valuationMethod, setValuationMethod] = useState(null);
+  const [financialData, setFinancialData] = useState(null);
+  const [compoundGrowth, setCompoundGrowth] = useState(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const hotStocks = [
-    { code: "600519", name: "贵州茅台" },
-    { code: "000858", name: "五粮液" },
-    { code: "601318", name: "中国平安" },
-    { code: "000001", name: "平安银行" },
-    { code: "600036", name: "招商银行" },
-    { code: "000651", name: "格力电器" },
-    { code: "002594", name: "比亚迪" },
-    { code: "601899", name: "紫金矿业" },
-  ];
+  useEffect(() => {
+    searchStock("000681");
+  }, []);
 
-  const result = useMemo(() => {
-    if (!stockInfo) return null;
-
-    const price = stockInfo.basic?.close_price;
-    const eps = stockInfo.last_year?.eps;
-    const bookValue = stockInfo.latest_report?.book_value_per_share || stockInfo.last_year?.book_value_per_share;
-    const totalMarketValue = stockInfo.basic?.total_market_value;
-    const totalShare = stockInfo.basic?.total_share;
-
-    return {
-      pe: price > 0 && eps > 0 ? (price / eps).toFixed(2) : "--",
-      pb: price > 0 && bookValue > 0 ? (price / bookValue).toFixed(2) : "--",
-      marketCap: totalMarketValue > 0 ? (totalMarketValue / 100000000).toFixed(2) : "--",
-      totalShare: totalShare > 0 ? (totalShare / 100000000).toFixed(2) : "--",
-    };
-  }, [stockInfo]);
-
-  const latestAssets = stockInfo?.latest_report?.assets || {};
-  const annualReports = stockInfo?.historical_reports || [];
-  const valuationMethod = stockInfo?.valuation_method || {};
-  const compositeGrowth = stockInfo?.composite_growth || {};
-  const valuationInputs = stockInfo?.valuation_inputs || {};
 
   async function searchStock(code) {
     const trimmedCode = code.trim();
     if (!trimmedCode) {
       setError("");
-      setStockInfo(null);
+      setQuote(null);
+      setBalanceAssets(null);
+      setIncomeStatement(null);
+      setValuationMethod(null);
+      setFinancialData(null);
+      setCompoundGrowth(null);
       return;
     }
 
     setLoading(true);
     setError("");
 
-    try {
-      const response = await fetch(`${getApiBaseUrl()}/api/v1/stocks/${encodeURIComponent(trimmedCode)}/valuation-source`);
-      const payload = await response.json();
-      if (!response.ok || !payload.success) {
-        throw new Error(payload.detail || "后端数据请求失败");
-      }
-      setStockInfo(payload.data);
-      setError("");
-    } catch (err) {
-      setStockInfo(null);
-      setError(err?.message || "后端数据请求失败，请确认后端服务已启动");
-    } finally {
-      setLoading(false);
-    }
-  }
+    const apiBase = getApiBaseUrl();
+    const encodedCode = encodeURIComponent(trimmedCode);
 
-  function selectHotStock(code) {
-    setStockCode(code);
-    searchStock(code);
+    const promises = [
+      fetch(`${apiBase}/api/v1/stocks/${encodedCode}/price`).then(r => r.json()).catch(() => ({ success: false })),
+      fetch(`${apiBase}/api/v1/stocks/${encodedCode}/balance-sheet/assets`).then(r => r.json()).catch(() => ({ success: false })),
+      fetch(`${apiBase}/api/v1/stocks/${encodedCode}/income-statement`).then(r => r.json()).catch(() => ({ success: false })),
+      fetch(`${apiBase}/api/v1/stocks/${encodedCode}/valuation-method`).then(r => r.json()).catch(() => ({ success: false })),
+      fetch(`${apiBase}/api/v1/stocks/${encodedCode}/financial-data`).then(r => r.json()).catch(() => ({ success: false })),
+      fetch(`${apiBase}/api/v1/stocks/${encodedCode}/compound-growth`).then(r => r.json()).catch(() => ({ success: false })),
+    ];
+
+    const [pricePayload, balancePayload, incomePayload, valuationPayload, financialPayload, growthPayload] = await Promise.all(promises);
+
+    setQuote(pricePayload.success ? pricePayload.data : null);
+    setBalanceAssets(balancePayload.success ? balancePayload.data : null);
+    setIncomeStatement(incomePayload.success ? incomePayload.data : null);
+    setValuationMethod(valuationPayload.success ? valuationPayload.data : null);
+    setFinancialData(financialPayload.success ? financialPayload.data : null);
+    setCompoundGrowth(growthPayload.success ? growthPayload.data : null);
+
+    const errors = [];
+    if (!pricePayload.success) errors.push("股价");
+    if (!balancePayload.success) errors.push("资产负债表");
+    if (!incomePayload.success) errors.push("利润表");
+    if (!valuationPayload.success) errors.push("估值方法");
+    if (!financialPayload.success) errors.push("财务数据");
+    if (!growthPayload.success) errors.push("复合增速");
+
+    if (errors.length > 0 && errors.length < 6) {
+      setError(`部分数据获取失败: ${errors.join("、")}`);
+    } else if (errors.length === 6) {
+      setError("所有数据获取失败，请检查后端服务");
+    } else {
+      setError("");
+    }
+
+    setLoading(false);
   }
 
   return (
@@ -578,100 +578,183 @@ function ValuationScreen({ isDesktop }) {
         {error ? (
           <Text style={{ color: "#f44336", fontSize: 14, marginBottom: 12 }}>{error}</Text>
         ) : null}
-
-        <Text style={{ fontSize: 14, color: "#666", marginBottom: 8 }}>热门股票</Text>
-        <View style={{ flexWrap: "wrap", flexDirection: "row", gap: 8 }}>
-          {hotStocks.map((stock) => (
-            <Pressable
-              key={stock.code}
-              style={{
-                paddingHorizontal: 12,
-                paddingVertical: 6,
-                backgroundColor: "#f5f5f5",
-                borderRadius: 999,
-              }}
-              onPress={() => selectHotStock(stock.code)}
-              disabled={loading}
-            >
-              <Text style={{ fontSize: 13, color: "#333" }}>
-                {stock.code} ({stock.name})
-              </Text>
-            </Pressable>
-          ))}
-        </View>
       </View>
 
-      {stockInfo ? (
+      {true ? (
         <View style={{ ...styles.resultPanel, marginTop: 12 }}>
           <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
             <View>
               <Text style={{ fontSize: 18, fontWeight: "600", color: "#333" }}>
-                {stockInfo.basic?.stock_name || stockInfo.stock_code} ({stockInfo.stock_code})
+                {quote?.stock_name || quote?.stock_code || "--"} ({quote?.stock_code || "--"})
               </Text>
               <Text style={{ fontSize: 14, color: "#666", marginTop: 2 }}>
-                当前股价：¥{formatNumber(stockInfo.basic?.close_price)}
+                当前股价：¥{quote?.current_price !== null && quote?.current_price !== undefined ? formatNumber(quote.current_price) : "--"}
               </Text>
               <Text style={{ fontSize: 12, color: "#888", marginTop: 2 }}>
-                最新财报：{formatDate(stockInfo.latest_report?.report_date)} {stockInfo.latest_report?.report_type || ""}
+                最新财报：{formatDate(incomeStatement?.report_date || "")} {incomeStatement?.report_type || "--"}
               </Text>
             </View>
           </View>
 
           <View style={styles.primaryResult}>
             <Text style={styles.primaryLabel}>估值方法</Text>
-            <Text style={styles.primaryValue}>{valuationMethod.method || "--"}</Text>
+            <Text style={styles.primaryValue}>{valuationMethod?.valuation_method || "--"}</Text>
             <Text style={{ color: "rgba(248, 255, 245, 0.78)", marginTop: 6, fontWeight: "700" }}>
-              {valuationMethod.method_name || "--"}
+              {valuationMethod?.valuation_method_name || "--"}
             </Text>
           </View>
 
           <View style={styles.metrics}>
-            <Metric label="重资产占比" value={valuationMethod.asset_ratio !== null && valuationMethod.asset_ratio !== undefined ? `${formatNumber(valuationMethod.asset_ratio)}%` : "--"} />
-            <Metric label="综合营收增速" value={compositeGrowth.composite_revenue_growth !== null && compositeGrowth.composite_revenue_growth !== undefined ? `${formatNumber(compositeGrowth.composite_revenue_growth)}%` : "--"} />
-            <Metric label="总股本（亿股）" value={result?.totalShare || "--"} />
-            <Metric label="总市值（亿元）" value={result?.marketCap || "--"} />
+            <Metric label="资产类型" value={valuationMethod?.asset_type || "--"} />
+            <Metric label="重资产占比" value={valuationMethod && valuationMethod.asset_ratio !== null ? `${formatNumber(valuationMethod.asset_ratio)}%` : "--"} />
+            <Metric label="总股本（亿股）" value={quote?.total_share > 0 ? (quote.total_share / 100000000).toFixed(2) : "--"} />
+            <Metric label="总市值（亿元）" value={quote?.total_market_value > 0 ? (quote.total_market_value / 100000000).toFixed(2) : "--"} />
           </View>
 
-          <View style={{ marginTop: 12, padding: 12, backgroundColor: "#f9f9f9", borderRadius: 8 }}>
-            <Text style={{ fontSize: 13, color: "#666", lineHeight: 22 }}>
-              <Text style={{ fontWeight: "500", color: "#333" }}>资产负债表：</Text>{"\n"}
-              投资性房地产：{formatHundredMillion(latestAssets.investment_real_estate)}{"\n"}
-              在建工程：{formatHundredMillion(latestAssets.construction_in_progress)}{"\n"}
-              固定资产：{formatHundredMillion(latestAssets.fixed_asset)}{"\n"}
-              总资产：{formatHundredMillion(latestAssets.total_assets)}{"\n\n"}
-              <Text style={{ fontWeight: "500", color: "#333" }}>利润表（最新财报）：</Text>{"\n"}
-              营业总收入：{formatHundredMillion(stockInfo.latest_report?.total_revenue)}{"\n"}
-              最新营收同比：{formatNumber(stockInfo.latest_report?.total_revenue_yoy)}%{"\n"}
-              归母净利润：{formatHundredMillion(stockInfo.latest_report?.net_profit)}{"\n"}
-              归母净利润同比：{formatNumber(stockInfo.latest_report?.net_profit_yoy)}%{"\n\n"}
-              <Text style={{ fontWeight: "500", color: "#333" }}>财务基本面：</Text>{"\n"}
-              总股本：{formatNumber((valuationInputs.total_share || 0) / 100000000)} 亿股{"\n"}
-              最新每股收益：¥{formatNumber(valuationInputs.latest_eps)}{"\n"}
-              上一年每股收益：¥{formatNumber(valuationInputs.last_year_eps)}{"\n"}
-              总市值：{formatHundredMillion(valuationInputs.total_market_value)}{"\n"}
-              当前股价：¥{formatNumber(valuationInputs.close_price)}
-            </Text>
-          </View>
-
-          {annualReports.length > 0 ? (
-            <View style={{ marginTop: 12, padding: 12, backgroundColor: "#fff", borderWidth: 1, borderColor: "#eeeeee", borderRadius: 8 }}>
-              <Text style={{ fontSize: 13, color: "#333", fontWeight: "600", marginBottom: 8 }}>历史利润表（{stockInfo.historical_years?.join("、")}）</Text>
-              {annualReports.map((item) => (
-                <Text key={item.report_date} style={{ fontSize: 13, color: "#666", lineHeight: 22 }}>
-                  {item.year}：营收 {formatHundredMillion(item.total_revenue)}，归母净利润 {formatHundredMillion(item.net_profit)}
-                </Text>
-              ))}
+          <View style={{ marginTop: 12, padding: 12, backgroundColor: "#fff", borderRadius: 8, borderWidth: 1, borderColor: "#e6e6e6" }}>
+            <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingVertical: 6 }}>
+              <Text style={{ fontSize: 13, color: "#666" }}>资产类型</Text>
+              <Text style={{ fontSize: 16, fontWeight: "700", color: "#e53935" }}>{valuationMethod?.asset_type || "--"}</Text>
             </View>
-          ) : null}
+            
+            <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingVertical: 6 }}>
+              <Text style={{ fontSize: 13, color: "#666" }}>固定资产占比</Text>
+              <Text style={{ fontSize: 16, fontWeight: "700", color: "#e53935" }}>{valuationMethod && valuationMethod.asset_ratio !== null ? `${formatNumber(valuationMethod.asset_ratio)}%` : "--"}</Text>
+            </View>
+            
+            <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingVertical: 6 }}>
+              <Text style={{ fontSize: 13, color: "#666" }}>投资性房地产</Text>
+              <Text style={{ fontSize: 13, color: "#333" }}>{formatHundredMillion(balanceAssets?.investment_real_estate || 0)}</Text>
+            </View>
+            
+            <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingVertical: 6 }}>
+              <Text style={{ fontSize: 13, color: "#666" }}>在建工程</Text>
+              <Text style={{ fontSize: 13, color: "#333" }}>{formatHundredMillion(balanceAssets?.construction_in_progress || 0)}</Text>
+            </View>
+            
+            <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingVertical: 6 }}>
+              <Text style={{ fontSize: 13, color: "#666" }}>固定资产</Text>
+              <Text style={{ fontSize: 13, color: "#333" }}>{formatHundredMillion(balanceAssets?.fixed_asset || 0)}</Text>
+            </View>
+            
+            <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingVertical: 6 }}>
+              <Text style={{ fontSize: 13, color: "#666" }}>资产合计</Text>
+              <Text style={{ fontSize: 13, color: "#333" }}>{formatHundredMillion(valuationMethod?.heavy_asset_sum || 0)}</Text>
+            </View>
+            
+            <View style={{ height: 1, backgroundColor: "#e6e6e6", marginTop: 8, marginBottom: 8 }} />
+            
+            <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingVertical: 6 }}>
+              <Text style={{ fontSize: 13, color: "#666" }}>总资产</Text>
+              <Text style={{ fontSize: 16, fontWeight: "700", color: "#e53935" }}>{formatHundredMillion(balanceAssets?.total_assets || 0)}</Text>
+            </View>
+            
+            <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingVertical: 6 }}>
+              <Text style={{ fontSize: 13, color: "#666" }}>推荐预测方法</Text>
+              <Text style={{ fontSize: 14, fontWeight: "600", color: "#333" }}>{valuationMethod?.valuation_method_name || "--"} ({valuationMethod?.valuation_method || "--"})</Text>
+            </View>
+          </View>
+
+          <View style={{ marginTop: 12, padding: 12, backgroundColor: "#fff", borderRadius: 8, borderWidth: 1, borderColor: "#e6e6e6" }}>
+            <Text style={{ fontSize: 14, fontWeight: "600", color: "#333", marginBottom: 12 }}>财务数据</Text>
+            
+            <View style={{ marginBottom: 16 }}>
+              <Text style={{ fontSize: 12, color: "#888", marginBottom: 8 }}>最新季度财务数据</Text>
+              <View style={{ borderWidth: 1, borderColor: "#e6e6e6", borderRadius: 6, overflow: "hidden" }}>
+                <View style={{ flexDirection: "row", backgroundColor: "#f5f5f5", padding: 8 }}>
+                  <Text style={{ flex: 2, fontSize: 12, fontWeight: "500", color: "#666" }}>报告日期</Text>
+                  <Text style={{ flex: 2, fontSize: 12, fontWeight: "500", color: "#666", textAlign: "right" }}>营业总收入(亿)</Text>
+                  <Text style={{ flex: 2, fontSize: 12, fontWeight: "500", color: "#666", textAlign: "right" }}>营收同比(%)</Text>
+                  <Text style={{ flex: 2, fontSize: 12, fontWeight: "500", color: "#666", textAlign: "right" }}>归母净利润(亿)</Text>
+                  <Text style={{ flex: 2, fontSize: 12, fontWeight: "500", color: "#666", textAlign: "right" }}>净利同比(%)</Text>
+                </View>
+                <View style={{ flexDirection: "row", padding: 8, borderTopWidth: 1, borderTopColor: "#e6e6e6" }}>
+                  <Text style={{ flex: 2, fontSize: 12, color: "#333" }}>{financialData?.latest_report?.report_date || "--"}</Text>
+                  <Text style={{ flex: 2, fontSize: 12, color: "#333", textAlign: "right" }}>{financialData?.latest_report?.total_revenue || "--"}</Text>
+                  <Text style={{ flex: 2, fontSize: 12, textAlign: "right", color: (financialData?.latest_report?.total_revenue_yoy || 0) >= 0 ? "#f44336" : "#52c41a" }}>
+                    {financialData?.latest_report?.total_revenue_yoy !== undefined && financialData?.latest_report?.total_revenue_yoy !== null ? 
+                      `${financialData.latest_report.total_revenue_yoy >= 0 ? '+' : ''}${financialData.latest_report.total_revenue_yoy}%` : "--"}
+                  </Text>
+                  <Text style={{ flex: 2, fontSize: 12, color: "#333", textAlign: "right" }}>{financialData?.latest_report?.net_profit || "--"}</Text>
+                  <Text style={{ flex: 2, fontSize: 12, textAlign: "right", color: (financialData?.latest_report?.net_profit_yoy || 0) >= 0 ? "#f44336" : "#52c41a" }}>
+                    {financialData?.latest_report?.net_profit_yoy !== undefined && financialData?.latest_report?.net_profit_yoy !== null ? 
+                      `${financialData.latest_report.net_profit_yoy >= 0 ? '+' : ''}${financialData.latest_report.net_profit_yoy}%` : "--"}
+                  </Text>
+                </View>
+              </View>
+            </View>
+
+            <View>
+              <Text style={{ fontSize: 12, color: "#888", marginBottom: 8 }}>历史数据 (2025-2021)</Text>
+              <View style={{ borderWidth: 1, borderColor: "#e6e6e6", borderRadius: 6, overflow: "hidden" }}>
+                <View style={{ flexDirection: "row", backgroundColor: "#f5f5f5", padding: 8 }}>
+                  <Text style={{ flex: 2, fontSize: 12, fontWeight: "500", color: "#666" }}>报告日期</Text>
+                  <Text style={{ flex: 2, fontSize: 12, fontWeight: "500", color: "#666", textAlign: "right" }}>营业总收入(亿)</Text>
+                  <Text style={{ flex: 2, fontSize: 12, fontWeight: "500", color: "#666", textAlign: "right" }}>营收同比(%)</Text>
+                  <Text style={{ flex: 2, fontSize: 12, fontWeight: "500", color: "#666", textAlign: "right" }}>归母净利润(亿)</Text>
+                  <Text style={{ flex: 2, fontSize: 12, fontWeight: "500", color: "#666", textAlign: "right" }}>净利同比(%)</Text>
+                </View>
+                {(financialData?.historical_reports || []).map((item, index) => (
+                  <View key={index} style={{ flexDirection: "row", padding: 8, borderTopWidth: 1, borderTopColor: "#e6e6e6" }}>
+                    <Text style={{ flex: 2, fontSize: 12, color: "#333" }}>{item.report_date || "--"}</Text>
+                    <Text style={{ flex: 2, fontSize: 12, color: "#333", textAlign: "right" }}>{item.total_revenue || "--"}</Text>
+                    <Text style={{ flex: 2, fontSize: 12, textAlign: "right", color: (item.total_revenue_yoy || 0) >= 0 ? "#f44336" : "#52c41a" }}>
+                      {item.total_revenue_yoy !== undefined && item.total_revenue_yoy !== null ? 
+                        `${item.total_revenue_yoy >= 0 ? '+' : ''}${item.total_revenue_yoy}%` : "--"}
+                    </Text>
+                    <Text style={{ flex: 2, fontSize: 12, color: "#333", textAlign: "right" }}>{item.net_profit || "--"}</Text>
+                    <Text style={{ flex: 2, fontSize: 12, textAlign: "right", color: (item.net_profit_yoy || 0) >= 0 ? "#f44336" : "#52c41a" }}>
+                      {item.net_profit_yoy !== undefined && item.net_profit_yoy !== null ? 
+                        `${item.net_profit_yoy >= 0 ? '+' : ''}${item.net_profit_yoy}%` : "--"}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+            </View>
+          </View>
+
+          <View style={{ marginTop: 12, padding: 12, backgroundColor: "#fff", borderRadius: 8, borderWidth: 1, borderColor: "#e6e6e6" }}>
+            <Text style={{ fontSize: 14, fontWeight: "600", color: "#333", marginBottom: 12 }}>历史平均复合增速</Text>
+            
+            <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingVertical: 6 }}>
+              <Text style={{ fontSize: 13, color: "#666" }}>近五年平均营业总收入</Text>
+              <Text style={{ fontSize: 13, color: "#333" }}>{compoundGrowth && compoundGrowth.avg_revenue_amount !== null ? `${compoundGrowth.avg_revenue_amount} 亿` : "--"}</Text>
+            </View>
+            
+            <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingVertical: 6 }}>
+              <Text style={{ fontSize: 13, color: "#666" }}>营收复合增速</Text>
+              <Text style={{ fontSize: 16, fontWeight: "700", color: compoundGrowth && compoundGrowth.revenue_cagr !== null && compoundGrowth.revenue_cagr >= 0 ? "#e53935" : "#52c41a" }}>{compoundGrowth && compoundGrowth.revenue_cagr !== null ? `${compoundGrowth.revenue_cagr >= 0 ? '+' : ''}${compoundGrowth.revenue_cagr}%` : "--"}</Text>
+            </View>
+            
+            <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingVertical: 6 }}>
+              <Text style={{ fontSize: 13, color: "#666" }}>近五年平均归母净利润</Text>
+              <Text style={{ fontSize: 13, color: "#333" }}>{compoundGrowth && compoundGrowth.avg_net_profit_amount !== null ? `${compoundGrowth.avg_net_profit_amount} 亿` : "--"}</Text>
+            </View>
+            
+            <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingVertical: 6 }}>
+              <Text style={{ fontSize: 13, color: "#666" }}>净利复合增速</Text>
+              <Text style={{ fontSize: 16, fontWeight: "700", color: compoundGrowth && compoundGrowth.profit_cagr !== null && compoundGrowth.profit_cagr >= 0 ? "#e53935" : "#52c41a" }}>{compoundGrowth && compoundGrowth.profit_cagr !== null ? `${compoundGrowth.profit_cagr >= 0 ? '+' : ''}${compoundGrowth.profit_cagr}%` : "--"}</Text>
+            </View>
+            
+            <View style={{ height: 1, backgroundColor: "#e6e6e6", marginTop: 8, marginBottom: 8 }} />
+            
+            <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingVertical: 6 }}>
+              <Text style={{ fontSize: 13, color: "#666" }}>预测{compoundGrowth && compoundGrowth.current_year || '--'}年营收增速</Text>
+              <Text style={{ fontSize: 14, fontWeight: "600", color: compoundGrowth && compoundGrowth.predicted_revenue_growth !== null && compoundGrowth.predicted_revenue_growth >= 0 ? "#e53935" : "#52c41a" }}>{compoundGrowth && compoundGrowth.predicted_revenue_growth !== null ? `${compoundGrowth.predicted_revenue_growth >= 0 ? '+' : ''}${compoundGrowth.predicted_revenue_growth}%` : "--"}</Text>
+            </View>
+            
+            <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingVertical: 6 }}>
+              <Text style={{ fontSize: 13, color: "#666" }}>预测{compoundGrowth && compoundGrowth.current_year || '--'}年净利润增速</Text>
+              <Text style={{ fontSize: 14, fontWeight: "600", color: compoundGrowth && compoundGrowth.predicted_profit_growth !== null && compoundGrowth.predicted_profit_growth >= 0 ? "#e53935" : "#52c41a" }}>{compoundGrowth && compoundGrowth.predicted_profit_growth !== null ? `${compoundGrowth.predicted_profit_growth >= 0 ? '+' : ''}${compoundGrowth.predicted_profit_growth}%` : "--"}</Text>
+            </View>
+          </View>
 
           <Text style={styles.formula}>
             数据来源：东方财富接口，经后端实时拉取，不写入数据库
 {"\n"}
-            估值方法：{valuationMethod.rule || "--"}
+            估值规则：{valuationMethod?.rule || "--"}
 {"\n"}
-            综合增速：{compositeGrowth.rule || "--"}
-{"\n"}
-            历史年报窗口：{stockInfo.historical_years?.join("、") || "--"}
+            重资产计算：投资性房地产({formatHundredMillion(valuationMethod && valuationMethod.investment_real_estate || 0)}) + 在建工程({formatHundredMillion(valuationMethod && valuationMethod.construction_in_progress || 0)}) + 固定资产({formatHundredMillion(valuationMethod && valuationMethod.fixed_asset || 0)}) = {formatHundredMillion(valuationMethod && valuationMethod.heavy_asset_sum || 0)} / 总资产({formatHundredMillion(valuationMethod && valuationMethod.total_assets || 0)}) = {valuationMethod && valuationMethod.asset_ratio !== null ? `${formatNumber(valuationMethod.asset_ratio)}%` : "--"}
           </Text>
         </View>
       ) : (
@@ -679,6 +762,157 @@ function ValuationScreen({ isDesktop }) {
           <Text style={{ fontSize: 16, color: "#999", textAlign: "center" }}>
             请输入股票代码查询估值
           </Text>
+        </View>
+      )}
+    </View>
+  );
+}
+
+function PriceLookupScreen({ isDesktop }) {
+  const [stockCode, setStockCode] = useState("");
+  const [quote, setQuote] = useState(null);
+  const [balanceAssets, setBalanceAssets] = useState(null);
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const hotStocks = [
+    { code: "600519", name: "贵州茅台" },
+    { code: "000858", name: "五粮液" },
+    { code: "601318", name: "中国平安" },
+    { code: "000001", name: "平安银行" },
+    { code: "600036", name: "招商银行" },
+    { code: "000651", name: "格力电器" },
+  ];
+
+  async function searchPrice(code) {
+    const trimmedCode = code.trim();
+    if (!trimmedCode) {
+      setQuote(null);
+      setBalanceAssets(null);
+      setError("");
+      return;
+    }
+
+    setLoading(true);
+    setError("");
+    try {
+      const [priceResponse, assetsResponse] = await Promise.all([
+        fetch(`${getApiBaseUrl()}/api/v1/stocks/${encodeURIComponent(trimmedCode)}/price`),
+        fetch(`${getApiBaseUrl()}/api/v1/stocks/${encodeURIComponent(trimmedCode)}/balance-sheet/assets`),
+      ]);
+      const [pricePayload, assetsPayload] = await Promise.all([
+        priceResponse.json(),
+        assetsResponse.json(),
+      ]);
+      if (!priceResponse.ok || !pricePayload.success) {
+        throw new Error(pricePayload.detail || "当前股价请求失败");
+      }
+      if (!assetsResponse.ok || !assetsPayload.success) {
+        throw new Error(assetsPayload.detail || "资产负债表请求失败");
+      }
+      setQuote(pricePayload.data);
+      setBalanceAssets(assetsPayload.data);
+    } catch (err) {
+      setQuote(null);
+      setBalanceAssets(null);
+      setError(err?.message || "当前股价请求失败，请确认本地后端已启动");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function selectHotStock(code) {
+    setStockCode(code);
+    searchPrice(code);
+  }
+
+  return (
+    <View style={{ width: "100%", paddingHorizontal: isDesktop ? "8%" : 12 }}>
+      <View style={{ ...styles.panel, paddingTop: 12 }}>
+        <View style={{ flexDirection: "row", gap: 8, marginBottom: 12 }}>
+          <View style={{ flex: 1 }}>
+            <Text style={{ fontSize: 14, color: "#666", marginBottom: 4 }}>股票代码</Text>
+            <TextInput
+              style={{
+                height: 40,
+                borderWidth: 1,
+                borderColor: "#e6e6e6",
+                borderRadius: 8,
+                paddingHorizontal: 12,
+                fontSize: 16,
+              }}
+              placeholder="输入股票代码（如 600519）"
+              value={stockCode}
+              onChangeText={setStockCode}
+              onSubmitEditing={() => searchPrice(stockCode)}
+              keyboardType="numeric"
+              editable={!loading}
+            />
+          </View>
+          <Pressable
+            style={{
+              height: 40,
+              paddingHorizontal: 16,
+              backgroundColor: "#1a73e8",
+              borderRadius: 8,
+              alignItems: "center",
+              justifyContent: "center",
+              alignSelf: "flex-end",
+              opacity: loading ? 0.65 : 1,
+            }}
+            onPress={() => searchPrice(stockCode)}
+            disabled={loading}
+          >
+            <Text style={{ color: "#fff", fontSize: 14, fontWeight: "500" }}>{loading ? "查询中" : "查询"}</Text>
+          </Pressable>
+        </View>
+
+        {error ? <Text style={{ color: "#f44336", fontSize: 14, marginBottom: 12 }}>{error}</Text> : null}
+
+        <Text style={{ fontSize: 14, color: "#666", marginBottom: 8 }}>热门股票</Text>
+        <View style={{ flexWrap: "wrap", flexDirection: "row", gap: 8 }}>
+          {hotStocks.map((stock) => (
+            <Pressable
+              key={stock.code}
+              style={{ paddingHorizontal: 12, paddingVertical: 6, backgroundColor: "#f5f5f5", borderRadius: 999 }}
+              onPress={() => selectHotStock(stock.code)}
+              disabled={loading}
+            >
+              <Text style={{ fontSize: 13, color: "#333" }}>{stock.code} ({stock.name})</Text>
+            </Pressable>
+          ))}
+        </View>
+      </View>
+
+      {quote ? (
+        <View style={{ ...styles.resultPanel, marginTop: 12 }}>
+          <Text style={{ fontSize: 18, fontWeight: "600", color: "#333", marginBottom: 8 }}>
+            {quote.stock_name || quote.stock_code} ({quote.stock_code})
+          </Text>
+          <View style={styles.primaryResult}>
+            <Text style={styles.primaryLabel}>当前股价</Text>
+            <Text style={styles.primaryValue}>¥{formatNumber(quote.current_price)}</Text>
+            <Text style={{ color: "rgba(248, 255, 245, 0.78)", marginTop: 6, fontWeight: "700" }}>
+              数据源：{quote.source || "eastmoney"}
+            </Text>
+          </View>
+          {balanceAssets ? (
+            <>
+              <Text style={{ fontSize: 14, color: "#666", marginTop: 14, marginBottom: 8 }}>
+                资产负债表：{formatDate(balanceAssets.report_date)}
+              </Text>
+              <View style={styles.metrics}>
+                <Metric label="投资性房地产" value={formatHundredMillion(balanceAssets.investment_real_estate)} />
+                <Metric label="在建工程" value={formatHundredMillion(balanceAssets.construction_in_progress)} />
+                <Metric label="固定资产" value={formatHundredMillion(balanceAssets.fixed_asset)} />
+                <Metric label="总资产" value={formatHundredMillion(balanceAssets.total_assets)} />
+              </View>
+            </>
+          ) : null}
+        </View>
+      ) : (
+        <View style={{ ...styles.resultPanel, marginTop: 12, paddingVertical: 40 }}>
+          <Text style={{ fontSize: 16, color: "#999", textAlign: "center" }}>请输入股票代码查询当前股价</Text>
         </View>
       )}
     </View>
@@ -748,7 +982,7 @@ function getScreenLabel(screen) {
 export default function App() {
   const { width: screenWidth } = useWindowDimensions();
   const isDesktop = Platform.OS === "web" && screenWidth >= 768;
-  const [screen, setScreen] = useState("trade");
+  const [screen, setScreen] = useState("valuation");
   const [menuOpen, setMenuOpen] = useState(false);
   const [history, setHistory] = useState([]);
   const [tradePrefill, setTradePrefill] = useState(null);

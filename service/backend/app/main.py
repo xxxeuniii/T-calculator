@@ -1,14 +1,11 @@
-from __future__ import annotations
-
-from datetime import date
-
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from .eastmoney_client import EastmoneyClient, EastmoneyError
+from .routers.stock import router as stock_router
 
 
 app = FastAPI(title="T Calculator Valuation Data Service", version="0.1.0")
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -17,25 +14,14 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-client = EastmoneyClient()
+app.include_router(stock_router)
 
 
 @app.get("/health")
-def health() -> dict[str, str]:
+def health():
     return {"status": "ok"}
 
 
 @app.get("/api/health")
-def api_health() -> dict[str, str]:
+def api_health():
     return health()
-
-
-@app.get("/api/v1/stocks/{code}/valuation-source")
-def valuation_source(
-    code: str,
-    as_of: date | None = Query(default=None, description="Use YYYY-MM-DD to test report window logic."),
-) -> dict[str, object]:
-    try:
-        return {"success": True, "data": client.get_valuation_source_data(code, as_of=as_of)}
-    except (ValueError, EastmoneyError) as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
