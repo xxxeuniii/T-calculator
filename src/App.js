@@ -288,12 +288,12 @@ function TradeCalculator({ addHistory, prefill }) {
 
         <View style={styles.metrics}>
           <Metric label="价差收益" value={formatCurrency(result?.spreadProfit)} />
+          <Metric label="做T后新成本价" value={result ? formatPrice(result.newCostPrice) : "--"} />
+          <Metric label="成本降低" value={result ? formatPrice(result.costReduction) : "--"} />
           <Metric label="总佣金" value={formatCurrency(result?.totalCommission)} />
           <Metric label="卖出佣金" value={formatCurrency(result?.sellCommission)} />
           <Metric label="买入佣金" value={formatCurrency(result?.buyCommission)} />
           <Metric label="印花税" value={formatCurrency(result?.stampTax)} />
-          <Metric label="做T后新成本价" value={result ? formatPrice(result.newCostPrice) : "--"} />
-          <Metric label="成本降低" value={result ? formatPrice(result.costReduction) : "--"} />
         </View>
 
         <Text style={styles.formula}>{formulaText}</Text>
