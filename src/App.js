@@ -437,6 +437,75 @@ function ContractCalculator({ addHistory, prefill, isDesktop }) {
   );
 }
 
+function ValuationScreen({ isDesktop }) {
+  const [form, setForm] = useState({
+    price: "",
+    earnings: "",
+    eps: "",
+    bookValue: "",
+    dividend: "",
+  });
+
+  const result = useMemo(() => {
+    if (!form.price) return null;
+    
+    const price = Number(form.price);
+    const earnings = Number(form.earnings);
+    const eps = Number(form.eps);
+    const bookValue = Number(form.bookValue);
+    const dividend = Number(form.dividend);
+
+    return {
+      pe: eps > 0 ? (price / eps).toFixed(2) : "--",
+      pb: bookValue > 0 ? (price / bookValue).toFixed(2) : "--",
+      dividendYield: price > 0 && dividend > 0 ? ((dividend / price) * 100).toFixed(2) : "--",
+      marketCap: earnings > 0 && eps > 0 ? ((earnings / eps) * price / 10000).toFixed(2) : "--",
+    };
+  }, [form]);
+
+  function updateField(key, value) {
+    setForm((current) => ({ ...current, [key]: value }));
+  }
+
+  return (
+    <View style={{ width: isDesktop ? "100%" : "100%", paddingHorizontal: isDesktop ? "8%" : 12 }}>
+      <View style={{ ...styles.panel, paddingTop: 12 }}>
+        <View style={styles.fieldGrid}>
+          <Field label="当前股价（元）" value={form.price} onChangeText={(value) => updateField("price", value)} />
+          <Field label="每股收益 EPS（元）" value={form.eps} onChangeText={(value) => updateField("eps", value)} />
+          <Field label="每股净资产（元）" value={form.bookValue} onChangeText={(value) => updateField("bookValue", value)} />
+          <Field label="每股股息（元）" value={form.dividend} onChangeText={(value) => updateField("dividend", value)} />
+          <Field label="净利润（万元）" value={form.earnings} onChangeText={(value) => updateField("earnings", value)} />
+        </View>
+      </View>
+
+      <View style={{ ...styles.resultPanel, marginTop: 12 }}>
+        <View style={styles.primaryResult}>
+          <Text style={styles.primaryLabel}>估值指标</Text>
+          <Text style={styles.primaryValue}>{result ? "已计算" : "--"}</Text>
+        </View>
+
+        <View style={styles.metrics}>
+          <Metric label="市盈率 (PE)" value={result?.pe || "--"} />
+          <Metric label="市净率 (PB)" value={result?.pb || "--"} />
+          <Metric label="股息率" value={result?.dividendYield ? `${result.dividendYield}%` : "--"} />
+          <Metric label="市值（万元）" value={result?.marketCap || "--"} />
+        </View>
+
+        <Text style={styles.formula}>
+          市盈率 = 当前股价 / 每股收益 (EPS)
+{"\n"}
+          市净率 = 当前股价 / 每股净资产
+{"\n"}
+          股息率 = 每股股息 / 当前股价 × 100%
+{"\n"}
+          市值 = (净利润 / EPS) × 当前股价
+        </Text>
+      </View>
+    </View>
+  );
+}
+
 function HistoryScreen({ history, clearHistory, onSelectHistory, isDesktop }) {
   return (
     <View style={{ ...styles.resultPanel, paddingHorizontal: isDesktop ? "8%" : 12 }}>
@@ -489,6 +558,7 @@ function HistoryScreen({ history, clearHistory, onSelectHistory, isDesktop }) {
 const screenOptions = [
   { label: "股票", value: "trade" },
   { label: "合约", value: "contract" },
+  { label: "估值", value: "valuation" },
   { label: "历史", value: "history" },
 ];
 
@@ -579,6 +649,7 @@ export default function App() {
           }}>
             {screen === "trade" && <TradeCalculator addHistory={addHistory} prefill={tradePrefill} isDesktop={isDesktop} />}
             {screen === "contract" && <ContractCalculator addHistory={addHistory} prefill={contractPrefill} isDesktop={isDesktop} />}
+            {screen === "valuation" && <ValuationScreen isDesktop={isDesktop} />}
             {screen === "history" && <HistoryScreen history={history} clearHistory={() => setHistory([])} onSelectHistory={selectHistory} isDesktop={isDesktop} />}
           </View>
         </ScrollView>
