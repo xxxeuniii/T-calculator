@@ -438,22 +438,29 @@ function ContractCalculator({ addHistory, prefill, isDesktop }) {
 }
 
 function ValuationScreen({ isDesktop }) {
-  const [form, setForm] = useState({
-    price: "",
-    earnings: "",
-    eps: "",
-    bookValue: "",
-    dividend: "",
-  });
+  const [stockCode, setStockCode] = useState("");
+  const [stockInfo, setStockInfo] = useState(null);
+  const [error, setError] = useState("");
+
+  const stockDatabase = {
+    "600519": { name: "贵州茅台", price: 1680.00, eps: 58.75, bookValue: 225.68, dividend: 25.91, earnings: 736.82 },
+    "000858": { name: "五粮液", price: 152.50, eps: 6.32, bookValue: 34.85, dividend: 3.78, earnings: 275.70 },
+    "601318": { name: "中国平安", price: 48.20, eps: 4.88, bookValue: 52.35, dividend: 2.20, earnings: 147.46 },
+    "000001": { name: "平安银行", price: 12.85, eps: 1.62, bookValue: 16.35, dividend: 0.45, earnings: 45.51 },
+    "600036": { name: "招商银行", price: 35.60, eps: 4.32, bookValue: 34.88, dividend: 1.73, earnings: 169.42 },
+    "000651": { name: "格力电器", price: 42.80, eps: 4.56, bookValue: 26.85, dividend: 2.40, earnings: 200.50 },
+    "002594": { name: "比亚迪", price: 256.80, eps: 5.28, bookValue: 48.56, dividend: 0.60, earnings: 42.34 },
+    "601899": { name: "紫金矿业", price: 15.20, eps: 0.68, bookValue: 4.85, dividend: 0.25, earnings: 200.60 },
+    "300750": { name: "宁德时代", price: 185.50, eps: 8.56, bookValue: 45.32, dividend: 2.52, earnings: 35.80 },
+    "601398": { name: "工商银行", price: 5.18, eps: 0.98, bookValue: 8.56, dividend: 0.35, earnings: 360.48 },
+  };
+
+  const hotStocks = ["600519", "000858", "601318", "000001", "600036", "000651", "002594", "601899"];
 
   const result = useMemo(() => {
-    if (!form.price) return null;
+    if (!stockInfo) return null;
     
-    const price = Number(form.price);
-    const earnings = Number(form.earnings);
-    const eps = Number(form.eps);
-    const bookValue = Number(form.bookValue);
-    const dividend = Number(form.dividend);
+    const { price, eps, bookValue, dividend, earnings } = stockInfo;
 
     return {
       pe: eps > 0 ? (price / eps).toFixed(2) : "--",
@@ -461,47 +468,147 @@ function ValuationScreen({ isDesktop }) {
       dividendYield: price > 0 && dividend > 0 ? ((dividend / price) * 100).toFixed(2) : "--",
       marketCap: earnings > 0 && eps > 0 ? ((earnings / eps) * price / 10000).toFixed(2) : "--",
     };
-  }, [form]);
+  }, [stockInfo]);
 
-  function updateField(key, value) {
-    setForm((current) => ({ ...current, [key]: value }));
+  function searchStock(code) {
+    const trimmedCode = code.trim();
+    if (!trimmedCode) {
+      setError("");
+      setStockInfo(null);
+      return;
+    }
+
+    const stock = stockDatabase[trimmedCode];
+    if (stock) {
+      setStockInfo(stock);
+      setError("");
+    } else {
+      setStockInfo(null);
+      setError("未找到该股票，请输入正确的股票代码");
+    }
+  }
+
+  function selectHotStock(code) {
+    setStockCode(code);
+    searchStock(code);
   }
 
   return (
     <View style={{ width: isDesktop ? "100%" : "100%", paddingHorizontal: isDesktop ? "8%" : 12 }}>
       <View style={{ ...styles.panel, paddingTop: 12 }}>
-        <View style={styles.fieldGrid}>
-          <Field label="当前股价（元）" value={form.price} onChangeText={(value) => updateField("price", value)} />
-          <Field label="每股收益 EPS（元）" value={form.eps} onChangeText={(value) => updateField("eps", value)} />
-          <Field label="每股净资产（元）" value={form.bookValue} onChangeText={(value) => updateField("bookValue", value)} />
-          <Field label="每股股息（元）" value={form.dividend} onChangeText={(value) => updateField("dividend", value)} />
-          <Field label="净利润（万元）" value={form.earnings} onChangeText={(value) => updateField("earnings", value)} />
+        <View style={{ flexDirection: "row", gap: 8, marginBottom: 12 }}>
+          <View style={{ flex: 1 }}>
+            <Text style={{ fontSize: 14, color: "#666", marginBottom: 4 }}>股票代码</Text>
+            <TextInput
+              style={{
+                height: 40,
+                borderWidth: 1,
+                borderColor: "#e6e6e6",
+                borderRadius: 8,
+                paddingHorizontal: 12,
+                fontSize: 16,
+              }}
+              placeholder="输入股票代码（如 600519）"
+              value={stockCode}
+              onChangeText={(value) => setStockCode(value)}
+              onSubmitEditing={() => searchStock(stockCode)}
+              keyboardType="numeric"
+            />
+          </View>
+          <Pressable
+            style={{
+              height: 40,
+              paddingHorizontal: 16,
+              backgroundColor: "#1a73e8",
+              borderRadius: 8,
+              flexDirection: "row",
+              alignItems: "center",
+              justifyContent: "center",
+              alignSelf: "flex-end",
+            }}
+            onPress={() => searchStock(stockCode)}
+          >
+            <Text style={{ color: "#fff", fontSize: 14, fontWeight: "500" }}>查询</Text>
+          </Pressable>
+        </View>
+
+        {error ? (
+          <Text style={{ color: "#f44336", fontSize: 14, marginBottom: 12 }}>{error}</Text>
+        ) : null}
+
+        <Text style={{ fontSize: 14, color: "#666", marginBottom: 8 }}>热门股票</Text>
+        <View style={{ flexWrap: "wrap", flexDirection: "row", gap: 8 }}>
+          {hotStocks.map((code) => (
+            <Pressable
+              key={code}
+              style={{
+                paddingHorizontal: 12,
+                paddingVertical: 6,
+                backgroundColor: "#f5f5f5",
+                borderRadius: 999,
+              }}
+              onPress={() => selectHotStock(code)}
+            >
+              <Text style={{ fontSize: 13, color: "#333" }}>
+                {code} ({stockDatabase[code]?.name})
+              </Text>
+            </Pressable>
+          ))}
         </View>
       </View>
 
-      <View style={{ ...styles.resultPanel, marginTop: 12 }}>
-        <View style={styles.primaryResult}>
-          <Text style={styles.primaryLabel}>估值指标</Text>
-          <Text style={styles.primaryValue}>{result ? "已计算" : "--"}</Text>
-        </View>
+      {stockInfo ? (
+        <View style={{ ...styles.resultPanel, marginTop: 12 }}>
+          <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+            <View>
+              <Text style={{ fontSize: 18, fontWeight: "600", color: "#333" }}>
+                {stockInfo.name} ({stockCode})
+              </Text>
+              <Text style={{ fontSize: 14, color: "#666", marginTop: 2 }}>
+                当前股价：¥{stockInfo.price.toFixed(2)}
+              </Text>
+            </View>
+          </View>
 
-        <View style={styles.metrics}>
-          <Metric label="市盈率 (PE)" value={result?.pe || "--"} />
-          <Metric label="市净率 (PB)" value={result?.pb || "--"} />
-          <Metric label="股息率" value={result?.dividendYield ? `${result.dividendYield}%` : "--"} />
-          <Metric label="市值（万元）" value={result?.marketCap || "--"} />
-        </View>
+          <View style={styles.primaryResult}>
+            <Text style={styles.primaryLabel}>估值指标</Text>
+            <Text style={styles.primaryValue}>{result?.pe || "--"}</Text>
+          </View>
 
-        <Text style={styles.formula}>
-          市盈率 = 当前股价 / 每股收益 (EPS)
+          <View style={styles.metrics}>
+            <Metric label="市盈率 (PE)" value={result?.pe || "--"} />
+            <Metric label="市净率 (PB)" value={result?.pb || "--"} />
+            <Metric label="股息率" value={result?.dividendYield ? `${result.dividendYield}%` : "--"} />
+            <Metric label="市值（亿元）" value={result?.marketCap || "--"} />
+          </View>
+
+          <View style={{ marginTop: 12, padding: 12, backgroundColor: "#f9f9f9", borderRadius: 8 }}>
+            <Text style={{ fontSize: 13, color: "#666", lineHeight: 1.8 }}>
+              <Text style={{ fontWeight: "500", color: "#333" }}>财务数据：</Text>{"\n"}
+              每股收益(EPS)：¥{stockInfo.eps.toFixed(2)} {"\n"}
+              每股净资产：¥{stockInfo.bookValue.toFixed(2)} {"\n"}
+              每股股息：¥{stockInfo.dividend.toFixed(2)} {"\n"}
+              净利润：{stockInfo.earnings.toFixed(2)}亿元
+            </Text>
+          </View>
+
+          <Text style={styles.formula}>
+            市盈率 = 当前股价 / 每股收益 (EPS)
 {"\n"}
-          市净率 = 当前股价 / 每股净资产
+            市净率 = 当前股价 / 每股净资产
 {"\n"}
-          股息率 = 每股股息 / 当前股价 × 100%
+            股息率 = 每股股息 / 当前股价 × 100%
 {"\n"}
-          市值 = (净利润 / EPS) × 当前股价
-        </Text>
-      </View>
+            市值 = (净利润 / EPS) × 当前股价
+          </Text>
+        </View>
+      ) : (
+        <View style={{ ...styles.resultPanel, marginTop: 12, paddingVertical: 40 }}>
+          <Text style={{ fontSize: 16, color: "#999", textAlign: "center" }}>
+            请输入股票代码查询估值
+          </Text>
+        </View>
+      )}
     </View>
   );
 }
