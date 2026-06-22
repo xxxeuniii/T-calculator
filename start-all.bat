@@ -70,7 +70,7 @@ echo [backend] Starting FastAPI...
 start "T Calculator Backend" cmd /k "cd /d ""%ROOT%\service\backend"" && call "".venv\Scripts\activate.bat"" && python -m uvicorn app.main:app --host %BACKEND_HOST% --port %BACKEND_PORT%"
 
 echo [frontend] Starting Expo Web...
-start "T Calculator Frontend" cmd /k "cd /d ""%ROOT%\web"" && set EXPO_NO_TELEMETRY=1 && npx expo start --web --port %FRONTEND_PORT% --host lan"
+start "T Calculator Frontend" cmd /k "cd /d ""%ROOT%\web"" && set ""EXPO_NO_TELEMETRY=1"" && npx expo start --web --port %FRONTEND_PORT% --host lan"
 
 echo.
 echo Started.
