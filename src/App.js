@@ -22,7 +22,7 @@ const palette = {
   line: "#e4e4e4",
   accent: "#151515",
   accentStrong: "#151515",
-  profitRed: "#b63030",
+  profitRed: "#d32f2f",
   lossGreen: "#0f7b55",
 };
 
