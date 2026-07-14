@@ -410,6 +410,81 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: "800",
   },
+  klineSectionLabel: {
+    color: palette.muted,
+    fontSize: 14,
+    fontWeight: "700",
+    marginBottom: 10,
+  },
+  klinePeriodRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+    marginBottom: 14,
+  },
+  klinePeriodChip: {
+    borderWidth: 1,
+    borderColor: "#e6e6e6",
+    borderRadius: 999,
+    paddingVertical: 7,
+    paddingHorizontal: 12,
+    backgroundColor: "#ffffff",
+  },
+  klinePeriodChipActive: {
+    backgroundColor: palette.ink,
+    borderColor: palette.ink,
+  },
+  klinePeriodChipText: {
+    color: palette.muted,
+    fontSize: 13,
+    fontWeight: "800",
+  },
+  klinePeriodChipTextActive: {
+    color: "#f8fff5",
+  },
+  klineDateTimeRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  klineHint: {
+    color: palette.muted,
+    fontSize: 12,
+    lineHeight: 18,
+  },
+  klineDateFallback: {
+    minHeight: 46,
+    borderWidth: 1,
+    borderColor: palette.line,
+    borderRadius: 7,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#fafafa",
+  },
+  klineDateFallbackText: {
+    color: palette.muted,
+    fontSize: 13,
+  },
+  klineResultValue: {
+    color: "#f8fff5",
+    fontSize: 24,
+    lineHeight: 30,
+    fontWeight: "900",
+  },
+  klineResultBox: {
+    marginTop: 10,
+    borderWidth: 1,
+    borderColor: "#e6e6e6",
+    borderRadius: 7,
+    padding: 12,
+    backgroundColor: "#ffffff",
+  },
+  klineResultText: {
+    color: palette.ink,
+    fontSize: 14,
+    lineHeight: 22,
+    fontWeight: "600",
+  },
 });
 
 export { palette };

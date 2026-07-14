@@ -14,6 +14,7 @@ import {
 } from "react-native";
 
 const { calculateTrade, calculateTrailingContract } = require("./calculator");
+import KlineCountScreen from "./components/KlineCountScreen";
 
 const palette = {
   ink: "#151515",
@@ -502,6 +503,7 @@ function HistoryScreen({ history, clearHistory, onSelectHistory, isDesktop }) {
 const screenOptions = [
   { label: "股票", value: "trade" },
   { label: "合约", value: "contract" },
+  { label: "数K线", value: "klineCount" },
   { label: "历史", value: "history" },
 ];
 
@@ -611,6 +613,7 @@ export default function App() {
           }}>
             {screen === "trade" && <TradeCalculator addHistory={addHistory} prefill={tradePrefill} isDesktop={isDesktop} />}
             {screen === "contract" && <ContractCalculator addHistory={addHistory} prefill={contractPrefill} isDesktop={isDesktop} />}
+            {screen === "klineCount" && <KlineCountScreen isDesktop={isDesktop} />}
             {screen === "history" && <HistoryScreen history={history} clearHistory={clearHistory} onSelectHistory={selectHistory} isDesktop={isDesktop} />}
           </View>
         </ScrollView>
