@@ -563,7 +563,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: "600",
     marginTop: 2,
-    textDecorationLine: "underline",
+    textDecorationLine: "none",
   },
   sessionStatusText: {
     color: palette.muted,
