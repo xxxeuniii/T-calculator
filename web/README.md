@@ -1,4 +1,4 @@
-# T+0 计算器
+# trade-tool
 
 一个用于计算股票 T+0 交易和合约移动止盈止损的计算器应用。
 
@@ -69,7 +69,7 @@ npm run build
 ## 项目结构
 
 ```
-T-calculator/
+trade-tool/
 ├── src/
 │   ├── App.js          # 主应用组件
 │   └── calculator.js   # 计算逻辑

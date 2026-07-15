@@ -1,6 +1,6 @@
 {
-  "name": "交易计算器",
-  "short_name": "交易计算器",
+  "name": "trade-tool",
+  "short_name": "trade-tool",
   "description": "股票做T与合约移动止盈止损计算工具。",
   "start_url": "./",
   "display": "standalone",

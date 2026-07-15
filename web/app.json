@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "做T计算器",
-    "slug": "t-calculator",
+    "name": "trade-tool",
+    "slug": "trade-tool",
     "version": "1.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
@@ -10,10 +10,10 @@
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.tcalculator.app"
+      "bundleIdentifier": "com.tradetool.app"
     },
     "android": {
-      "package": "com.tcalculator.app",
+      "package": "com.tradetool.app",
       "adaptiveIcon": {
         "backgroundColor": "#151515"
       }

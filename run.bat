@@ -31,7 +31,7 @@ if not exist "node_modules\" (
   )
 )
 
-echo Starting T-calculator Web...
+echo Starting trade-tool Web...
 echo If browser does not open, visit http://localhost:8081
 echo Press Ctrl+C to stop.
 echo.

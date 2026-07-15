@@ -16,7 +16,7 @@ let fixed = html
 const headTags = [
   '<meta name="theme-color" content="#151515" />',
   '<meta name="apple-mobile-web-app-capable" content="yes" />',
-  '<meta name="apple-mobile-web-app-title" content="交易计算器" />',
+  '<meta name="apple-mobile-web-app-title" content="trade-tool" />',
   '<link rel="manifest" href="./manifest.webmanifest" />',
   '<link rel="icon" href="./icon.svg" type="image/svg+xml" />',
 ];
