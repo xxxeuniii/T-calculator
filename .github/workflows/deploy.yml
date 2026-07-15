@@ -57,4 +57,15 @@ jobs:
             cd web
             sudo docker build -t t-calculator-frontend .
             sudo docker run -d --name t-calculator-frontend-1 -p 127.0.0.1:3002:80 t-calculator-frontend
-            curl -fsS -o /dev/null -w "%{http_code}\n" http://127.0.0.1:3002/t-calculator/
+
+            # 容器刚起来时 nginx 可能尚未就绪，重试探测
+            for i in 1 2 3 4 5 6 7 8 9 10; do
+              if curl -fsS -o /dev/null http://127.0.0.1:3002/t-calculator/; then
+                echo "healthcheck ok (attempt $i)"
+                exit 0
+              fi
+              sleep 1
+            done
+            echo "healthcheck failed"
+            sudo docker logs --tail 50 t-calculator-frontend-1 || true
+            exit 1
