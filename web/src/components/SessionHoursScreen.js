@@ -1,6 +1,8 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Modal, Pressable, Text, View } from "react-native";
+import { Linking, Modal, Pressable, Text, View } from "react-native";
 import styles from "../styles";
+
+const TV_CHART_BASE = "https://cn.tradingview.com/chart/p9kPk3Fp/";
 
 /**
  * 盘口时段（北京时间）。
@@ -13,6 +15,7 @@ const MARKETS = [
     region: "亚盘",
     utc: "UTC+8",
     indexNote: "上证综指 000001",
+    chartUrl: `${TV_CHART_BASE}?symbol=SSE%3A000001`,
     hasDst: false,
     phasesWinter: [
       { key: "auctionOpen", label: "集合竞价", start: "09:15", end: "09:25", hint: "开盘·定开盘价" },
@@ -30,6 +33,7 @@ const MARKETS = [
     region: "亚盘",
     utc: "UTC+9",
     indexNote: "日经225",
+    chartUrl: `${TV_CHART_BASE}?symbol=TVC%3ANI225`,
     hasDst: false,
     phasesWinter: [
       { key: "pre", label: "盘前", start: "07:00", end: "08:00" },
@@ -45,6 +49,7 @@ const MARKETS = [
     region: "亚盘",
     utc: "UTC+9",
     indexNote: "KOSPI",
+    chartUrl: `${TV_CHART_BASE}?symbol=TVC%3AKOSPI`,
     hasDst: false,
     phasesWinter: [
       { key: "pre", label: "盘前", start: "07:30", end: "08:00" },
@@ -58,7 +63,8 @@ const MARKETS = [
     region: "美盘",
     utcWinter: "UTC-5",
     utcSummer: "UTC-4",
-    indexNote: "标普500",
+    indexNote: "纳指100 .NDX",
+    chartUrl: `${TV_CHART_BASE}?symbol=TVC%3ANDX`,
     hasDst: true,
     phasesWinter: [
       { key: "pre", label: "盘前", start: "17:00", end: "22:30" },
@@ -209,6 +215,11 @@ function getIndexLine(market, summer) {
   return utc || market.indexNote || "";
 }
 
+function openChart(url) {
+  if (!url) return;
+  Linking.openURL(url).catch(() => {});
+}
+
 export default function SessionHoursScreen({ isDesktop }) {
   const [now, setNow] = useState(() => new Date());
   const [countdownMarketId, setCountdownMarketId] = useState(null);
@@ -269,7 +280,19 @@ export default function SessionHoursScreen({ isDesktop }) {
                 <Text style={styles.sessionName}>
                   {market.region} · {market.name}
                 </Text>
-                {market.indexLine ? <Text style={styles.sessionIndexNote}>{market.indexLine}</Text> : null}
+                {market.indexLine ? (
+                  market.chartUrl ? (
+                    <Pressable
+                      onPress={() => openChart(market.chartUrl)}
+                      accessibilityRole="link"
+                      accessibilityLabel={`打开 ${market.indexNote} 图表`}
+                    >
+                      <Text style={styles.sessionIndexLink}>{market.indexLine}</Text>
+                    </Pressable>
+                  ) : (
+                    <Text style={styles.sessionIndexNote}>{market.indexLine}</Text>
+                  )
+                ) : null}
               </View>
               <View style={styles.sessionCardTopRight}>
                 <Pressable

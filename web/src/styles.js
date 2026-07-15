@@ -558,6 +558,13 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     marginTop: 2,
   },
+  sessionIndexLink: {
+    color: palette.muted,
+    fontSize: 12,
+    fontWeight: "600",
+    marginTop: 2,
+    textDecorationLine: "underline",
+  },
   sessionStatusText: {
     color: palette.muted,
     fontSize: 13,
