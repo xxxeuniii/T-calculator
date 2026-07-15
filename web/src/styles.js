@@ -518,6 +518,94 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: "600",
   },
+  sessionClockGrid: {
+    gap: 10,
+    marginBottom: 14,
+  },
+  sessionClockGridDesktop: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 12,
+    marginBottom: 14,
+  },
+  sessionClockCard: {
+    borderWidth: 1,
+    borderColor: "#e6e6e6",
+    borderRadius: 10,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    backgroundColor: "#ffffff",
+  },
+  sessionClockCardDesktop: {
+    flex: 1,
+    minWidth: 160,
+  },
+  sessionClockName: {
+    color: palette.ink,
+    fontSize: 15,
+    fontWeight: "900",
+  },
+  sessionClockOffset: {
+    color: palette.muted,
+    fontSize: 11,
+    fontWeight: "600",
+    marginTop: 2,
+    marginBottom: 8,
+  },
+  sessionClockDate: {
+    color: palette.muted,
+    fontSize: 12,
+    fontWeight: "700",
+  },
+  sessionClockTime: {
+    color: palette.ink,
+    fontSize: 26,
+    fontWeight: "900",
+    lineHeight: 32,
+    marginTop: 2,
+    fontVariant: ["tabular-nums"],
+  },
+  sessionPhaseRow: {
+    borderWidth: 1,
+    borderColor: "#ececec",
+    borderRadius: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    backgroundColor: "#ffffff",
+    marginBottom: 8,
+  },
+  sessionPhaseRowActive: {
+    borderColor: palette.ink,
+    backgroundColor: "#f7f7f7",
+  },
+  sessionPhaseHead: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginBottom: 4,
+  },
+  sessionPhaseLabel: {
+    color: palette.ink,
+    fontSize: 14,
+    fontWeight: "900",
+  },
+  sessionPhaseLabelActive: {
+    color: palette.ink,
+  },
+  sessionPhaseDesc: {
+    color: palette.muted,
+    fontSize: 12,
+    fontWeight: "600",
+  },
+  sessionPhaseTime: {
+    color: palette.ink,
+    fontSize: 16,
+    fontWeight: "800",
+    fontVariant: ["tabular-nums"],
+  },
+  sessionPhaseTimeActive: {
+    color: palette.ink,
+  },
   sessionGrid: {
     gap: 12,
   },
@@ -533,8 +621,8 @@ const styles = StyleSheet.create({
     backgroundColor: "#ffffff",
   },
   sessionCardDesktop: {
-    width: "31%",
-    minWidth: 240,
+    width: "48%",
+    minWidth: 280,
   },
   sessionCardAsia: {
     borderColor: "rgba(26, 86, 219, 0.25)",
@@ -602,43 +690,82 @@ const styles = StyleSheet.create({
   sessionBadgeTextActive: {
     color: "#f8fff5",
   },
-  sessionTimeRow: {
+  phaseList: {
+    gap: 8,
+  },
+  phaseRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
-    marginBottom: 10,
+    gap: 10,
+    borderWidth: 1,
+    borderColor: "#ececec",
+    borderRadius: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 10,
+    backgroundColor: "#ffffff",
   },
-  sessionTimeBlock: {
+  phaseRowActive: {
+    borderColor: palette.ink,
+    backgroundColor: "#f7f7f7",
+  },
+  phaseChip: {
+    minWidth: 44,
+    alignItems: "center",
+    borderRadius: 999,
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    backgroundColor: "#f2f2f2",
+  },
+  phaseChipPre: {
+    backgroundColor: "rgba(180, 120, 0, 0.12)",
+  },
+  phaseChipOpen: {
+    backgroundColor: "rgba(211, 47, 47, 0.12)",
+  },
+  phaseChipBreak: {
+    backgroundColor: "rgba(109, 109, 109, 0.12)",
+  },
+  phaseChipAfter: {
+    backgroundColor: "rgba(26, 86, 219, 0.12)",
+  },
+  phaseChipActive: {
+    backgroundColor: palette.ink,
+  },
+  phaseChipText: {
+    color: palette.ink,
+    fontSize: 12,
+    fontWeight: "800",
+  },
+  phaseChipTextActive: {
+    color: "#f8fff5",
+  },
+  phaseMain: {
     flex: 1,
   },
-  sessionTimeLabel: {
+  phaseTime: {
+    color: palette.ink,
+    fontSize: 16,
+    fontWeight: "800",
+  },
+  phaseTimeActive: {
+    color: palette.ink,
+  },
+  phaseHint: {
     color: palette.muted,
     fontSize: 12,
-    fontWeight: "700",
-    marginBottom: 4,
+    fontWeight: "600",
+    marginTop: 2,
   },
-  sessionTimeValue: {
+  phaseNowTag: {
     color: palette.ink,
-    fontSize: 28,
+    fontSize: 12,
     fontWeight: "900",
-    lineHeight: 34,
-  },
-  sessionTimeSep: {
-    color: palette.muted,
-    fontSize: 18,
-    fontWeight: "700",
-    marginTop: 12,
-  },
-  sessionNote: {
-    color: palette.muted,
-    fontSize: 13,
-    lineHeight: 20,
-    marginBottom: 10,
   },
   sessionDstRow: {
     flexDirection: "row",
     flexWrap: "wrap",
     gap: 8,
+    marginTop: 10,
   },
   sessionDstText: {
     borderWidth: 1,

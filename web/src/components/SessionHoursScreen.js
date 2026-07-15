@@ -2,40 +2,73 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Text, View } from "react-native";
 import styles from "../styles";
 
-/** 常用外汇/加密盘口对照（北京时间），冬夏令时影响欧盘、美盘开收时间。 */
-const SESSIONS = [
+/**
+ * 盘口时段（北京时间）。
+ * 亚盘按日韩中股市；美盘按纽约，区分冬夏令时。
+ */
+const MARKETS = [
   {
-    id: "asia",
-    name: "亚盘",
-    markets: "悉尼 / 东京",
-    openWinter: "06:00",
-    closeWinter: "14:00",
-    openSummer: "06:00",
-    closeSummer: "14:00",
-    note: "悉尼约 06:00 启动，东京约 08:00 进入主力时段。",
+    id: "china",
+    session: "asia",
+    name: "中国",
+    region: "亚盘",
     tone: "asia",
+    hasDst: false,
+    phasesWinter: [
+      { key: "pre", label: "盘前", start: "09:15", end: "09:25" },
+      { key: "openAm", label: "盘中", start: "09:30", end: "11:30", hint: "上午" },
+      { key: "break", label: "休盘", start: "11:30", end: "13:00" },
+      { key: "openPm", label: "盘中", start: "13:00", end: "15:00", hint: "下午" },
+      { key: "after", label: "盘后", start: "15:05", end: "15:30" },
+    ],
   },
   {
-    id: "europe",
-    name: "欧盘",
-    markets: "法兰克福 / 伦敦",
-    openWinter: "15:00",
-    closeWinter: "00:00",
-    openSummer: "14:00",
-    closeSummer: "23:00",
-    note: "伦敦开盘：冬季约 16:00，夏季约 15:00（受英国夏令时影响）。",
-    tone: "europe",
+    id: "japan",
+    session: "asia",
+    name: "日本",
+    region: "亚盘",
+    tone: "asia",
+    hasDst: false,
+    phasesWinter: [
+      { key: "pre", label: "盘前", start: "07:00", end: "08:00" },
+      { key: "openAm", label: "盘中", start: "08:00", end: "10:30", hint: "上午" },
+      { key: "break", label: "休盘", start: "10:30", end: "11:30" },
+      { key: "openPm", label: "盘中", start: "11:30", end: "14:00", hint: "下午" },
+      { key: "after", label: "盘后", start: "14:00", end: "15:00" },
+    ],
   },
   {
-    id: "america",
-    name: "美盘",
-    markets: "纽约",
-    openWinter: "21:00",
-    closeWinter: "05:00",
-    openSummer: "20:00",
-    closeSummer: "04:00",
-    note: "纽约开盘：冬季约 21:00，夏季约 20:00；与欧盘重叠时段往往波动更大。",
+    id: "korea",
+    session: "asia",
+    name: "韩国",
+    region: "亚盘",
+    tone: "asia",
+    hasDst: false,
+    phasesWinter: [
+      { key: "pre", label: "盘前", start: "07:30", end: "08:00" },
+      { key: "open", label: "盘中", start: "08:00", end: "14:30", hint: "连续竞价" },
+      { key: "after", label: "盘后", start: "14:30", end: "15:30" },
+    ],
+  },
+  {
+    id: "us",
+    session: "america",
+    name: "美国",
+    region: "美盘",
     tone: "america",
+    hasDst: true,
+    phasesWinter: [
+      { key: "pre", label: "盘前", start: "17:00", end: "22:30" },
+      { key: "open", label: "盘中", start: "22:30", end: "05:00" },
+      { key: "after", label: "盘后", start: "05:00", end: "09:00" },
+      { key: "break", label: "休盘", start: "09:00", end: "17:00", hint: "隔夜闭市" },
+    ],
+    phasesSummer: [
+      { key: "pre", label: "盘前", start: "16:00", end: "21:30" },
+      { key: "open", label: "盘中", start: "21:30", end: "04:00" },
+      { key: "after", label: "盘后", start: "04:00", end: "08:00" },
+      { key: "break", label: "休盘", start: "08:00", end: "16:00", hint: "隔夜闭市" },
+    ],
   },
 ];
 
@@ -52,7 +85,6 @@ function getBeijingParts(now = new Date()) {
     hour: "2-digit",
     minute: "2-digit",
     hour12: false,
-    weekday: "short",
   }).formatToParts(now);
 
   const map = Object.fromEntries(parts.filter((item) => item.type !== "literal").map((item) => [item.type, item.value]));
@@ -70,7 +102,6 @@ function getBeijingParts(now = new Date()) {
   };
 }
 
-/** 粗判北半球是否处于夏令时窗口（3月中旬～11月初），用于欧盘/美盘展示。 */
 function isNorthernSummer(beijing) {
   const month = beijing.month;
   const day = beijing.day;
@@ -85,14 +116,30 @@ function parseHm(value) {
   return h * 60 + m;
 }
 
-function isSessionActive(openHm, closeHm, minutesOfDay) {
-  const open = parseHm(openHm);
-  const close = parseHm(closeHm);
-  if (open === close) return true;
-  if (open < close) {
-    return minutesOfDay >= open && minutesOfDay < close;
+function isInRange(startHm, endHm, minutesOfDay) {
+  const start = parseHm(startHm);
+  const end = parseHm(endHm);
+  if (start === end) return true;
+  if (start < end) {
+    return minutesOfDay >= start && minutesOfDay < end;
   }
-  return minutesOfDay >= open || minutesOfDay < close;
+  return minutesOfDay >= start || minutesOfDay < end;
+}
+
+function getPhases(market, summer) {
+  if (market.hasDst && summer && market.phasesSummer) {
+    return market.phasesSummer;
+  }
+  return market.phasesWinter;
+}
+
+function getCurrentPhase(phases, minutesOfDay) {
+  return phases.find((phase) => isInRange(phase.start, phase.end, minutesOfDay)) || null;
+}
+
+function getStatusLabel(phase) {
+  if (!phase) return "闭市";
+  return phase.label;
 }
 
 const toneStyles = {
@@ -101,16 +148,18 @@ const toneStyles = {
     badge: styles.sessionBadgeAsia,
     badgeText: styles.sessionBadgeTextAsia,
   },
-  europe: {
-    card: styles.sessionCardEurope,
-    badge: styles.sessionBadgeEurope,
-    badgeText: styles.sessionBadgeTextEurope,
-  },
   america: {
     card: styles.sessionCardAmerica,
     badge: styles.sessionBadgeAmerica,
     badgeText: styles.sessionBadgeTextAmerica,
   },
+};
+
+const phaseTone = {
+  盘前: styles.phaseChipPre,
+  盘中: styles.phaseChipOpen,
+  休盘: styles.phaseChipBreak,
+  盘后: styles.phaseChipAfter,
 };
 
 export default function SessionHoursScreen({ isDesktop }) {
@@ -123,21 +172,28 @@ export default function SessionHoursScreen({ isDesktop }) {
 
   const beijing = useMemo(() => getBeijingParts(now), [now]);
   const summer = useMemo(() => isNorthernSummer(beijing), [beijing]);
-  const seasonLabel = summer ? "夏令时对照" : "冬令时对照";
 
   const rows = useMemo(
     () =>
-      SESSIONS.map((session) => {
-        const open = summer ? session.openSummer : session.openWinter;
-        const close = summer ? session.closeSummer : session.closeWinter;
-        const active = isSessionActive(open, close, beijing.minutesOfDay);
-        return { ...session, open, close, active };
+      MARKETS.map((market) => {
+        const phases = getPhases(market, summer);
+        const current = getCurrentPhase(phases, beijing.minutesOfDay);
+        return {
+          ...market,
+          phases,
+          current,
+          status: getStatusLabel(current),
+          active: Boolean(current),
+        };
       }),
     [beijing.minutesOfDay, summer]
   );
 
-  const activeNames = rows.filter((item) => item.active).map((item) => item.name);
-  const statusText = activeNames.length ? `当前开盘：${activeNames.join("、")}` : "当前为盘口切换空隙";
+  const activeSummary = rows
+    .filter((item) => item.current)
+    .map((item) => `${item.name}${item.status}`)
+    .join("、");
+  const statusText = activeSummary || "当前各市场均为闭市";
 
   return (
     <View style={[styles.sessionContainer, { paddingHorizontal: isDesktop ? "8%" : 12, width: "100%" }]}>
@@ -145,57 +201,63 @@ export default function SessionHoursScreen({ isDesktop }) {
         <Text style={styles.sessionNowLabel}>北京时间</Text>
         <Text style={styles.sessionNowValue}>{beijing.label}</Text>
         <Text style={styles.sessionNowStatus}>{statusText}</Text>
-        <Text style={styles.sessionSeason}>{seasonLabel}</Text>
+        <Text style={styles.sessionSeason}>{summer ? "美盘按夏令时" : "美盘按冬令时"}</Text>
       </View>
 
       <View style={isDesktop ? styles.sessionGridDesktop : styles.sessionGrid}>
-        {rows.map((session) => {
-          const tone = toneStyles[session.tone];
+        {rows.map((market) => {
+          const tone = toneStyles[market.tone];
           return (
             <View
-              key={session.id}
-              style={[styles.sessionCard, tone.card, isDesktop && styles.sessionCardDesktop, session.active && styles.sessionCardActive]}
+              key={market.id}
+              style={[styles.sessionCard, tone.card, isDesktop && styles.sessionCardDesktop, market.active && styles.sessionCardActive]}
             >
               <View style={styles.sessionCardTop}>
                 <View>
-                  <Text style={styles.sessionName}>{session.name}</Text>
-                  <Text style={styles.sessionMarkets}>{session.markets}</Text>
+                  <Text style={styles.sessionName}>
+                    {market.region} · {market.name}
+                  </Text>
                 </View>
-                <View style={[styles.sessionBadge, tone.badge, session.active && styles.sessionBadgeActive]}>
-                  <Text style={[styles.sessionBadgeText, tone.badgeText, session.active && styles.sessionBadgeTextActive]}>
-                    {session.active ? "开盘中" : "未开盘"}
+                <View style={[styles.sessionBadge, tone.badge, market.active && styles.sessionBadgeActive]}>
+                  <Text style={[styles.sessionBadgeText, tone.badgeText, market.active && styles.sessionBadgeTextActive]}>
+                    {market.status}
                   </Text>
                 </View>
               </View>
 
-              <View style={styles.sessionTimeRow}>
-                <View style={styles.sessionTimeBlock}>
-                  <Text style={styles.sessionTimeLabel}>开盘</Text>
-                  <Text style={styles.sessionTimeValue}>{session.open}</Text>
-                </View>
-                <Text style={styles.sessionTimeSep}>→</Text>
-                <View style={styles.sessionTimeBlock}>
-                  <Text style={styles.sessionTimeLabel}>收盘</Text>
-                  <Text style={styles.sessionTimeValue}>{session.close}</Text>
-                </View>
+              <View style={styles.phaseList}>
+                {market.phases.map((phase) => {
+                  const isCurrent = market.current?.key === phase.key;
+                  return (
+                    <View key={`${market.id}-${phase.key}`} style={[styles.phaseRow, isCurrent && styles.phaseRowActive]}>
+                      <View style={[styles.phaseChip, phaseTone[phase.label], isCurrent && styles.phaseChipActive]}>
+                        <Text style={[styles.phaseChipText, isCurrent && styles.phaseChipTextActive]}>{phase.label}</Text>
+                      </View>
+                      <View style={styles.phaseMain}>
+                        <Text style={[styles.phaseTime, isCurrent && styles.phaseTimeActive]}>
+                          {phase.start} – {phase.end}
+                        </Text>
+                        {phase.hint ? <Text style={styles.phaseHint}>{phase.hint}</Text> : null}
+                      </View>
+                      {isCurrent ? <Text style={styles.phaseNowTag}>当前</Text> : null}
+                    </View>
+                  );
+                })}
               </View>
 
-              <Text style={styles.sessionNote}>{session.note}</Text>
-
-              <View style={styles.sessionDstRow}>
-                <Text style={styles.sessionDstText}>
-                  冬季 {session.openWinter}-{session.closeWinter}
-                </Text>
-                <Text style={styles.sessionDstText}>
-                  夏季 {session.openSummer}-{session.closeSummer}
-                </Text>
-              </View>
+              {market.hasDst ? (
+                <View style={styles.sessionDstRow}>
+                  <Text style={styles.sessionDstText}>冬令时 / 夏令时自动切换</Text>
+                </View>
+              ) : null}
             </View>
           );
         })}
       </View>
 
-      <Text style={styles.sessionFooter}>时间为北京时间（UTC+8）。欧盘、美盘会受夏令时影响，切换时以当地开市为准。</Text>
+      <Text style={styles.sessionFooter}>
+        时间为北京时间（UTC+8）。韩国无午间休盘；美股盘中连续交易，休盘为盘后到次日盘前的隔夜闭市，开收受夏令时影响。
+      </Text>
     </View>
   );
 }
