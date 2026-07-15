@@ -502,10 +502,10 @@ function HistoryScreen({ history, clearHistory, onSelectHistory, isDesktop }) {
 }
 
 const screenOptions = [
+  { label: "盘口时间", value: "sessions" },
   { label: "股票", value: "trade" },
   { label: "合约", value: "contract" },
   { label: "数K线", value: "klineCount" },
-  { label: "盘口时间", value: "sessions" },
   { label: "历史", value: "history" },
 ];
 
@@ -516,7 +516,7 @@ function getScreenLabel(screen) {
 export default function App() {
   const { width: screenWidth } = useWindowDimensions();
   const isDesktop = Platform.OS === "web" && screenWidth >= 768;
-  const [screen, setScreen] = useState("trade");
+  const [screen, setScreen] = useState("sessions");
   const [menuOpen, setMenuOpen] = useState(false);
   
   const loadHistory = () => {

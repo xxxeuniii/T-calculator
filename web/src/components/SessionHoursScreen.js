@@ -5,16 +5,14 @@ import styles from "../styles";
 /**
  * 盘口时段（北京时间）。
  * 亚盘按中日韩股市；美盘按纽约，区分冬夏令时。
- * indexNote：旁边注解，说明指数一般看哪个。
  */
 const MARKETS = [
   {
     id: "china",
-    session: "asia",
     name: "中国",
-    indexNote: "看上证综指 000001",
     region: "亚盘",
-    tone: "asia",
+    utc: "UTC+8",
+    indexNote: "上证综指 000001",
     hasDst: false,
     phasesWinter: [
       { key: "auctionOpen", label: "集合竞价", start: "09:15", end: "09:25", hint: "开盘·定开盘价" },
@@ -28,11 +26,10 @@ const MARKETS = [
   },
   {
     id: "japan",
-    session: "asia",
     name: "日本",
-    indexNote: "看日经225",
     region: "亚盘",
-    tone: "asia",
+    utc: "UTC+9",
+    indexNote: "日经225",
     hasDst: false,
     phasesWinter: [
       { key: "pre", label: "盘前", start: "07:00", end: "08:00" },
@@ -44,11 +41,10 @@ const MARKETS = [
   },
   {
     id: "korea",
-    session: "asia",
     name: "韩国",
-    indexNote: "看 KOSPI",
     region: "亚盘",
-    tone: "asia",
+    utc: "UTC+9",
+    indexNote: "KOSPI",
     hasDst: false,
     phasesWinter: [
       { key: "pre", label: "盘前", start: "07:30", end: "08:00" },
@@ -58,10 +54,11 @@ const MARKETS = [
   },
   {
     id: "us",
-    session: "america",
     name: "美国",
     region: "美盘",
-    tone: "america",
+    utcWinter: "UTC-5",
+    utcSummer: "UTC-4",
+    indexNote: "标普500",
     hasDst: true,
     phasesWinter: [
       { key: "pre", label: "盘前", start: "17:00", end: "22:30" },
@@ -136,7 +133,6 @@ function isInRange(startHm, endHm, minutesOfDay) {
   return minutesOfDay >= start || minutesOfDay < end;
 }
 
-/** 当前时段已进行比例 0–1（支持跨日，如美盘 21:30–04:00） */
 function getPhaseProgress(startHm, endHm, secondsOfDay) {
   const start = parseHm(startHm) * 60;
   const end = parseHm(endHm) * 60;
@@ -144,9 +140,7 @@ function getPhaseProgress(startHm, endHm, secondsOfDay) {
 
   let duration;
   let elapsed;
-  if (start === end) {
-    return 0;
-  }
+  if (start === end) return 0;
   if (start < end) {
     duration = end - start;
     elapsed = secondsOfDay - start;
@@ -164,12 +158,8 @@ function getSecondsRemainingInPhase(startHm, endHm, secondsOfDay) {
   const end = parseHm(endHm) * 60;
   const day = 24 * 3600;
   if (start === end) return 0;
-  if (start < end) {
-    return Math.max(0, end - secondsOfDay);
-  }
-  if (secondsOfDay >= start) {
-    return day - secondsOfDay + end;
-  }
+  if (start < end) return Math.max(0, end - secondsOfDay);
+  if (secondsOfDay >= start) return day - secondsOfDay + end;
   return Math.max(0, end - secondsOfDay);
 }
 
@@ -193,16 +183,14 @@ function formatCountdown(totalSec) {
 function getPhaseCountdown(phase, minutesOfDay, secondsOfDay) {
   if (isInRange(phase.start, phase.end, minutesOfDay)) {
     const seconds = getSecondsRemainingInPhase(phase.start, phase.end, secondsOfDay);
-    return { state: "current", seconds, caption: "剩余", text: formatCountdown(seconds) };
+    return { state: "current", seconds, text: formatCountdown(seconds) };
   }
   const seconds = getSecondsUntilStart(phase.start, secondsOfDay);
-  return { state: "upcoming", seconds, caption: "还有", text: formatCountdown(seconds) };
+  return { state: "upcoming", seconds, text: formatCountdown(seconds) };
 }
 
 function getPhases(market, summer) {
-  if (market.hasDst && summer && market.phasesSummer) {
-    return market.phasesSummer;
-  }
+  if (market.hasDst && summer && market.phasesSummer) return market.phasesSummer;
   return market.phasesWinter;
 }
 
@@ -215,28 +203,11 @@ function getStatusLabel(phase) {
   return phase.label;
 }
 
-const toneStyles = {
-  asia: {
-    card: styles.sessionCardAsia,
-    badge: styles.sessionBadgeAsia,
-    badgeText: styles.sessionBadgeTextAsia,
-  },
-  america: {
-    card: styles.sessionCardAmerica,
-    badge: styles.sessionBadgeAmerica,
-    badgeText: styles.sessionBadgeTextAmerica,
-  },
-};
-
-const phaseTone = {
-  盘前: styles.phaseChipPre,
-  集合竞价: styles.phaseChipAuction,
-  等待开盘: styles.phaseChipWait,
-  连续竞价: styles.phaseChipOpen,
-  盘中: styles.phaseChipOpen,
-  休盘: styles.phaseChipBreak,
-  盘后: styles.phaseChipAfter,
-};
+function getIndexLine(market, summer) {
+  const utc = market.hasDst ? (summer ? market.utcSummer : market.utcWinter) : market.utc;
+  if (utc && market.indexNote) return `${utc} · ${market.indexNote}`;
+  return utc || market.indexNote || "";
+}
 
 export default function SessionHoursScreen({ isDesktop }) {
   const [now, setNow] = useState(() => new Date());
@@ -266,13 +237,13 @@ export default function SessionHoursScreen({ isDesktop }) {
         current,
         progress,
         countdowns,
+        indexLine: getIndexLine(market, summer),
         status: getStatusLabel(current),
         active: Boolean(current),
         order: index,
       };
     });
 
-    // 当前开着的市场置顶，同组内保持原顺序
     return list.sort((a, b) => {
       if (a.active !== b.active) return a.active ? -1 : 1;
       return a.order - b.order;
@@ -284,63 +255,23 @@ export default function SessionHoursScreen({ isDesktop }) {
   return (
     <View style={[styles.sessionContainer, { paddingHorizontal: isDesktop ? "8%" : 12, width: "100%" }]}>
       <View style={styles.sessionNowBar}>
-        <Text style={styles.sessionNowLabel}>北京时间</Text>
         <Text style={styles.sessionNowValue}>{beijing.label}</Text>
       </View>
 
       <View style={isDesktop ? styles.sessionGridDesktop : styles.sessionGrid}>
-        {rows.map((market) => {
-          const tone = toneStyles[market.tone];
-          return (
-            <View
-              key={market.id}
-              style={[styles.sessionCard, tone.card, isDesktop && styles.sessionCardDesktop, market.active && styles.sessionCardActive]}
-            >
-              <View style={styles.sessionCardTop}>
-                <View style={{ flex: 1, minWidth: 0 }}>
-                  <Text style={styles.sessionName}>
-                    {market.region} · {market.name}
-                  </Text>
-                  {market.indexNote ? <Text style={styles.sessionIndexNote}>{market.indexNote}</Text> : null}
-                </View>
-                <View style={[styles.sessionBadge, tone.badge, market.active && styles.sessionBadgeActive]}>
-                  <Text style={[styles.sessionBadgeText, tone.badgeText, market.active && styles.sessionBadgeTextActive]}>
-                    {market.status}
-                  </Text>
-                </View>
+        {rows.map((market) => (
+          <View
+            key={market.id}
+            style={[styles.sessionCard, isDesktop && styles.sessionCardDesktop, market.active && styles.sessionCardActive]}
+          >
+            <View style={styles.sessionCardTop}>
+              <View style={{ flex: 1, minWidth: 0 }}>
+                <Text style={styles.sessionName}>
+                  {market.region} · {market.name}
+                </Text>
+                {market.indexLine ? <Text style={styles.sessionIndexNote}>{market.indexLine}</Text> : null}
               </View>
-
-              <View style={styles.phaseList}>
-                {market.phases.map((phase) => {
-                  const isCurrent = market.current?.key === phase.key;
-                  const progressPct = isCurrent ? Math.round(market.progress * 1000) / 10 : 0;
-                  return (
-                    <View key={`${market.id}-${phase.key}`} style={[styles.phaseRow, isCurrent && styles.phaseRowActive]}>
-                      {isCurrent ? (
-                        <View pointerEvents="none" style={[styles.phaseProgressFill, { width: `${progressPct}%` }]} />
-                      ) : null}
-                      <View style={styles.phaseRowInner}>
-                        <View style={[styles.phaseChip, phaseTone[phase.label], isCurrent && styles.phaseChipActive]}>
-                          <Text style={[styles.phaseChipText, isCurrent && styles.phaseChipTextActive]}>{phase.label}</Text>
-                        </View>
-                        <View style={styles.phaseMain}>
-                          <Text style={[styles.phaseTime, isCurrent && styles.phaseTimeActive]}>
-                            {phase.start} – {phase.end}
-                          </Text>
-                          {phase.hint ? <Text style={styles.phaseHint}>{phase.hint}</Text> : null}
-                        </View>
-                      </View>
-                    </View>
-                  );
-                })}
-              </View>
-
-              <View style={styles.sessionCardFooter}>
-                {market.hasDst ? (
-                  <Text style={styles.sessionDstText}>冬令时 / 夏令时自动切换</Text>
-                ) : (
-                  <View style={{ flex: 1 }} />
-                )}
+              <View style={styles.sessionCardTopRight}>
                 <Pressable
                   onPress={() => setCountdownMarketId(market.id)}
                   style={styles.sessionCountdownEntry}
@@ -351,8 +282,40 @@ export default function SessionHoursScreen({ isDesktop }) {
                 </Pressable>
               </View>
             </View>
-          );
-        })}
+
+            <View style={styles.phaseList}>
+              {market.phases.map((phase, phaseIndex) => {
+                const isCurrent = market.current?.key === phase.key;
+                const progressPct = isCurrent ? Math.round(market.progress * 1000) / 10 : 0;
+                return (
+                  <View
+                    key={`${market.id}-${phase.key}`}
+                    style={[styles.phaseRow, phaseIndex > 0 && styles.phaseRowDivided, isCurrent && styles.phaseRowActive]}
+                  >
+                    {isCurrent ? (
+                      <View pointerEvents="none" style={[styles.phaseProgressFill, { width: `${progressPct}%` }]} />
+                    ) : null}
+                    <View style={styles.phaseRowInner}>
+                      <View style={styles.phaseMain}>
+                        <Text style={[styles.phaseLabel, isCurrent && styles.phaseLabelActive]}>{phase.label}</Text>
+                        {phase.hint ? <Text style={styles.phaseHint}>{phase.hint}</Text> : null}
+                      </View>
+                      <Text style={[styles.phaseTime, isCurrent && styles.phaseTimeActive]}>
+                        {phase.start} – {phase.end}
+                      </Text>
+                    </View>
+                  </View>
+                );
+              })}
+            </View>
+
+            {market.hasDst ? (
+              <View style={styles.sessionCardFooter}>
+                <Text style={styles.sessionDstText}>冬令时 / 夏令时自动切换</Text>
+              </View>
+            ) : null}
+          </View>
+        ))}
       </View>
 
       <Text style={styles.sessionFooter}>
@@ -372,12 +335,15 @@ export default function SessionHoursScreen({ isDesktop }) {
                   <Text style={styles.countdownCloseText}>关闭</Text>
                 </Pressable>
               </View>
-              <Text style={styles.countdownSub}>距离各时段还有多久（北京时间）</Text>
               <View style={styles.countdownList}>
-                {countdownMarket.countdowns.map((item) => (
+                {countdownMarket.countdowns.map((item, index) => (
                   <View
                     key={`${countdownMarket.id}-${item.phase.key}-cd`}
-                    style={[styles.countdownRow, item.state === "current" && styles.countdownRowCurrent]}
+                    style={[
+                      styles.countdownRow,
+                      index > 0 && styles.countdownRowDivided,
+                      item.state === "current" && styles.countdownRowCurrent,
+                    ]}
                   >
                     <View style={styles.countdownRowLeft}>
                       <Text style={styles.countdownPhaseLabel}>

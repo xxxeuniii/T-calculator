@@ -494,15 +494,12 @@ const styles = StyleSheet.create({
     paddingBottom: 16,
   },
   sessionNowBar: {
-    borderWidth: 1,
-    borderColor: "#e6e6e6",
-    borderRadius: 10,
-    paddingVertical: 22,
-    paddingHorizontal: 18,
-    backgroundColor: "#ffffff",
-    marginTop: 14,
-    marginBottom: 14,
-    gap: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: "#ececec",
+    paddingVertical: 18,
+    paddingHorizontal: 2,
+    marginBottom: 18,
+    alignItems: "center",
   },
   sessionNowLabel: {
     color: palette.muted,
@@ -511,112 +508,14 @@ const styles = StyleSheet.create({
   },
   sessionNowValue: {
     color: palette.ink,
-    fontSize: 22,
+    fontSize: 28,
     fontWeight: "900",
     fontVariant: ["tabular-nums"],
     letterSpacing: 0.4,
-  },
-  sessionNowStatus: {
-    color: palette.ink,
-    fontSize: 14,
-    fontWeight: "700",
-    marginTop: 2,
-  },
-  sessionSeason: {
-    color: palette.muted,
-    fontSize: 12,
-    fontWeight: "600",
-  },
-  sessionClockGrid: {
-    gap: 10,
-    marginBottom: 14,
-  },
-  sessionClockGridDesktop: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 12,
-    marginBottom: 14,
-  },
-  sessionClockCard: {
-    borderWidth: 1,
-    borderColor: "#e6e6e6",
-    borderRadius: 10,
-    paddingVertical: 12,
-    paddingHorizontal: 14,
-    backgroundColor: "#ffffff",
-  },
-  sessionClockCardDesktop: {
-    flex: 1,
-    minWidth: 160,
-  },
-  sessionClockName: {
-    color: palette.ink,
-    fontSize: 15,
-    fontWeight: "900",
-  },
-  sessionClockOffset: {
-    color: palette.muted,
-    fontSize: 11,
-    fontWeight: "600",
-    marginTop: 2,
-    marginBottom: 8,
-  },
-  sessionClockDate: {
-    color: palette.muted,
-    fontSize: 12,
-    fontWeight: "700",
-  },
-  sessionClockTime: {
-    color: palette.ink,
-    fontSize: 26,
-    fontWeight: "900",
-    lineHeight: 32,
-    marginTop: 2,
-    fontVariant: ["tabular-nums"],
-  },
-  sessionPhaseRow: {
-    borderWidth: 1,
-    borderColor: "#ececec",
-    borderRadius: 8,
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    backgroundColor: "#ffffff",
-    marginBottom: 8,
-  },
-  sessionPhaseRowActive: {
-    borderColor: palette.ink,
-    backgroundColor: "#f7f7f7",
-  },
-  sessionPhaseHead: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    marginBottom: 4,
-  },
-  sessionPhaseLabel: {
-    color: palette.ink,
-    fontSize: 14,
-    fontWeight: "900",
-  },
-  sessionPhaseLabelActive: {
-    color: palette.ink,
-  },
-  sessionPhaseDesc: {
-    color: palette.muted,
-    fontSize: 12,
-    fontWeight: "600",
-  },
-  sessionPhaseTime: {
-    color: palette.ink,
-    fontSize: 16,
-    fontWeight: "800",
-    fontVariant: ["tabular-nums"],
-  },
-  sessionPhaseTimeActive: {
-    color: palette.ink,
+    textAlign: "center",
   },
   sessionGrid: {
-    gap: 12,
+    gap: 16,
   },
   sessionGridDesktop: {
     flexDirection: "row",
@@ -625,39 +524,32 @@ const styles = StyleSheet.create({
   },
   sessionCard: {
     borderWidth: 1,
-    borderRadius: 10,
-    padding: 14,
+    borderColor: "#e6e6e6",
+    borderRadius: 8,
+    padding: 16,
     backgroundColor: "#ffffff",
   },
   sessionCardDesktop: {
     width: "48%",
     minWidth: 280,
   },
-  sessionCardAsia: {
-    borderColor: "rgba(26, 86, 219, 0.25)",
-    backgroundColor: "rgba(26, 86, 219, 0.04)",
-  },
-  sessionCardEurope: {
-    borderColor: "rgba(180, 120, 0, 0.28)",
-    backgroundColor: "rgba(180, 120, 0, 0.04)",
-  },
-  sessionCardAmerica: {
-    borderColor: "rgba(211, 47, 47, 0.28)",
-    backgroundColor: "rgba(211, 47, 47, 0.04)",
-  },
   sessionCardActive: {
-    borderWidth: 2,
+    borderColor: palette.ink,
   },
   sessionCardTop: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "flex-start",
-    marginBottom: 12,
+    marginBottom: 4,
     gap: 8,
+  },
+  sessionCardTopRight: {
+    alignItems: "flex-end",
+    gap: 6,
   },
   sessionName: {
     color: palette.ink,
-    fontSize: 18,
+    fontSize: 17,
     fontWeight: "900",
   },
   sessionIndexNote: {
@@ -666,120 +558,68 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     marginTop: 2,
   },
-  sessionMarkets: {
+  sessionStatusText: {
     color: palette.muted,
-    fontSize: 12,
-    fontWeight: "600",
-    marginTop: 2,
-  },
-  sessionBadge: {
-    borderRadius: 999,
-    paddingVertical: 4,
-    paddingHorizontal: 10,
-  },
-  sessionBadgeAsia: {
-    backgroundColor: "rgba(26, 86, 219, 0.12)",
-  },
-  sessionBadgeEurope: {
-    backgroundColor: "rgba(180, 120, 0, 0.12)",
-  },
-  sessionBadgeAmerica: {
-    backgroundColor: "rgba(211, 47, 47, 0.12)",
-  },
-  sessionBadgeActive: {
-    backgroundColor: palette.ink,
-  },
-  sessionBadgeText: {
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: "800",
   },
-  sessionBadgeTextAsia: {
-    color: "#1a56db",
-  },
-  sessionBadgeTextEurope: {
-    color: "#9a6700",
-  },
-  sessionBadgeTextAmerica: {
-    color: palette.profitRed,
-  },
-  sessionBadgeTextActive: {
-    color: "#f8fff5",
+  sessionStatusTextActive: {
+    color: palette.ink,
   },
   phaseList: {
-    gap: 8,
+    marginTop: 8,
   },
   phaseRow: {
     position: "relative",
     overflow: "hidden",
-    borderWidth: 1,
-    borderColor: "#ececec",
-    borderRadius: 8,
-    backgroundColor: "#ffffff",
+  },
+  phaseRowDivided: {
+    borderTopWidth: 1,
+    borderTopColor: "#f0f0f0",
   },
   phaseRowActive: {
-    borderColor: palette.ink,
-    backgroundColor: "#ffffff",
+    backgroundColor: "#f7f7f7",
+    marginHorizontal: -8,
+    paddingHorizontal: 8,
+    borderRadius: 8,
   },
   phaseProgressFill: {
     position: "absolute",
     left: 0,
     top: 0,
     bottom: 0,
-    backgroundColor: "rgba(21, 21, 21, 0.08)",
+    backgroundColor: "rgba(21, 21, 21, 0.07)",
   },
   phaseRowInner: {
     position: "relative",
     zIndex: 1,
     flexDirection: "row",
     alignItems: "center",
-    gap: 10,
-    paddingVertical: 8,
-    paddingHorizontal: 10,
+    justifyContent: "space-between",
+    gap: 12,
+    paddingVertical: 11,
   },
-  phaseChip: {
-    minWidth: 72,
-    alignItems: "center",
-    borderRadius: 999,
-    paddingVertical: 4,
-    paddingHorizontal: 8,
-    backgroundColor: "#f2f2f2",
-  },
-  phaseChipPre: {
-    backgroundColor: "rgba(180, 120, 0, 0.12)",
-  },
-  phaseChipAuction: {
-    backgroundColor: "rgba(124, 58, 237, 0.12)",
-  },
-  phaseChipWait: {
-    backgroundColor: "rgba(109, 109, 109, 0.14)",
-  },
-  phaseChipOpen: {
-    backgroundColor: "rgba(211, 47, 47, 0.12)",
-  },
-  phaseChipBreak: {
-    backgroundColor: "rgba(109, 109, 109, 0.12)",
-  },
-  phaseChipAfter: {
-    backgroundColor: "rgba(26, 86, 219, 0.12)",
-  },
-  phaseChipActive: {
-    backgroundColor: palette.ink,
-  },
-  phaseChipText: {
-    color: palette.ink,
-    fontSize: 12,
+  phaseLabel: {
+    color: palette.muted,
+    fontSize: 13,
     fontWeight: "800",
+    textAlign: "left",
   },
-  phaseChipTextActive: {
-    color: "#f8fff5",
+  phaseLabelActive: {
+    color: palette.ink,
   },
   phaseMain: {
     flex: 1,
+    minWidth: 0,
+    alignItems: "flex-start",
   },
   phaseTime: {
     color: palette.ink,
     fontSize: 16,
     fontWeight: "800",
+    fontVariant: ["tabular-nums"],
+    textAlign: "right",
+    flexShrink: 0,
   },
   phaseTimeActive: {
     color: palette.ink,
@@ -789,31 +629,26 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: "600",
     marginTop: 2,
+    textAlign: "left",
   },
   sessionCardFooter: {
     marginTop: 12,
-    flexDirection: "row",
-    alignItems: "flex-end",
-    justifyContent: "space-between",
-    gap: 10,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: "#f0f0f0",
   },
   sessionCountdownEntry: {
     borderWidth: 1,
     borderColor: "#e0e0e0",
-    borderRadius: 999,
-    paddingVertical: 6,
-    paddingHorizontal: 12,
+    borderRadius: 8,
+    paddingVertical: 5,
+    paddingHorizontal: 10,
     backgroundColor: "#ffffff",
   },
   sessionCountdownEntryText: {
     color: palette.ink,
     fontSize: 12,
     fontWeight: "800",
-  },
-  phaseNowTag: {
-    color: palette.ink,
-    fontSize: 12,
-    fontWeight: "900",
   },
   countdownOverlay: {
     flex: 1,
@@ -830,7 +665,7 @@ const styles = StyleSheet.create({
   },
   countdownSheet: {
     backgroundColor: "#ffffff",
-    borderRadius: 14,
+    borderRadius: 8,
     paddingHorizontal: 16,
     paddingTop: 14,
     paddingBottom: 10,
@@ -851,42 +686,39 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   countdownCloseBtn: {
-    borderWidth: 1,
-    borderColor: "#e6e6e6",
-    borderRadius: 999,
-    paddingVertical: 5,
-    paddingHorizontal: 10,
+    paddingVertical: 4,
+    paddingHorizontal: 4,
   },
   countdownCloseText: {
-    color: palette.ink,
-    fontSize: 12,
+    color: palette.muted,
+    fontSize: 13,
     fontWeight: "800",
   },
   countdownSub: {
     color: palette.muted,
     fontSize: 12,
     fontWeight: "600",
-    marginBottom: 12,
+    marginBottom: 8,
   },
   countdownList: {
-    gap: 8,
     paddingBottom: 6,
   },
   countdownRow: {
-    borderWidth: 1,
-    borderColor: "#ececec",
-    borderRadius: 10,
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    backgroundColor: "#fafafa",
+    paddingVertical: 12,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     gap: 10,
   },
+  countdownRowDivided: {
+    borderTopWidth: 1,
+    borderTopColor: "#f0f0f0",
+  },
   countdownRowCurrent: {
-    borderColor: palette.ink,
-    backgroundColor: "#f3f3f3",
+    backgroundColor: "#f7f7f7",
+    marginHorizontal: -8,
+    paddingHorizontal: 8,
+    borderRadius: 8,
   },
   countdownRowLeft: {
     flex: 1,
@@ -922,24 +754,10 @@ const styles = StyleSheet.create({
   countdownValueCurrent: {
     color: palette.profitRed,
   },
-  sessionDstRow: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 8,
-    flex: 1,
-  },
   sessionDstText: {
-    flex: 1,
-    borderWidth: 1,
-    borderStyle: "dashed",
-    borderColor: "#e2e2e2",
-    borderRadius: 7,
-    paddingVertical: 5,
-    paddingHorizontal: 8,
-    color: palette.ink,
-    backgroundColor: "#f7f7f7",
+    color: palette.muted,
     fontSize: 12,
-    fontWeight: "700",
+    fontWeight: "600",
   },
   sessionFooter: {
     marginTop: 14,
