@@ -15,6 +15,7 @@ import {
 
 const { calculateTrade, calculateTrailingContract } = require("./calculator");
 import KlineCountScreen from "./components/KlineCountScreen";
+import SessionHoursScreen from "./components/SessionHoursScreen";
 
 const palette = {
   ink: "#151515",
@@ -504,6 +505,7 @@ const screenOptions = [
   { label: "股票", value: "trade" },
   { label: "合约", value: "contract" },
   { label: "数K线", value: "klineCount" },
+  { label: "盘口时间", value: "sessions" },
   { label: "历史", value: "history" },
 ];
 
@@ -614,6 +616,7 @@ export default function App() {
             {screen === "trade" && <TradeCalculator addHistory={addHistory} prefill={tradePrefill} isDesktop={isDesktop} />}
             {screen === "contract" && <ContractCalculator addHistory={addHistory} prefill={contractPrefill} isDesktop={isDesktop} />}
             {screen === "klineCount" && <KlineCountScreen isDesktop={isDesktop} />}
+            {screen === "sessions" && <SessionHoursScreen isDesktop={isDesktop} />}
             {screen === "history" && <HistoryScreen history={history} clearHistory={clearHistory} onSelectHistory={selectHistory} isDesktop={isDesktop} />}
           </View>
         </ScrollView>
@@ -692,7 +695,7 @@ const styles = StyleSheet.create({
     position: "absolute",
     top: 42,
     left: 0,
-    width: 132,
+    width: 148,
     borderWidth: 1,
     borderColor: "#e6e6e6",
     borderRadius: 12,

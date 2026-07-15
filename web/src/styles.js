@@ -485,6 +485,179 @@ const styles = StyleSheet.create({
     lineHeight: 22,
     fontWeight: "600",
   },
+  sessionContainer: {
+    paddingBottom: 16,
+  },
+  sessionNowBar: {
+    borderWidth: 1,
+    borderColor: "#e6e6e6",
+    borderRadius: 10,
+    padding: 14,
+    backgroundColor: "#ffffff",
+    marginBottom: 14,
+    gap: 4,
+  },
+  sessionNowLabel: {
+    color: palette.muted,
+    fontSize: 12,
+    fontWeight: "700",
+  },
+  sessionNowValue: {
+    color: palette.ink,
+    fontSize: 22,
+    fontWeight: "900",
+  },
+  sessionNowStatus: {
+    color: palette.ink,
+    fontSize: 14,
+    fontWeight: "700",
+    marginTop: 4,
+  },
+  sessionSeason: {
+    color: palette.muted,
+    fontSize: 12,
+    fontWeight: "600",
+  },
+  sessionGrid: {
+    gap: 12,
+  },
+  sessionGridDesktop: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 16,
+  },
+  sessionCard: {
+    borderWidth: 1,
+    borderRadius: 10,
+    padding: 14,
+    backgroundColor: "#ffffff",
+  },
+  sessionCardDesktop: {
+    width: "31%",
+    minWidth: 240,
+  },
+  sessionCardAsia: {
+    borderColor: "rgba(26, 86, 219, 0.25)",
+    backgroundColor: "rgba(26, 86, 219, 0.04)",
+  },
+  sessionCardEurope: {
+    borderColor: "rgba(180, 120, 0, 0.28)",
+    backgroundColor: "rgba(180, 120, 0, 0.04)",
+  },
+  sessionCardAmerica: {
+    borderColor: "rgba(211, 47, 47, 0.28)",
+    backgroundColor: "rgba(211, 47, 47, 0.04)",
+  },
+  sessionCardActive: {
+    borderWidth: 2,
+  },
+  sessionCardTop: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    marginBottom: 12,
+    gap: 8,
+  },
+  sessionName: {
+    color: palette.ink,
+    fontSize: 18,
+    fontWeight: "900",
+  },
+  sessionMarkets: {
+    color: palette.muted,
+    fontSize: 12,
+    fontWeight: "600",
+    marginTop: 2,
+  },
+  sessionBadge: {
+    borderRadius: 999,
+    paddingVertical: 4,
+    paddingHorizontal: 10,
+  },
+  sessionBadgeAsia: {
+    backgroundColor: "rgba(26, 86, 219, 0.12)",
+  },
+  sessionBadgeEurope: {
+    backgroundColor: "rgba(180, 120, 0, 0.12)",
+  },
+  sessionBadgeAmerica: {
+    backgroundColor: "rgba(211, 47, 47, 0.12)",
+  },
+  sessionBadgeActive: {
+    backgroundColor: palette.ink,
+  },
+  sessionBadgeText: {
+    fontSize: 12,
+    fontWeight: "800",
+  },
+  sessionBadgeTextAsia: {
+    color: "#1a56db",
+  },
+  sessionBadgeTextEurope: {
+    color: "#9a6700",
+  },
+  sessionBadgeTextAmerica: {
+    color: palette.profitRed,
+  },
+  sessionBadgeTextActive: {
+    color: "#f8fff5",
+  },
+  sessionTimeRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    marginBottom: 10,
+  },
+  sessionTimeBlock: {
+    flex: 1,
+  },
+  sessionTimeLabel: {
+    color: palette.muted,
+    fontSize: 12,
+    fontWeight: "700",
+    marginBottom: 4,
+  },
+  sessionTimeValue: {
+    color: palette.ink,
+    fontSize: 28,
+    fontWeight: "900",
+    lineHeight: 34,
+  },
+  sessionTimeSep: {
+    color: palette.muted,
+    fontSize: 18,
+    fontWeight: "700",
+    marginTop: 12,
+  },
+  sessionNote: {
+    color: palette.muted,
+    fontSize: 13,
+    lineHeight: 20,
+    marginBottom: 10,
+  },
+  sessionDstRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+  },
+  sessionDstText: {
+    borderWidth: 1,
+    borderStyle: "dashed",
+    borderColor: "#e2e2e2",
+    borderRadius: 7,
+    paddingVertical: 5,
+    paddingHorizontal: 8,
+    color: palette.ink,
+    backgroundColor: "#f7f7f7",
+    fontSize: 12,
+    fontWeight: "700",
+  },
+  sessionFooter: {
+    marginTop: 14,
+    color: palette.muted,
+    fontSize: 12,
+    lineHeight: 18,
+  },
 });
 
 export { palette };
