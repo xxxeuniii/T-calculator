@@ -1,6 +1,5 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { createElement, useEffect, useMemo, useRef, useState } from "react";
 import { Platform, Pressable, Text, TextInput, View } from "react-native";
-import { unstable_createElement as createElement } from "react-native-web";
 import styles from "../styles";
 import {
   KLINE_PERIODS,
@@ -13,11 +12,10 @@ import {
   getTimeOfDayValue,
 } from "../klineCount";
 
-const controlStyle = {
+const webControlStyle = {
   minHeight: 46,
-  borderWidth: 1,
-  borderStyle: "solid",
-  borderColor: "#e4e4e4",
+  height: 46,
+  border: "1px solid #e4e4e4",
   borderRadius: 7,
   paddingLeft: 14,
   paddingRight: 14,
@@ -25,9 +23,24 @@ const controlStyle = {
   color: "#151515",
   backgroundColor: "#ffffff",
   boxSizing: "border-box",
+  outline: "none",
+  fontFamily: "inherit",
+  WebkitAppearance: "auto",
+  appearance: "auto",
+  pointerEvents: "auto",
+  position: "relative",
+  zIndex: 20,
+  overflow: "visible",
 };
 
+/**
+ * 纯 DOM 日期/时间控件。
+ * 避免 RN Web 的 View / unstable_createElement 导致原生 date picker 无法点击。
+ * 额外提供「选择」按钮，兼容部分浏览器日历图标被裁切/点不到的情况。
+ */
 function PeriodDateTimeInput({ value, period, onChange }) {
+  const dateRef = useRef(null);
+
   if (Platform.OS !== "web") {
     return (
       <View style={styles.klineDateFallback}>
@@ -41,40 +54,112 @@ function PeriodDateTimeInput({ value, period, onChange }) {
   const timeValue = getTimeOfDayValue(value, period);
   const timeSlots = getPeriodTimeSlots(period);
 
-  const dateInput = createElement("input", {
-    type: "date",
-    value: dateValue,
-    onChange: (event) => {
-      const next = combineDateAndTime(event.target.value, timeValue, period);
-      if (next) onChange(next);
-    },
-    style: { ...controlStyle, flex: isDateOnly ? undefined : 1, width: isDateOnly ? "100%" : undefined },
-  });
-
-  if (isDateOnly) {
-    return dateInput;
+  function handleDateChange(event) {
+    const next = combineDateAndTime(event.target.value, timeValue || "00:00", period);
+    if (next) onChange(next);
   }
 
-  const timeSelect = createElement(
-    "select",
+  function openDatePicker() {
+    const input = dateRef.current;
+    if (!input) return;
+    try {
+      if (typeof input.showPicker === "function") {
+        input.showPicker();
+        return;
+      }
+    } catch (_) {
+      // Fallback to focus/click below.
+    }
+    input.focus();
+    input.click();
+  }
+
+  const dateRow = createElement(
+    "div",
     {
-      value: timeValue,
-      onChange: (event) => {
-        const next = combineDateAndTime(dateValue, event.target.value, period);
-        if (next) onChange(next);
+      key: "date-row",
+      style: {
+        display: "flex",
+        width: "100%",
+        gap: 8,
+        alignItems: "stretch",
       },
-      style: { ...controlStyle, width: 120, cursor: "pointer" },
     },
-    timeSlots.map((slot) =>
-      createElement("option", { key: slot.value, value: slot.value }, slot.label)
+    createElement("input", {
+      ref: dateRef,
+      type: "date",
+      value: dateValue,
+      onChange: handleDateChange,
+      onInput: handleDateChange,
+      style: {
+        ...webControlStyle,
+        flex: 1,
+        width: "100%",
+        minWidth: 160,
+      },
+    }),
+    createElement(
+      "button",
+      {
+        type: "button",
+        onClick: openDatePicker,
+        style: {
+          ...webControlStyle,
+          width: 72,
+          flexShrink: 0,
+          cursor: "pointer",
+          fontWeight: 700,
+          paddingLeft: 0,
+          paddingRight: 0,
+          backgroundColor: "#f7f7f7",
+        },
+      },
+      "选择"
     )
   );
 
-  return (
-    <View style={styles.klineDateTimeRow}>
-      {dateInput}
-      {timeSelect}
-    </View>
+  const children = [dateRow];
+
+  if (!isDateOnly) {
+    children.push(
+      createElement(
+        "select",
+        {
+          key: "time",
+          value: timeValue,
+          onChange: (event) => {
+            const next = combineDateAndTime(dateValue, event.target.value, period);
+            if (next) onChange(next);
+          },
+          style: {
+            ...webControlStyle,
+            width: "100%",
+            cursor: "pointer",
+          },
+        },
+        timeSlots.map((slot) =>
+          createElement("option", { key: slot.value, value: slot.value }, slot.label)
+        )
+      )
+    );
+  }
+
+  return createElement(
+    "div",
+    {
+      style: {
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "stretch",
+        gap: 8,
+        width: "100%",
+        position: "relative",
+        zIndex: 20,
+        pointerEvents: "auto",
+        overflow: "visible",
+      },
+    },
+    children
   );
 }
 
@@ -145,7 +230,7 @@ export default function KlineCountScreen({ isDesktop }) {
           </View>
 
           <View style={styles.fieldGrid}>
-            <View style={styles.field}>
+            <View style={[styles.field, styles.klineDateField]}>
               <Text style={styles.fieldLabel}>选择时间</Text>
               <PeriodDateTimeInput value={alignedDate} period={period} onChange={setSelectedDate} />
               <Text style={styles.klineHint}>{periodHint}</Text>
