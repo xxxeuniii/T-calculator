@@ -9,44 +9,52 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '22'
-          cache: 'npm'
-          cache-dependency-path: 'web/package-lock.json'
-      
+          node-version: "22"
+          cache: "npm"
+          cache-dependency-path: "web/package-lock.json"
+
       - name: Install dependencies
         run: |
           cd web
           npm ci
-      
+
       - name: Build frontend
         run: |
           cd web
           npm run build:web
-      
+
       - name: Deploy to server
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
+          script_stop: true
           script: |
+            set -euo pipefail
             cd /opt/apps/t-calculator
-            git pull origin main
-            
-            # 停止并删除旧容器
+
+            # HTTPS 访问 github.com 在该机不稳定，强制走 SSH
+            git remote set-url origin git@github.com:xxxeuniii/T-calculator.git
+            mkdir -p ~/.ssh
+            chmod 700 ~/.ssh
+            ssh-keyscan -t ed25519,rsa github.com >> ~/.ssh/known_hosts 2>/dev/null || true
+
+            git fetch --prune origin main
+            git reset --hard origin/main
+            git clean -fd
+            git log -1 --oneline
+
             sudo docker rm -f t-calculator-frontend-1 || true
-            
-            # 构建新镜像
             cd web
             sudo docker build -t t-calculator-frontend .
-            
-            # 启动新容器
             sudo docker run -d --name t-calculator-frontend-1 -p 127.0.0.1:3002:80 t-calculator-frontend
+            curl -fsS -o /dev/null -w "%{http_code}\n" http://127.0.0.1:3002/t-calculator/
