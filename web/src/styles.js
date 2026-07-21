@@ -475,12 +475,22 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: "rgba(0, 0, 0, 0.06)",
   },
+  triggerKvKeyStack: {
+    flexShrink: 0,
+    gap: 2,
+  },
   triggerKvKey: {
     color: palette.muted,
     fontSize: 13,
     fontWeight: "600",
     flexShrink: 0,
     lineHeight: 20,
+  },
+  triggerKvPrice: {
+    color: palette.ink,
+    fontSize: 12,
+    fontWeight: "600",
+    lineHeight: 16,
   },
   triggerKvValue: {
     color: palette.ink,
@@ -514,12 +524,6 @@ const styles = StyleSheet.create({
     color: palette.muted,
     fontSize: 13,
     fontWeight: "700",
-  },
-  triggerGapBlock: {
-    marginTop: 12,
-    paddingTop: 12,
-    borderTopWidth: 1,
-    borderTopColor: "rgba(0, 0, 0, 0.06)",
   },
   triggerGapHint: {
     marginTop: 12,

@@ -2,10 +2,15 @@ import React from "react";
 import { Text, TextInput, View, Pressable } from "react-native";
 import styles from "../../styles";
 
-export default function StepField({ label, value, onChangeText, onStepDown, onStepUp }) {
+export default function StepField({ label, labelAccessory, value, onChangeText, onStepDown, onStepUp }) {
   return (
     <View style={styles.field}>
-      <Text style={styles.fieldLabel}>{label}</Text>
+      {label || labelAccessory ? (
+        <View style={styles.fieldLabelRow}>
+          {label ? <Text style={styles.fieldLabel}>{label}</Text> : null}
+          {labelAccessory}
+        </View>
+      ) : null}
       <View style={styles.stepInputRow}>
         <TextInput
           style={styles.stepInput}

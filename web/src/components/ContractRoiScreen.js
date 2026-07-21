@@ -21,17 +21,17 @@ const RISK_REWARD_QUICK = ["1:1", "1:2", "1:3", "1:4", "1:5"];
 const MARGIN_QUICK = ["5", "10", "15", "20"];
 
 const defaultForm = {
-  entryPrice: "",
-  currentPrice: "",
+  entryPrice: "66714.9",
+  currentPrice: "66660",
   leverage: "100",
   targetRoi: "100",
   riskReward: "1:3",
   takeProfitPrice: "",
   stopLossPrice: "",
-  quantity: "",
+  quantity: "10",
 };
 
-function HoverTip({ text }) {
+function HoverTip({ text, accessibilityLabel = "说明" }) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -40,7 +40,7 @@ function HoverTip({ text }) {
         onPress={() => setOpen((value) => !value)}
         style={styles.hoverTipTrigger}
         accessibilityRole="button"
-        accessibilityLabel="盈亏比说明"
+        accessibilityLabel={accessibilityLabel}
       >
         <Text style={styles.hoverTipTriggerText}>?</Text>
       </Pressable>
@@ -92,6 +92,7 @@ function syncTakeProfitFromRoi(form, side) {
     leverage: form.leverage && Number(form.leverage) > 0 ? form.leverage : "100",
     targetRoi: form.targetRoi === "" || form.targetRoi === undefined ? "100" : form.targetRoi,
     riskReward: form.riskReward || "1:3",
+    quantity: form.quantity === "" || form.quantity === undefined ? "10" : form.quantity,
   };
   const derived = calculatePricesFromRoi(nextForm.entryPrice, nextForm.leverage, nextForm.targetRoi, side);
   if (!derived) {
@@ -278,7 +279,13 @@ export default function ContractRoiScreen({ addHistory, prefill, isDesktop }) {
               })}
             </View>
             <StepField
-              label="目标回报率（%）"
+              label="目标回报率"
+              labelAccessory={
+                <HoverTip
+                  text="可与止盈价格互相换算"
+                  accessibilityLabel="目标回报率说明"
+                />
+              }
               value={form.targetRoi}
               onChangeText={changeRoi}
               onStepDown={() => stepRoi(-10)}
@@ -301,7 +308,12 @@ export default function ContractRoiScreen({ addHistory, prefill, isDesktop }) {
             <Field label="止盈价格" value={form.takeProfitPrice} onChangeText={changeTakeProfitPrice} />
             <Field
               label="盈亏比"
-              labelAccessory={<HoverTip text="盈亏比越大止损越近，越小止损越远" />}
+              labelAccessory={
+                <HoverTip
+                  text="可与止损价格互相换算。盈亏比越大止损越近，越小止损越远"
+                  accessibilityLabel="盈亏比说明"
+                />
+              }
               value={form.riskReward}
               onChangeText={changeRiskReward}
               placeholder="1:3"
@@ -325,7 +337,6 @@ export default function ContractRoiScreen({ addHistory, prefill, isDesktop }) {
               label="止损价格"
               value={form.stopLossPrice}
               onChangeText={changeStopLossPrice}
-              placeholder="改止损会反推盈亏比"
             />
           </View>
         </View>
@@ -353,12 +364,18 @@ export default function ContractRoiScreen({ addHistory, prefill, isDesktop }) {
               {result ? (
                 <GapKvRows
                   label="距开仓价"
+                  price={formatUsdt(result.entryPrice)}
                   gap={buildEntryGap(result.entryPrice, result.takeProfitPrice)}
                   spaced
                 />
               ) : null}
               {result?.gapToTakeProfit ? (
-                <GapKvRows label="距当前价" gap={result.gapToTakeProfit} spaced />
+                <GapKvRows
+                  label={reachLabel("止盈", result.gapToTakeProfit.direction)}
+                  gap={result.gapToTakeProfit}
+                  spaced
+                  signed={false}
+                />
               ) : null}
             </View>
           </View>
@@ -406,11 +423,17 @@ export default function ContractRoiScreen({ addHistory, prefill, isDesktop }) {
                 <>
                   <GapKvRows
                     label="距开仓价"
+                    price={formatUsdt(result.entryPrice)}
                     gap={buildEntryGap(result.entryPrice, result.stopLossPrice)}
                     spaced
                   />
                   {result.gapToStopLoss ? (
-                    <GapKvRows label="距当前价" gap={result.gapToStopLoss} spaced />
+                    <GapKvRows
+                      label={reachLabel("止损", result.gapToStopLoss.direction)}
+                      gap={result.gapToStopLoss}
+                      spaced
+                      signed={false}
+                    />
                   ) : null}
                 </>
               ) : (
@@ -498,23 +521,32 @@ function buildEntryGap(entryPrice, targetPrice) {
   };
 }
 
-function formatGapAmount(gap) {
-  const sign = gap.direction === "up" ? "+" : gap.direction === "down" ? "-" : "";
+function reachLabel(targetName, direction) {
+  if (direction === "up") return `到${targetName}还需涨`;
+  if (direction === "down") return `到${targetName}还需跌`;
+  return `已到${targetName}`;
+}
+
+function formatGapAmount(gap, { signed = true } = {}) {
+  const sign = signed ? (gap.direction === "up" ? "+" : gap.direction === "down" ? "-" : "") : "";
   return `${sign}${formatUsdt(gap.amount)}`;
 }
 
-function formatGapPercent(gap) {
-  const sign = gap.direction === "up" ? "+" : gap.direction === "down" ? "-" : "";
+function formatGapPercent(gap, { signed = true } = {}) {
+  const sign = signed ? (gap.direction === "up" ? "+" : gap.direction === "down" ? "-" : "") : "";
   return `${sign}${formatNumber(gap.percent)}%`;
 }
 
-function GapKvRows({ label, gap, spaced }) {
+function GapKvRows({ label, price, gap, spaced, signed = true }) {
   return (
     <View style={[styles.triggerKvRow, spaced && styles.triggerKvRowSpaced]}>
-      <Text style={styles.triggerKvKey}>{label}</Text>
+      <View style={styles.triggerKvKeyStack}>
+        <Text style={styles.triggerKvKey}>{label}</Text>
+        {price ? <Text style={styles.triggerKvPrice}>{price}</Text> : null}
+      </View>
       <View style={styles.triggerKvValueStack}>
-        <Text style={styles.triggerKvValue}>{formatGapAmount(gap)}</Text>
-        <Text style={styles.triggerKvPercent}>{formatGapPercent(gap)}</Text>
+        <Text style={styles.triggerKvPercent}>{formatGapPercent(gap, { signed })}</Text>
+        <Text style={styles.triggerKvValue}>{formatGapAmount(gap, { signed })}</Text>
       </View>
     </View>
   );
