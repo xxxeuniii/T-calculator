@@ -638,6 +638,14 @@ const styles = StyleSheet.create({
     textAlign: "right",
     flex: 1,
   },
+  metricKvValuePlain: {
+    color: palette.ink,
+    fontSize: 15,
+    lineHeight: 22,
+    fontWeight: "400",
+    textAlign: "right",
+    flex: 1,
+  },
   roiCard: {
     flex: 1,
     minWidth: 0,

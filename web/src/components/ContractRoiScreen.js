@@ -384,9 +384,9 @@ export default function ContractRoiScreen({ addHistory, prefill, isDesktop }) {
                 </View>
               </View>
             ) : null}
-            <View style={styles.gapCard}>
-              <Text style={styles.gapCardTitle}>当前持仓</Text>
-              {result?.hasCurrentPrice ? (
+            {result?.hasCurrentPrice ? (
+              <View style={styles.gapCard}>
+                <Text style={styles.gapCardTitle}>当前持仓</Text>
                 <View style={styles.roiCardRow}>
                   <View
                     style={[
@@ -431,10 +431,8 @@ export default function ContractRoiScreen({ addHistory, prefill, isDesktop }) {
                     </Text>
                   </View>
                 </View>
-              ) : (
-                <Text style={styles.gapEmpty}>填写当前价格后，显示未实现盈亏和当前回报率</Text>
-              )}
-            </View>
+              </View>
+            ) : null}
           </View>
         </View>
       </View>
@@ -449,12 +447,6 @@ export default function ContractRoiScreen({ addHistory, prefill, isDesktop }) {
             <View style={styles.triggerKvList}>
               <View style={[styles.roiCardRow, styles.triggerMetricRow]}>
                 <View style={styles.roiCard}>
-                  <Text style={styles.roiCardLabel}>回报率</Text>
-                  <Text style={[styles.roiCardValue, result ? styles.gapUpText : null]}>
-                    {result ? `+${formatNumber(result.takeProfitRoi)}%` : "--"}
-                  </Text>
-                </View>
-                <View style={styles.roiCard}>
                   <Text style={styles.roiCardLabel}>预计收益</Text>
                   <Text
                     style={[
@@ -463,6 +455,12 @@ export default function ContractRoiScreen({ addHistory, prefill, isDesktop }) {
                     ]}
                   >
                     {result?.notionalValue ? `+${formatUsdt(result.estimatedProfit)}` : "--"}
+                  </Text>
+                </View>
+                <View style={styles.roiCard}>
+                  <Text style={styles.roiCardLabel}>回报率</Text>
+                  <Text style={[styles.roiCardValue, result ? styles.gapUpText : null]}>
+                    {result ? `+${formatNumber(result.takeProfitRoi)}%` : "--"}
                   </Text>
                 </View>
               </View>
@@ -493,17 +491,6 @@ export default function ContractRoiScreen({ addHistory, prefill, isDesktop }) {
             <View style={styles.triggerKvList}>
               <View style={[styles.roiCardRow, styles.triggerMetricRow]}>
                 <View style={styles.roiCard}>
-                  <Text style={styles.roiCardLabel}>亏损率</Text>
-                  <Text
-                    style={[
-                      styles.roiCardValue,
-                      result?.hasStopLoss ? styles.gapDownText : null,
-                    ]}
-                  >
-                    {result?.hasStopLoss ? `-${formatNumber(result.stopLossRoi)}%` : "--"}
-                  </Text>
-                </View>
-                <View style={styles.roiCard}>
                   <Text style={styles.roiCardLabel}>预计亏损</Text>
                   <Text
                     style={[
@@ -514,6 +501,17 @@ export default function ContractRoiScreen({ addHistory, prefill, isDesktop }) {
                     {result?.hasStopLoss && result?.notionalValue
                       ? formatUsdt(result.estimatedLoss)
                       : "--"}
+                  </Text>
+                </View>
+                <View style={styles.roiCard}>
+                  <Text style={styles.roiCardLabel}>亏损率</Text>
+                  <Text
+                    style={[
+                      styles.roiCardValue,
+                      result?.hasStopLoss ? styles.gapDownText : null,
+                    ]}
+                  >
+                    {result?.hasStopLoss ? `-${formatNumber(result.stopLossRoi)}%` : "--"}
                   </Text>
                 </View>
               </View>
@@ -578,7 +576,7 @@ function EntryGapMetric({ targetName, gap, spaced }) {
       <View style={styles.metricKvList}>
         <View style={styles.metricKvRow}>
           <Text style={styles.metricKvKey}>{`到${targetName}触发价`}</Text>
-          <Text style={styles.metricKvValue}>{formatGapPercent(gap)}</Text>
+          <Text style={styles.metricKvValuePlain}>{formatGapPercent(gap)}</Text>
         </View>
         <View style={styles.metricKvRow}>
           <Text style={styles.metricKvKey}>价差</Text>
@@ -621,7 +619,7 @@ function ReachMetric({ targetName, gap, spaced, currentRoi, unrealizedPnl }) {
       <View style={styles.metricKvList}>
         <View style={styles.metricKvRow}>
           <Text style={styles.metricKvKey}>{rateLabel}</Text>
-          <Text style={styles.metricKvValue}>{rateValue}</Text>
+          <Text style={styles.metricKvValuePlain}>{rateValue}</Text>
         </View>
         <View style={styles.metricKvRow}>
           <Text style={styles.metricKvKey}>{amountLabel}</Text>
