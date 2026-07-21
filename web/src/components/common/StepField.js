@@ -7,16 +7,15 @@ export default function StepField({ label, value, onChangeText, onStepDown, onSt
     <View style={styles.field}>
       <Text style={styles.fieldLabel}>{label}</Text>
       <View style={styles.stepInputRow}>
-        <Pressable onPress={onStepDown} style={styles.stepButton}>
-          <Text style={styles.stepButtonText}>−</Text>
-        </Pressable>
         <TextInput
           style={styles.stepInput}
           value={value}
           onChangeText={onChangeText}
           keyboardType="decimal-pad"
-          textAlign="center"
         />
+        <Pressable onPress={onStepDown} style={styles.stepButton}>
+          <Text style={styles.stepButtonText}>−</Text>
+        </Pressable>
         <Pressable onPress={onStepUp} style={styles.stepButton}>
           <Text style={styles.stepButtonText}>+</Text>
         </Pressable>

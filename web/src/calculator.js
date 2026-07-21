@@ -85,46 +85,186 @@ function calculateTrailingContract(values) {
   };
 }
 
+function calculateRoiFromPrice(entryPrice, leverage, price, side, kind) {
+  const entry = toNumber(entryPrice);
+  const lev = toNumber(leverage);
+  const target = toNumber(price);
+  if (!entry || !lev || lev <= 0 || !target) return null;
+
+  const moveRatio =
+    kind === "stop"
+      ? side === "short"
+        ? (target - entry) / entry
+        : (entry - target) / entry
+      : side === "short"
+        ? (entry - target) / entry
+        : (target - entry) / entry;
+
+  return moveRatio * lev * 100;
+}
+
+function calculatePricesFromRoi(entryPrice, leverage, targetRoi, side) {
+  const entry = toNumber(entryPrice);
+  const lev = toNumber(leverage);
+  const roi = toNumber(targetRoi);
+  if (!entry || !lev || lev <= 0 || !roi) return null;
+
+  const priceMoveAmount = entry * (roi / lev / 100);
+  return {
+    takeProfitPrice: side === "short" ? entry - priceMoveAmount : entry + priceMoveAmount,
+    priceMoveAmount,
+    priceMovePercent: roi / lev,
+  };
+}
+
+function parseRiskRewardRatio(value) {
+  if (value === null || value === undefined) return null;
+  const text = String(value).trim();
+  if (!text) return null;
+
+  const match = text.match(/^(\d+(?:\.\d+)?)\s*[:：/]\s*(\d+(?:\.\d+)?)$/);
+  if (match) {
+    const left = Number(match[1]);
+    const right = Number(match[2]);
+    if (!left || !right) return null;
+    return right / left;
+  }
+
+  const single = Number(text);
+  return Number.isFinite(single) && single > 0 ? single : null;
+}
+
+function formatRiskRewardRatio(multiple) {
+  if (typeof multiple !== "number" || !Number.isFinite(multiple) || multiple <= 0) return "";
+  return `1:${Number(multiple.toFixed(2))}`;
+}
+
+function calculateStopLossFromRiskReward(entryPrice, takeProfitPrice, side, riskReward) {
+  const entry = toNumber(entryPrice);
+  const takeProfit = toNumber(takeProfitPrice);
+  const multiple = typeof riskReward === "number" ? riskReward : parseRiskRewardRatio(riskReward);
+  if (!entry || !takeProfit || !multiple) return null;
+
+  const rewardDistance = Math.abs(takeProfit - entry);
+  const riskDistance = rewardDistance / multiple;
+  return side === "short" ? entry + riskDistance : entry - riskDistance;
+}
+
+function calculateRiskRewardFromPrices(entryPrice, takeProfitPrice, stopLossPrice) {
+  const entry = toNumber(entryPrice);
+  const takeProfit = toNumber(takeProfitPrice);
+  const stopLoss = toNumber(stopLossPrice);
+  if (!entry || !takeProfit || !stopLoss) return null;
+
+  const rewardDistance = Math.abs(takeProfit - entry);
+  const riskDistance = Math.abs(stopLoss - entry);
+  if (!riskDistance) return null;
+  return rewardDistance / riskDistance;
+}
+
 function calculateRoiContract(values) {
   const entryPrice = toNumber(values.entryPrice);
   const leverage = toNumber(values.leverage);
-  const targetRoi = toNumber(values.targetRoi);
   const quantity = toNumber(values.quantity);
   const currentPrice = toNumber(values.currentPrice);
   const side = values.side === "short" ? "short" : "long";
   const symbol = typeof values.symbol === "string" ? values.symbol.trim() : "";
 
-  if (!entryPrice || !leverage || leverage <= 0 || !targetRoi) {
+  let takeProfitPrice = toNumber(values.takeProfitPrice);
+  let stopLossPrice = toNumber(values.stopLossPrice);
+  let targetRoi = toNumber(values.targetRoi);
+  let riskRewardMultiple = parseRiskRewardRatio(values.riskReward);
+
+  if (!entryPrice || !leverage || leverage <= 0) {
     return null;
   }
 
-  const priceMovePercent = targetRoi / leverage;
-  const priceMoveDecimal = priceMovePercent / 100;
-  const priceMoveAmount = entryPrice * priceMoveDecimal;
-  const takeProfitPrice =
-    side === "short" ? entryPrice - priceMoveAmount : entryPrice + priceMoveAmount;
-  const stopLossPrice =
-    side === "short" ? entryPrice + priceMoveAmount : entryPrice - priceMoveAmount;
-  const estimatedProfit = quantity ? quantity * priceMoveDecimal : 0;
-  const estimatedLoss = quantity ? -quantity * priceMoveDecimal : 0;
+  if (!takeProfitPrice && targetRoi) {
+    const derived = calculatePricesFromRoi(entryPrice, leverage, targetRoi, side);
+    if (derived) {
+      takeProfitPrice = derived.takeProfitPrice;
+    }
+  }
+
+  if (!takeProfitPrice) {
+    return null;
+  }
+
+  if (!stopLossPrice && riskRewardMultiple) {
+    const derivedStop = calculateStopLossFromRiskReward(
+      entryPrice,
+      takeProfitPrice,
+      side,
+      riskRewardMultiple
+    );
+    if (derivedStop !== null) {
+      stopLossPrice = derivedStop;
+    }
+  }
+
+  const takeProfitRoi = calculateRoiFromPrice(entryPrice, leverage, takeProfitPrice, side, "take");
+  if (takeProfitRoi === null) {
+    return null;
+  }
+
+  const stopLossRoi = stopLossPrice
+    ? calculateRoiFromPrice(entryPrice, leverage, stopLossPrice, side, "stop")
+    : null;
+
+  if (!targetRoi) {
+    targetRoi = takeProfitRoi;
+  }
+
+  if (stopLossPrice && !riskRewardMultiple) {
+    riskRewardMultiple = calculateRiskRewardFromPrices(entryPrice, takeProfitPrice, stopLossPrice);
+  } else if (stopLossPrice && riskRewardMultiple) {
+    const measured = calculateRiskRewardFromPrices(entryPrice, takeProfitPrice, stopLossPrice);
+    if (measured !== null) {
+      riskRewardMultiple = measured;
+    }
+  }
+
+  const takeProfitMoveAmount = Math.abs(takeProfitPrice - entryPrice);
+  const stopLossMoveAmount = stopLossPrice ? Math.abs(stopLossPrice - entryPrice) : 0;
+  const takeProfitMovePercent = (takeProfitMoveAmount / entryPrice) * 100;
+  const stopLossMovePercent = stopLossPrice ? (stopLossMoveAmount / entryPrice) * 100 : 0;
+  const notionalValue = quantity ? quantity * leverage : 0;
+  const estimatedProfit = notionalValue ? notionalValue * (takeProfitRoi / 100 / leverage) : 0;
+  const estimatedLoss =
+    notionalValue && stopLossRoi !== null ? -notionalValue * (stopLossRoi / 100 / leverage) : 0;
 
   let gapToTakeProfit = null;
   let gapToStopLoss = null;
+  let currentRoi = null;
+  let unrealizedPnl = null;
+  let currentMovePercent = null;
+
   if (currentPrice > 0) {
+    const moveRatio =
+      side === "short"
+        ? (entryPrice - currentPrice) / entryPrice
+        : (currentPrice - entryPrice) / entryPrice;
+    currentRoi = moveRatio * leverage * 100;
+    currentMovePercent = moveRatio * 100;
+    unrealizedPnl = notionalValue ? notionalValue * moveRatio : null;
+
     const tpDiff = takeProfitPrice - currentPrice;
-    const slDiff = stopLossPrice - currentPrice;
     gapToTakeProfit = {
       amount: Math.abs(tpDiff),
       percent: (Math.abs(tpDiff) / currentPrice) * 100,
       direction: tpDiff > 0 ? "up" : tpDiff < 0 ? "down" : "flat",
       signedAmount: tpDiff,
     };
-    gapToStopLoss = {
-      amount: Math.abs(slDiff),
-      percent: (Math.abs(slDiff) / currentPrice) * 100,
-      direction: slDiff > 0 ? "up" : slDiff < 0 ? "down" : "flat",
-      signedAmount: slDiff,
-    };
+
+    if (stopLossPrice) {
+      const slDiff = stopLossPrice - currentPrice;
+      gapToStopLoss = {
+        amount: Math.abs(slDiff),
+        percent: (Math.abs(slDiff) / currentPrice) * 100,
+        direction: slDiff > 0 ? "up" : slDiff < 0 ? "down" : "flat",
+        signedAmount: slDiff,
+      };
+    }
   }
 
   return {
@@ -134,11 +274,25 @@ function calculateRoiContract(values) {
     currentPrice: currentPrice || 0,
     leverage,
     targetRoi,
+    takeProfitRoi,
+    stopLossRoi,
+    riskRewardMultiple: riskRewardMultiple || 0,
+    riskRewardLabel: riskRewardMultiple ? formatRiskRewardRatio(riskRewardMultiple) : "",
     quantity,
-    priceMovePercent,
-    priceMoveAmount,
+    notionalValue,
+    priceMovePercent: takeProfitMovePercent,
+    priceMoveAmount: takeProfitMoveAmount,
+    takeProfitMoveAmount,
+    stopLossMoveAmount,
+    takeProfitMovePercent,
+    stopLossMovePercent,
     takeProfitPrice,
-    stopLossPrice,
+    stopLossPrice: stopLossPrice || 0,
+    hasStopLoss: Boolean(stopLossPrice),
+    hasCurrentPrice: currentPrice > 0,
+    currentRoi,
+    currentMovePercent,
+    unrealizedPnl,
     estimatedProfit,
     estimatedLoss,
     gapToTakeProfit,
@@ -152,6 +306,12 @@ module.exports = {
   STAMP_TAX_RATE,
   calculateCommission,
   calculateTrailingContract,
+  calculateRoiFromPrice,
+  calculatePricesFromRoi,
+  parseRiskRewardRatio,
+  formatRiskRewardRatio,
+  calculateStopLossFromRiskReward,
+  calculateRiskRewardFromPrices,
   calculateRoiContract,
   calculateTrade,
 };
