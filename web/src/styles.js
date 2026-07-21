@@ -323,6 +323,12 @@ const styles = StyleSheet.create({
     fontWeight: "800",
     marginBottom: 4,
   },
+  gapCardPrice: {
+    color: palette.ink,
+    fontSize: 16,
+    fontWeight: "700",
+    marginBottom: 2,
+  },
   gapCardHeader: {
     flexDirection: "row",
     alignItems: "center",
@@ -607,6 +613,30 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     gap: 16,
     marginTop: 10,
+  },
+  metricKvList: {
+    marginTop: 6,
+    gap: 8,
+  },
+  metricKvRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 12,
+  },
+  metricKvKey: {
+    color: palette.muted,
+    fontSize: 13,
+    fontWeight: "600",
+    flexShrink: 0,
+  },
+  metricKvValue: {
+    color: palette.ink,
+    fontSize: 16,
+    lineHeight: 22,
+    fontWeight: "800",
+    textAlign: "right",
+    flex: 1,
   },
   roiCard: {
     flex: 1,
