@@ -31,6 +31,28 @@ const defaultForm = {
   quantity: "",
 };
 
+function HoverTip({ text }) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <View style={styles.hoverTipWrap}>
+      <Pressable
+        onPress={() => setOpen((value) => !value)}
+        style={styles.hoverTipTrigger}
+        accessibilityRole="button"
+        accessibilityLabel="盈亏比说明"
+      >
+        <Text style={styles.hoverTipTriggerText}>?</Text>
+      </Pressable>
+      {open ? (
+        <View style={styles.hoverTipBubble} pointerEvents="none">
+          <Text style={styles.hoverTipText}>{text}</Text>
+        </View>
+      ) : null}
+    </View>
+  );
+}
+
 function formatPriceInput(value) {
   if (typeof value !== "number" || !Number.isFinite(value)) return "";
   return Number(value.toFixed(2)).toString();
@@ -94,21 +116,6 @@ export default function ContractRoiScreen({ addHistory, prefill, isDesktop }) {
 
   const result = useMemo(() => calculateRoiContract({ ...form, side }), [form, side]);
   const sideText = side === "long" ? "做多" : "做空";
-
-  const descriptionLines = result
-    ? result.hasStopLoss
-      ? [
-          `${sideText} ${result.leverage}x`,
-          `止盈价 ${formatUsdt(result.takeProfitPrice)}（+${formatNumber(result.takeProfitRoi)}%）`,
-          `止损价 ${formatUsdt(result.stopLossPrice)}（亏损 ${formatNumber(result.stopLossRoi)}%）`,
-          `盈亏比 ${result.riskRewardLabel || form.riskReward || "--"}`,
-        ]
-      : [
-          `${sideText} ${result.leverage}x`,
-          `止盈价 ${formatUsdt(result.takeProfitPrice)}（回报率 ${formatNumber(result.takeProfitRoi)}%）`,
-          "可填盈亏比自动算止损，或手填止损反推盈亏比",
-        ]
-    : ["输入开仓价后，用回报率算出止盈价", "盈亏比默认 1:3，可与止损价互相换算"];
 
   useEffect(() => {
     if (!prefill) return;
@@ -250,7 +257,7 @@ export default function ContractRoiScreen({ addHistory, prefill, isDesktop }) {
             <Field label="当前价格" value={form.currentPrice} onChangeText={(value) => updateField("currentPrice", value)} />
             <Field label="杠杆" value={form.leverage} onChangeText={changeLeverage} placeholder="默认 100" />
             <StepField
-              label="保证金（可选）"
+              label="保证金"
               value={form.quantity}
               onChangeText={(value) => updateField("quantity", value)}
               onStepDown={() => stepQuantity(-1)}
@@ -293,7 +300,8 @@ export default function ContractRoiScreen({ addHistory, prefill, isDesktop }) {
             </View>
             <Field label="止盈价格" value={form.takeProfitPrice} onChangeText={changeTakeProfitPrice} />
             <Field
-              label="盈亏比（默认 1:3）"
+              label="盈亏比"
+              labelAccessory={<HoverTip text="盈亏比越大止损越近，越小止损越远" />}
               value={form.riskReward}
               onChangeText={changeRiskReward}
               placeholder="1:3"
@@ -320,43 +328,37 @@ export default function ContractRoiScreen({ addHistory, prefill, isDesktop }) {
               placeholder="改止损会反推盈亏比"
             />
           </View>
-
-          <View style={styles.feeRow}>
-            <Text style={styles.feeChip}>盈亏比越大止损越近，越小止损越远</Text>
-          </View>
         </View>
       </View>
 
       <View style={{ width: isDesktop ? "48%" : "100%", maxWidth: isDesktop ? 420 : "100%" }}>
         <View style={styles.resultPanel}>
           <View style={[styles.triggerCard, styles.triggerCardGain]}>
-            <Text style={styles.triggerCardLabel}>止盈触发价</Text>
-            <Text style={[styles.triggerCardValue, styles.gapUpText]}>
-              {result ? formatUsdt(result.takeProfitPrice) : "--"}
-            </Text>
-            <View style={[styles.gapMetrics, styles.triggerStatsRow]}>
-              <View style={styles.gapMetricItem}>
-                <Text style={styles.gapMetricLabel}>回报率</Text>
-                <Text style={[styles.gapMetricValue, styles.gapUpText]}>
-                  {result ? `+${formatNumber(result.takeProfitRoi)}%` : "--"}
-                </Text>
-              </View>
-              <View style={styles.gapMetricItem}>
-                <Text style={styles.gapMetricLabel}>预计收益</Text>
-                <Text style={[styles.gapMetricValue, result?.notionalValue ? styles.gapUpText : null]}>
-                  {result?.notionalValue ? `+${formatUsdt(result.estimatedProfit)}` : "--"}
-                </Text>
-              </View>
+            <View style={styles.triggerHeroRow}>
+              <Text style={styles.triggerKvKey}>止盈触发价</Text>
+              <Text style={[styles.triggerHeroValue, styles.gapUpText]}>
+                {result ? formatUsdt(result.takeProfitPrice) : "--"}
+              </Text>
             </View>
-            <View style={styles.triggerGapBlock}>
+            <View style={styles.triggerKvList}>
+              <KvRow
+                label="回报率"
+                value={result ? `+${formatNumber(result.takeProfitRoi)}%` : "--"}
+              />
+              <KvRow
+                label="预计收益"
+                value={result?.notionalValue ? `+${formatUsdt(result.estimatedProfit)}` : "--"}
+                valueStyle={result?.notionalValue ? styles.gapUpText : null}
+              />
               {result ? (
-                <GapLine
+                <GapKvRows
                   label="距开仓价"
                   gap={buildEntryGap(result.entryPrice, result.takeProfitPrice)}
+                  spaced
                 />
               ) : null}
               {result?.gapToTakeProfit ? (
-                <GapLine label="距当前价" gap={result.gapToTakeProfit} spaced />
+                <GapKvRows label="距当前价" gap={result.gapToTakeProfit} spaced />
               ) : null}
             </View>
           </View>
@@ -373,44 +375,48 @@ export default function ContractRoiScreen({ addHistory, prefill, isDesktop }) {
           </View>
 
           <View style={[styles.triggerCard, styles.triggerCardLoss]}>
-            <Text style={styles.triggerCardLabel}>止损触发价</Text>
-            <Text style={[styles.triggerCardValue, result?.hasStopLoss ? styles.gapDownText : null]}>
-              {result?.hasStopLoss ? formatUsdt(result.stopLossPrice) : "--"}
-            </Text>
-            <View style={[styles.gapMetrics, styles.triggerStatsRow]}>
-              <View style={styles.gapMetricItem}>
-                <Text style={styles.gapMetricLabel}>亏损率</Text>
-                <Text style={[styles.gapMetricValue, result?.hasStopLoss ? styles.gapDownText : null]}>
-                  {result?.hasStopLoss ? `-${formatNumber(result.stopLossRoi)}%` : "--"}
-                </Text>
-              </View>
-              <View style={styles.gapMetricItem}>
-                <Text style={styles.gapMetricLabel}>预计亏损</Text>
-                <Text
-                  style={[
-                    styles.gapMetricValue,
-                    result?.hasStopLoss && result?.notionalValue ? styles.gapDownText : null,
-                  ]}
-                >
-                  {result?.hasStopLoss && result?.notionalValue
-                    ? formatUsdt(result.estimatedLoss)
-                    : "--"}
-                </Text>
-              </View>
+            <View style={styles.triggerHeroRow}>
+              <Text style={styles.triggerKvKey}>止损触发价</Text>
+              <Text
+                style={[
+                  styles.triggerHeroValue,
+                  result?.hasStopLoss ? styles.gapDownText : null,
+                ]}
+              >
+                {result?.hasStopLoss ? formatUsdt(result.stopLossPrice) : "--"}
+              </Text>
             </View>
-            {result?.hasStopLoss ? (
-              <View style={styles.triggerGapBlock}>
-                <GapLine
-                  label="距开仓价"
-                  gap={buildEntryGap(result.entryPrice, result.stopLossPrice)}
-                />
-                {result.gapToStopLoss ? (
-                  <GapLine label="距当前价" gap={result.gapToStopLoss} spaced />
-                ) : null}
-              </View>
-            ) : (
-              <Text style={styles.triggerGapHint}>设置止损价后显示差距</Text>
-            )}
+            <View style={styles.triggerKvList}>
+              <KvRow
+                label="亏损率"
+                value={result?.hasStopLoss ? `-${formatNumber(result.stopLossRoi)}%` : "--"}
+              />
+              <KvRow
+                label="预计亏损"
+                value={
+                  result?.hasStopLoss && result?.notionalValue
+                    ? formatUsdt(result.estimatedLoss)
+                    : "--"
+                }
+                valueStyle={
+                  result?.hasStopLoss && result?.notionalValue ? styles.gapDownText : null
+                }
+              />
+              {result?.hasStopLoss ? (
+                <>
+                  <GapKvRows
+                    label="距开仓价"
+                    gap={buildEntryGap(result.entryPrice, result.stopLossPrice)}
+                    spaced
+                  />
+                  {result.gapToStopLoss ? (
+                    <GapKvRows label="距当前价" gap={result.gapToStopLoss} spaced />
+                  ) : null}
+                </>
+              ) : (
+                <Text style={styles.triggerGapHintInline}>设置止损价后显示差距</Text>
+              )}
+            </View>
           </View>
 
           <View style={[styles.gapCard, styles.triggerCardSpaced]}>
@@ -470,13 +476,6 @@ export default function ContractRoiScreen({ addHistory, prefill, isDesktop }) {
             <Metric label="保证金" value={form.quantity ? `${form.quantity} USDT` : "--"} />
           </View>
 
-          <View style={styles.formulaBox}>
-            {descriptionLines.map((line) => (
-              <Text key={line} style={styles.formulaLine}>
-                {line}
-              </Text>
-            ))}
-          </View>
           <Pressable onPress={saveContract} style={[styles.confirmButton, !result && styles.disabledButton]}>
             <Text style={styles.confirmText}>确认并存入历史</Text>
           </Pressable>
@@ -499,29 +498,35 @@ function buildEntryGap(entryPrice, targetPrice) {
   };
 }
 
-function GapLine({ label, gap, spaced }) {
-  const toneStyle = gap.direction === "up" ? styles.gapUpText : gap.direction === "down" ? styles.gapDownText : null;
+function formatGapAmount(gap) {
   const sign = gap.direction === "up" ? "+" : gap.direction === "down" ? "-" : "";
+  return `${sign}${formatUsdt(gap.amount)}`;
+}
 
+function formatGapPercent(gap) {
+  const sign = gap.direction === "up" ? "+" : gap.direction === "down" ? "-" : "";
+  return `${sign}${formatNumber(gap.percent)}%`;
+}
+
+function GapKvRows({ label, gap, spaced }) {
   return (
-    <View style={[styles.gapBlock, spaced && styles.gapRowSpaced]}>
-      <Text style={styles.gapLabel}>{label}</Text>
-      <View style={styles.gapMetrics}>
-        <View style={styles.gapMetricItem}>
-          <Text style={styles.gapMetricLabel}>价差</Text>
-          <Text style={[styles.gapMetricValue, toneStyle]}>
-            {sign}
-            {formatUsdt(gap.amount)}
-          </Text>
-        </View>
-        <View style={styles.gapMetricItem}>
-          <Text style={styles.gapMetricLabel}>涨跌幅</Text>
-          <Text style={[styles.gapMetricValue, toneStyle]}>
-            {sign}
-            {formatNumber(gap.percent)}%
-          </Text>
-        </View>
+    <View style={[styles.triggerKvRow, spaced && styles.triggerKvRowSpaced]}>
+      <Text style={styles.triggerKvKey}>{label}</Text>
+      <View style={styles.triggerKvValueStack}>
+        <Text style={styles.triggerKvValue}>{formatGapAmount(gap)}</Text>
+        <Text style={styles.triggerKvPercent}>{formatGapPercent(gap)}</Text>
       </View>
+    </View>
+  );
+}
+
+function KvRow({ label, value, spaced, valueStyle }) {
+  return (
+    <View style={[styles.triggerKvRow, spaced && styles.triggerKvRowSpaced]}>
+      <Text style={styles.triggerKvKey}>{label}</Text>
+      <Text style={[styles.triggerKvValue, valueStyle && styles.triggerKvValueAccent, valueStyle]}>
+        {value}
+      </Text>
     </View>
   );
 }
