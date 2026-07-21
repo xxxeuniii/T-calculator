@@ -16,6 +16,7 @@ import {
 const { calculateTrade, calculateTrailingContract } = require("./calculator");
 import KlineCountScreen from "./components/KlineCountScreen";
 import SessionHoursScreen from "./components/SessionHoursScreen";
+import ContractRoiScreen from "./components/ContractRoiScreen";
 
 const palette = {
   ink: "#151515",
@@ -462,7 +463,7 @@ function HistoryScreen({ history, clearHistory, onSelectHistory, isDesktop }) {
       </View>
 
       {history.length === 0 ? (
-        <Text style={styles.emptyText}>还没有记录。做T或合约页点“确认并存入历史”后会出现在这里。</Text>
+        <Text style={styles.emptyText}>还没有记录。做T、合约或止盈止损页点“确认并存入历史”后会出现在这里。</Text>
       ) : (
         <View style={{ flexDirection: isDesktop ? "row" : "column", flexWrap: "wrap", gap: isDesktop ? 24 : 0 }}>
           {history.map((item) => (
@@ -505,6 +506,7 @@ const screenOptions = [
   { label: "盘口时间", value: "sessions" },
   { label: "股票", value: "trade" },
   { label: "合约", value: "contract" },
+  { label: "止盈止损", value: "contractRoi" },
   { label: "数K线", value: "klineCount" },
   { label: "历史", value: "history" },
 ];
@@ -531,6 +533,7 @@ export default function App() {
   const [history, setHistory] = useState(loadHistory);
   const [tradePrefill, setTradePrefill] = useState(null);
   const [contractPrefill, setContractPrefill] = useState(null);
+  const [contractRoiPrefill, setContractRoiPrefill] = useState(null);
 
   function addHistory(record) {
     const time = new Date().toLocaleString("zh-CN", {
@@ -574,6 +577,12 @@ export default function App() {
     if (item.screen === "contract") {
       setContractPrefill({ id: item.id, side: item.side, form: item.form });
       setScreen("contract");
+      return;
+    }
+
+    if (item.screen === "contractRoi") {
+      setContractRoiPrefill({ id: item.id, side: item.side, form: item.form });
+      setScreen("contractRoi");
     }
   }
 
@@ -615,6 +624,7 @@ export default function App() {
           }}>
             {screen === "trade" && <TradeCalculator addHistory={addHistory} prefill={tradePrefill} isDesktop={isDesktop} />}
             {screen === "contract" && <ContractCalculator addHistory={addHistory} prefill={contractPrefill} isDesktop={isDesktop} />}
+            {screen === "contractRoi" && <ContractRoiScreen addHistory={addHistory} prefill={contractRoiPrefill} isDesktop={isDesktop} />}
             {screen === "klineCount" && <KlineCountScreen isDesktop={isDesktop} />}
             {screen === "sessions" && <SessionHoursScreen isDesktop={isDesktop} />}
             {screen === "history" && <HistoryScreen history={history} clearHistory={clearHistory} onSelectHistory={selectHistory} isDesktop={isDesktop} />}

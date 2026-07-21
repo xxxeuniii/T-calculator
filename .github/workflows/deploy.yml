@@ -60,7 +60,8 @@ jobs:
 
             # 容器刚起来时 nginx 可能尚未就绪，重试探测
             for i in 1 2 3 4 5 6 7 8 9 10; do
-              if curl -fsS -o /dev/null http://127.0.0.1:3002/t-calculator/; then
+              if curl -fsS -o /dev/null http://127.0.0.1:3002/t-calculator/ \
+                && curl -fsS -o /dev/null http://127.0.0.1:3002/trade-tool/; then
                 echo "healthcheck ok (attempt $i)"
                 exit 0
               fi

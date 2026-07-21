@@ -85,11 +85,73 @@ function calculateTrailingContract(values) {
   };
 }
 
+function calculateRoiContract(values) {
+  const entryPrice = toNumber(values.entryPrice);
+  const leverage = toNumber(values.leverage);
+  const targetRoi = toNumber(values.targetRoi);
+  const quantity = toNumber(values.quantity);
+  const currentPrice = toNumber(values.currentPrice);
+  const side = values.side === "short" ? "short" : "long";
+  const symbol = typeof values.symbol === "string" ? values.symbol.trim() : "";
+
+  if (!entryPrice || !leverage || leverage <= 0 || !targetRoi) {
+    return null;
+  }
+
+  const priceMovePercent = targetRoi / leverage;
+  const priceMoveDecimal = priceMovePercent / 100;
+  const priceMoveAmount = entryPrice * priceMoveDecimal;
+  const takeProfitPrice =
+    side === "short" ? entryPrice - priceMoveAmount : entryPrice + priceMoveAmount;
+  const stopLossPrice =
+    side === "short" ? entryPrice + priceMoveAmount : entryPrice - priceMoveAmount;
+  const estimatedProfit = quantity ? quantity * priceMoveDecimal : 0;
+  const estimatedLoss = quantity ? -quantity * priceMoveDecimal : 0;
+
+  let gapToTakeProfit = null;
+  let gapToStopLoss = null;
+  if (currentPrice > 0) {
+    const tpDiff = takeProfitPrice - currentPrice;
+    const slDiff = stopLossPrice - currentPrice;
+    gapToTakeProfit = {
+      amount: Math.abs(tpDiff),
+      percent: (Math.abs(tpDiff) / currentPrice) * 100,
+      direction: tpDiff > 0 ? "up" : tpDiff < 0 ? "down" : "flat",
+      signedAmount: tpDiff,
+    };
+    gapToStopLoss = {
+      amount: Math.abs(slDiff),
+      percent: (Math.abs(slDiff) / currentPrice) * 100,
+      direction: slDiff > 0 ? "up" : slDiff < 0 ? "down" : "flat",
+      signedAmount: slDiff,
+    };
+  }
+
+  return {
+    side,
+    symbol,
+    entryPrice,
+    currentPrice: currentPrice || 0,
+    leverage,
+    targetRoi,
+    quantity,
+    priceMovePercent,
+    priceMoveAmount,
+    takeProfitPrice,
+    stopLossPrice,
+    estimatedProfit,
+    estimatedLoss,
+    gapToTakeProfit,
+    gapToStopLoss,
+  };
+}
+
 module.exports = {
   COMMISSION_RATE,
   MIN_COMMISSION,
   STAMP_TAX_RATE,
   calculateCommission,
   calculateTrailingContract,
+  calculateRoiContract,
   calculateTrade,
 };
