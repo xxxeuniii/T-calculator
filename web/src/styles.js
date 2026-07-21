@@ -487,6 +487,9 @@ const styles = StyleSheet.create({
     marginTop: 14,
     gap: 10,
   },
+  triggerMetricRow: {
+    marginTop: 0,
+  },
   triggerKvRow: {
     flexDirection: "row",
     alignItems: "flex-start",

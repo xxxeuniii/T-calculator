@@ -398,15 +398,25 @@ export default function ContractRoiScreen({ addHistory, prefill, isDesktop }) {
               </Text>
             </View>
             <View style={styles.triggerKvList}>
-              <KvRow
-                label="回报率"
-                value={result ? `+${formatNumber(result.takeProfitRoi)}%` : "--"}
-              />
-              <KvRow
-                label="预计收益"
-                value={result?.notionalValue ? `+${formatUsdt(result.estimatedProfit)}` : "--"}
-                valueStyle={result?.notionalValue ? styles.gapUpText : null}
-              />
+              <View style={[styles.roiCardRow, styles.triggerMetricRow]}>
+                <View style={styles.roiCard}>
+                  <Text style={styles.roiCardLabel}>回报率</Text>
+                  <Text style={[styles.roiCardValue, result ? styles.gapUpText : null]}>
+                    {result ? `+${formatNumber(result.takeProfitRoi)}%` : "--"}
+                  </Text>
+                </View>
+                <View style={styles.roiCard}>
+                  <Text style={styles.roiCardLabel}>预计收益</Text>
+                  <Text
+                    style={[
+                      styles.roiCardValue,
+                      result?.notionalValue ? styles.gapUpText : null,
+                    ]}
+                  >
+                    {result?.notionalValue ? `+${formatUsdt(result.estimatedProfit)}` : "--"}
+                  </Text>
+                </View>
+              </View>
               {result ? (
                 <GapKvRows
                   label="距开仓价"
@@ -442,21 +452,32 @@ export default function ContractRoiScreen({ addHistory, prefill, isDesktop }) {
               </Text>
             </View>
             <View style={styles.triggerKvList}>
-              <KvRow
-                label="亏损率"
-                value={result?.hasStopLoss ? `-${formatNumber(result.stopLossRoi)}%` : "--"}
-              />
-              <KvRow
-                label="预计亏损"
-                value={
-                  result?.hasStopLoss && result?.notionalValue
-                    ? formatUsdt(result.estimatedLoss)
-                    : "--"
-                }
-                valueStyle={
-                  result?.hasStopLoss && result?.notionalValue ? styles.gapDownText : null
-                }
-              />
+              <View style={[styles.roiCardRow, styles.triggerMetricRow]}>
+                <View style={styles.roiCard}>
+                  <Text style={styles.roiCardLabel}>亏损率</Text>
+                  <Text
+                    style={[
+                      styles.roiCardValue,
+                      result?.hasStopLoss ? styles.gapDownText : null,
+                    ]}
+                  >
+                    {result?.hasStopLoss ? `-${formatNumber(result.stopLossRoi)}%` : "--"}
+                  </Text>
+                </View>
+                <View style={styles.roiCard}>
+                  <Text style={styles.roiCardLabel}>预计亏损</Text>
+                  <Text
+                    style={[
+                      styles.roiCardValue,
+                      result?.hasStopLoss && result?.notionalValue ? styles.gapDownText : null,
+                    ]}
+                  >
+                    {result?.hasStopLoss && result?.notionalValue
+                      ? formatUsdt(result.estimatedLoss)
+                      : "--"}
+                  </Text>
+                </View>
+              </View>
               {result?.hasStopLoss ? (
                 <GapKvRows
                   label="距开仓价"
@@ -620,7 +641,7 @@ function ReachLabel({ targetName, direction, reached }) {
   if (direction === "up") {
     return (
       <Text style={styles.roiCardLabel}>
-        {`到${targetName}目标价还需`}
+        {`到${targetName}触发价还需`}
         <Text style={styles.gapUpText}>涨</Text>
       </Text>
     );
@@ -628,7 +649,7 @@ function ReachLabel({ targetName, direction, reached }) {
   if (direction === "down") {
     return (
       <Text style={styles.roiCardLabel}>
-        {`到${targetName}目标价还需`}
+        {`到${targetName}触发价还需`}
         <Text style={styles.gapDownText}>跌</Text>
       </Text>
     );
@@ -657,17 +678,6 @@ function GapKvRows({ label, price, gap, spaced, signed = true }) {
         <Text style={styles.triggerKvPercent}>{formatGapPercent(gap, { signed })}</Text>
         <Text style={styles.triggerKvValue}>{formatGapAmount(gap, { signed })}</Text>
       </View>
-    </View>
-  );
-}
-
-function KvRow({ label, value, spaced, valueStyle }) {
-  return (
-    <View style={[styles.triggerKvRow, spaced && styles.triggerKvRowSpaced]}>
-      <Text style={styles.triggerKvKey}>{label}</Text>
-      <Text style={[styles.triggerKvValue, valueStyle && styles.triggerKvValueAccent, valueStyle]}>
-        {value}
-      </Text>
     </View>
   );
 }
