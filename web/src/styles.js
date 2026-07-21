@@ -599,6 +599,25 @@ const styles = StyleSheet.create({
     lineHeight: 26,
     fontWeight: "900",
   },
+  roiCardSubValue: {
+    color: palette.ink,
+    fontSize: 14,
+    lineHeight: 20,
+    fontWeight: "700",
+    marginTop: 2,
+  },
+  reachStack: {
+    marginTop: 10,
+  },
+  reachStackItem: {
+    gap: 4,
+  },
+  reachStackItemSpaced: {
+    marginTop: 12,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: "rgba(0, 0, 0, 0.06)",
+  },
   metrics: {
     flexDirection: "row",
     flexWrap: "wrap",

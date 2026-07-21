@@ -140,11 +140,48 @@ const longRoiWithCurrent = calculateRoiContract({
 
 assert.ok(longRoiWithCurrent.gapToTakeProfit);
 assert.equal(longRoiWithCurrent.gapToTakeProfit.direction, "up");
+assert.equal(longRoiWithCurrent.gapToTakeProfit.reached, false);
 assert.equal(Number(longRoiWithCurrent.gapToTakeProfit.amount.toFixed(2)), 686.94);
 assert.equal(longRoiWithCurrent.gapToStopLoss.direction, "down");
+assert.equal(longRoiWithCurrent.gapToStopLoss.reached, false);
 assert.equal(Number(longRoiWithCurrent.gapToStopLoss.amount.toFixed(2)), 647.34);
 assert.equal(longRoiWithCurrent.hasCurrentPrice, true);
 assert.equal(Number(longRoiWithCurrent.currentRoi.toFixed(2)), -2.97);
+
+const shortPastTakeProfit = calculateRoiContract({
+  side: "short",
+  entryPrice: "66714.9",
+  currentPrice: "65000",
+  leverage: "100",
+  targetRoi: "100",
+  stopLossPrice: "66937.28",
+});
+assert.equal(shortPastTakeProfit.gapToTakeProfit.reached, true);
+assert.equal(shortPastTakeProfit.gapToTakeProfit.direction, "flat");
+assert.equal(shortPastTakeProfit.gapToStopLoss.reached, false);
+assert.equal(shortPastTakeProfit.gapToStopLoss.direction, "up");
+
+const longPastBoth = calculateRoiContract({
+  side: "long",
+  entryPrice: "66714",
+  currentPrice: "68000",
+  leverage: "100",
+  targetRoi: "100",
+  stopLossPrice: "66046.86",
+});
+assert.equal(longPastBoth.gapToTakeProfit.reached, true);
+assert.equal(longPastBoth.gapToStopLoss.reached, false);
+
+const longHitStopLoss = calculateRoiContract({
+  side: "long",
+  entryPrice: "66714",
+  currentPrice: "65000",
+  leverage: "100",
+  targetRoi: "100",
+  stopLossPrice: "66046.86",
+});
+assert.equal(longHitStopLoss.gapToTakeProfit.reached, false);
+assert.equal(longHitStopLoss.gapToStopLoss.reached, true);
 
 const unrealizedCase = calculateRoiContract({
   side: "long",

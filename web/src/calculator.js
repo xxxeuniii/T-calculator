@@ -249,19 +249,25 @@ function calculateRoiContract(values) {
     unrealizedPnl = notionalValue ? notionalValue * moveRatio : null;
 
     const tpDiff = takeProfitPrice - currentPrice;
+    const takeProfitReached =
+      side === "short" ? currentPrice <= takeProfitPrice : currentPrice >= takeProfitPrice;
     gapToTakeProfit = {
       amount: Math.abs(tpDiff),
       percent: (Math.abs(tpDiff) / currentPrice) * 100,
-      direction: tpDiff > 0 ? "up" : tpDiff < 0 ? "down" : "flat",
+      direction: takeProfitReached ? "flat" : tpDiff > 0 ? "up" : tpDiff < 0 ? "down" : "flat",
+      reached: takeProfitReached,
       signedAmount: tpDiff,
     };
 
     if (stopLossPrice) {
       const slDiff = stopLossPrice - currentPrice;
+      const stopLossReached =
+        side === "short" ? currentPrice >= stopLossPrice : currentPrice <= stopLossPrice;
       gapToStopLoss = {
         amount: Math.abs(slDiff),
         percent: (Math.abs(slDiff) / currentPrice) * 100,
-        direction: slDiff > 0 ? "up" : slDiff < 0 ? "down" : "flat",
+        direction: stopLossReached ? "flat" : slDiff > 0 ? "up" : slDiff < 0 ? "down" : "flat",
+        reached: stopLossReached,
         signedAmount: slDiff,
       };
     }

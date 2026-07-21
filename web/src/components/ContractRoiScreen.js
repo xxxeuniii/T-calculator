@@ -255,7 +255,6 @@ export default function ContractRoiScreen({ addHistory, prefill, isDesktop }) {
 
           <View style={styles.fieldGrid}>
             <Field label="开仓价格" value={form.entryPrice} onChangeText={changeEntryPrice} />
-            <Field label="当前价格" value={form.currentPrice} onChangeText={(value) => updateField("currentPrice", value)} />
             <Field label="杠杆" value={form.leverage} onChangeText={changeLeverage} placeholder="默认 100" />
             <StepField
               label="保证金"
@@ -338,6 +337,41 @@ export default function ContractRoiScreen({ addHistory, prefill, isDesktop }) {
               value={form.stopLossPrice}
               onChangeText={changeStopLossPrice}
             />
+            <Field label="当前价格" value={form.currentPrice} onChangeText={(value) => updateField("currentPrice", value)} />
+            {result?.hasCurrentPrice ? (
+              <View style={styles.gapCard}>
+                <Text style={styles.gapCardTitle}>距当前价</Text>
+                <View style={styles.reachStack}>
+                  {result.gapToTakeProfit ? (
+                    <ReachMetric
+                      targetName="止盈"
+                      gap={result.gapToTakeProfit}
+                      currentRoi={result.currentRoi}
+                      unrealizedPnl={result.unrealizedPnl}
+                    />
+                  ) : (
+                    <View style={styles.reachStackItem}>
+                      <Text style={styles.roiCardLabel}>到止盈</Text>
+                      <Text style={styles.gapEmpty}>填写止盈价格后显示</Text>
+                    </View>
+                  )}
+                  {result.gapToStopLoss ? (
+                    <ReachMetric
+                      targetName="止损"
+                      gap={result.gapToStopLoss}
+                      currentRoi={result.currentRoi}
+                      unrealizedPnl={result.unrealizedPnl}
+                      spaced
+                    />
+                  ) : (
+                    <View style={[styles.reachStackItem, styles.reachStackItemSpaced]}>
+                      <Text style={styles.roiCardLabel}>到止损</Text>
+                      <Text style={styles.gapEmpty}>填写止损价格后显示</Text>
+                    </View>
+                  )}
+                </View>
+              </View>
+            ) : null}
           </View>
         </View>
       </View>
@@ -367,14 +401,6 @@ export default function ContractRoiScreen({ addHistory, prefill, isDesktop }) {
                   price={formatUsdt(result.entryPrice)}
                   gap={buildEntryGap(result.entryPrice, result.takeProfitPrice)}
                   spaced
-                />
-              ) : null}
-              {result?.gapToTakeProfit ? (
-                <GapKvRows
-                  label={reachLabel("止盈", result.gapToTakeProfit.direction)}
-                  gap={result.gapToTakeProfit}
-                  spaced
-                  signed={false}
                 />
               ) : null}
             </View>
@@ -420,22 +446,12 @@ export default function ContractRoiScreen({ addHistory, prefill, isDesktop }) {
                 }
               />
               {result?.hasStopLoss ? (
-                <>
-                  <GapKvRows
-                    label="距开仓价"
-                    price={formatUsdt(result.entryPrice)}
-                    gap={buildEntryGap(result.entryPrice, result.stopLossPrice)}
-                    spaced
-                  />
-                  {result.gapToStopLoss ? (
-                    <GapKvRows
-                      label={reachLabel("止损", result.gapToStopLoss.direction)}
-                      gap={result.gapToStopLoss}
-                      spaced
-                      signed={false}
-                    />
-                  ) : null}
-                </>
+                <GapKvRows
+                  label="距开仓价"
+                  price={formatUsdt(result.entryPrice)}
+                  gap={buildEntryGap(result.entryPrice, result.stopLossPrice)}
+                  spaced
+                />
               ) : (
                 <Text style={styles.triggerGapHintInline}>设置止损价后显示差距</Text>
               )}
@@ -521,10 +537,91 @@ function buildEntryGap(entryPrice, targetPrice) {
   };
 }
 
-function reachLabel(targetName, direction) {
-  if (direction === "up") return `到${targetName}还需涨`;
-  if (direction === "down") return `到${targetName}还需跌`;
-  return `已到${targetName}`;
+function ReachMetric({ targetName, gap, spaced, currentRoi, unrealizedPnl }) {
+  const reached = gap.reached || gap.direction === "flat";
+  const isTakeProfit = targetName === "止盈";
+  const toneStyle = reached
+    ? isTakeProfit
+      ? styles.gapUpText
+      : styles.gapDownText
+    : gap.direction === "up"
+      ? styles.gapUpText
+      : gap.direction === "down"
+        ? styles.gapDownText
+        : null;
+
+  const rateLabel = reached ? (isTakeProfit ? "回报率" : "亏损率") : "涨跌幅";
+  const amountLabel = reached ? (isTakeProfit ? "利润" : "亏损") : "价差";
+
+  let rateValue = formatGapPercent(gap);
+  let amountValue = formatGapAmount(gap);
+
+  if (reached) {
+    if (typeof currentRoi === "number" && Number.isFinite(currentRoi)) {
+      const absRoi = Math.abs(currentRoi);
+      rateValue = isTakeProfit ? `+${formatNumber(absRoi)}%` : `-${formatNumber(absRoi)}%`;
+    } else {
+      rateValue = "--";
+    }
+
+    if (typeof unrealizedPnl === "number" && Number.isFinite(unrealizedPnl)) {
+      const absPnl = Math.abs(unrealizedPnl);
+      amountValue = isTakeProfit ? `+${formatUsdt(absPnl)}` : `-${formatUsdt(absPnl)}`;
+    } else {
+      amountValue = "填保证金后计算";
+    }
+  }
+
+  return (
+    <View style={[styles.reachStackItem, spaced && styles.reachStackItemSpaced]}>
+      <ReachLabel targetName={targetName} direction={gap.direction} reached={reached} />
+      <View style={styles.roiCardRow}>
+        <View style={styles.roiCard}>
+          <Text style={styles.roiCardLabel}>{rateLabel}</Text>
+          <Text style={[styles.roiCardValue, toneStyle]}>{rateValue}</Text>
+        </View>
+        <View style={styles.roiCard}>
+          <Text style={styles.roiCardLabel}>{amountLabel}</Text>
+          <Text
+            style={[
+              amountValue === "填保证金后计算" ? styles.gapEmpty : styles.roiCardValue,
+              amountValue === "填保证金后计算" ? null : toneStyle,
+            ]}
+          >
+            {amountValue}
+          </Text>
+        </View>
+      </View>
+    </View>
+  );
+}
+
+function ReachLabel({ targetName, direction, reached }) {
+  if (reached || direction === "flat") {
+    return (
+      <Text style={styles.roiCardLabel}>
+        当前价格已到
+        <Text style={targetName === "止盈" ? styles.gapUpText : styles.gapDownText}>{targetName}</Text>
+      </Text>
+    );
+  }
+  if (direction === "up") {
+    return (
+      <Text style={styles.roiCardLabel}>
+        {`到${targetName}还需`}
+        <Text style={styles.gapUpText}>涨</Text>
+      </Text>
+    );
+  }
+  if (direction === "down") {
+    return (
+      <Text style={styles.roiCardLabel}>
+        {`到${targetName}还需`}
+        <Text style={styles.gapDownText}>跌</Text>
+      </Text>
+    );
+  }
+  return <Text style={styles.roiCardLabel}>{`已到${targetName}`}</Text>;
 }
 
 function formatGapAmount(gap, { signed = true } = {}) {
@@ -541,7 +638,7 @@ function GapKvRows({ label, price, gap, spaced, signed = true }) {
   return (
     <View style={[styles.triggerKvRow, spaced && styles.triggerKvRowSpaced]}>
       <View style={styles.triggerKvKeyStack}>
-        <Text style={styles.triggerKvKey}>{label}</Text>
+        {typeof label === "string" ? <Text style={styles.triggerKvKey}>{label}</Text> : label}
         {price ? <Text style={styles.triggerKvPrice}>{price}</Text> : null}
       </View>
       <View style={styles.triggerKvValueStack}>
