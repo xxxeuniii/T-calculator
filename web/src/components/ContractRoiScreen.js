@@ -18,6 +18,7 @@ import Metric from "./common/Metric";
 
 const ROI_QUICK_RATES = ["50", "100", "150", "200", "300"];
 const RISK_REWARD_QUICK = ["1:1", "1:2", "1:3", "1:4", "1:5"];
+const MARGIN_QUICK = ["5", "10", "15", "20"];
 
 const defaultForm = {
   entryPrice: "",
@@ -94,11 +95,20 @@ export default function ContractRoiScreen({ addHistory, prefill, isDesktop }) {
   const result = useMemo(() => calculateRoiContract({ ...form, side }), [form, side]);
   const sideText = side === "long" ? "做多" : "做空";
 
-  const description = result
+  const descriptionLines = result
     ? result.hasStopLoss
-      ? `${sideText} ${result.leverage}x：止盈价 ${formatUsdt(result.takeProfitPrice)}（+${formatNumber(result.takeProfitRoi)}%），止损价 ${formatUsdt(result.stopLossPrice)}（亏损 ${formatNumber(result.stopLossRoi)}%），盈亏比 ${result.riskRewardLabel || form.riskReward || "--"}。`
-      : `${sideText} ${result.leverage}x：止盈价 ${formatUsdt(result.takeProfitPrice)}（回报率 ${formatNumber(result.takeProfitRoi)}%）。可填盈亏比自动算止损，或手填止损反推盈亏比。`
-    : "输入开仓价后，用回报率算出止盈价；盈亏比默认 1:3，可与止损价互相换算。";
+      ? [
+          `${sideText} ${result.leverage}x`,
+          `止盈价 ${formatUsdt(result.takeProfitPrice)}（+${formatNumber(result.takeProfitRoi)}%）`,
+          `止损价 ${formatUsdt(result.stopLossPrice)}（亏损 ${formatNumber(result.stopLossRoi)}%）`,
+          `盈亏比 ${result.riskRewardLabel || form.riskReward || "--"}`,
+        ]
+      : [
+          `${sideText} ${result.leverage}x`,
+          `止盈价 ${formatUsdt(result.takeProfitPrice)}（回报率 ${formatNumber(result.takeProfitRoi)}%）`,
+          "可填盈亏比自动算止损，或手填止损反推盈亏比",
+        ]
+    : ["输入开仓价后，用回报率算出止盈价", "盈亏比默认 1:3，可与止损价互相换算"];
 
   useEffect(() => {
     if (!prefill) return;
@@ -174,10 +184,14 @@ export default function ContractRoiScreen({ addHistory, prefill, isDesktop }) {
     changeRoi(Number(next.toFixed(0)).toString());
   }
 
-  function stepLeverage(delta) {
-    const current = Number(form.leverage) || 0;
-    const next = Math.max(1, current + delta);
-    changeLeverage(Number(next.toFixed(0)).toString());
+  function stepQuantity(delta) {
+    const current = Number(form.quantity) || 0;
+    const next = Math.max(0, current + delta);
+    updateField("quantity", Number(next.toFixed(2)).toString());
+  }
+
+  function quickQuantity(value) {
+    updateField("quantity", value);
   }
 
   function clearForm() {
@@ -232,15 +246,30 @@ export default function ContractRoiScreen({ addHistory, prefill, isDesktop }) {
           </View>
 
           <View style={styles.fieldGrid}>
-            <Field label="开仓价格（USDT）" value={form.entryPrice} onChangeText={changeEntryPrice} />
-            <Field label="当前价格（USDT）" value={form.currentPrice} onChangeText={(value) => updateField("currentPrice", value)} />
+            <Field label="开仓价格" value={form.entryPrice} onChangeText={changeEntryPrice} />
+            <Field label="当前价格" value={form.currentPrice} onChangeText={(value) => updateField("currentPrice", value)} />
+            <Field label="杠杆" value={form.leverage} onChangeText={changeLeverage} placeholder="默认 100" />
             <StepField
-              label="杠杆（默认 100x）"
-              value={form.leverage || "100"}
-              onChangeText={changeLeverage}
-              onStepDown={() => stepLeverage(-1)}
-              onStepUp={() => stepLeverage(1)}
+              label="保证金（可选）"
+              value={form.quantity}
+              onChangeText={(value) => updateField("quantity", value)}
+              onStepDown={() => stepQuantity(-1)}
+              onStepUp={() => stepQuantity(1)}
             />
+            <View style={styles.quickRates}>
+              {MARGIN_QUICK.map((amount) => {
+                const active = form.quantity === amount;
+                return (
+                  <Pressable
+                    key={amount}
+                    onPress={() => quickQuantity(amount)}
+                    style={[styles.quickRate, active && styles.quickRateActive]}
+                  >
+                    <Text style={[styles.quickRateText, active && styles.quickRateTextActive]}>{amount}</Text>
+                  </Pressable>
+                );
+              })}
+            </View>
             <StepField
               label="目标回报率（%）"
               value={form.targetRoi}
@@ -262,7 +291,7 @@ export default function ContractRoiScreen({ addHistory, prefill, isDesktop }) {
                 );
               })}
             </View>
-            <Field label="止盈价格（USDT）" value={form.takeProfitPrice} onChangeText={changeTakeProfitPrice} />
+            <Field label="止盈价格" value={form.takeProfitPrice} onChangeText={changeTakeProfitPrice} />
             <Field
               label="盈亏比（默认 1:3）"
               value={form.riskReward}
@@ -285,18 +314,15 @@ export default function ContractRoiScreen({ addHistory, prefill, isDesktop }) {
               })}
             </View>
             <Field
-              label="止损价格（USDT）"
+              label="止损价格"
               value={form.stopLossPrice}
               onChangeText={changeStopLossPrice}
               placeholder="改止损会反推盈亏比"
             />
-            <Field label="保证金（USDT，可选）" value={form.quantity} onChangeText={(value) => updateField("quantity", value)} />
           </View>
 
           <View style={styles.feeRow}>
-            <Text style={styles.feeChip}>盈亏比 1:3 = 收益是风险的 3 倍</Text>
             <Text style={styles.feeChip}>盈亏比越大止损越近，越小止损越远</Text>
-            <Text style={styles.feeChip}>改盈亏比算止损，改止损反推盈亏比</Text>
           </View>
         </View>
       </View>
@@ -308,28 +334,38 @@ export default function ContractRoiScreen({ addHistory, prefill, isDesktop }) {
             <Text style={[styles.triggerCardValue, styles.gapUpText]}>
               {result ? formatUsdt(result.takeProfitPrice) : "--"}
             </Text>
-            <View style={styles.triggerMetaRow}>
-              <Text style={[styles.triggerMetaText, styles.gapUpText]}>
-                回报率 {result ? `+${formatNumber(result.takeProfitRoi)}%` : "--"}
-              </Text>
-              <Text style={[styles.triggerMetaText, result?.notionalValue ? styles.gapUpText : null]}>
-                预计收益 {result?.notionalValue ? `+${formatUsdt(result.estimatedProfit)}` : "--"}
-              </Text>
-            </View>
-            {result?.gapToTakeProfit ? (
-              <View style={styles.triggerGapBlock}>
-                <GapLine label="距当前价" gap={result.gapToTakeProfit} />
+            <View style={[styles.gapMetrics, styles.triggerStatsRow]}>
+              <View style={styles.gapMetricItem}>
+                <Text style={styles.gapMetricLabel}>回报率</Text>
+                <Text style={[styles.gapMetricValue, styles.gapUpText]}>
+                  {result ? `+${formatNumber(result.takeProfitRoi)}%` : "--"}
+                </Text>
               </View>
-            ) : (
-              <Text style={styles.triggerGapHint}>填写当前价格后显示距止盈差距</Text>
-            )}
+              <View style={styles.gapMetricItem}>
+                <Text style={styles.gapMetricLabel}>预计收益</Text>
+                <Text style={[styles.gapMetricValue, result?.notionalValue ? styles.gapUpText : null]}>
+                  {result?.notionalValue ? `+${formatUsdt(result.estimatedProfit)}` : "--"}
+                </Text>
+              </View>
+            </View>
+            <View style={styles.triggerGapBlock}>
+              {result ? (
+                <GapLine
+                  label="距开仓价"
+                  gap={buildEntryGap(result.entryPrice, result.takeProfitPrice)}
+                />
+              ) : null}
+              {result?.gapToTakeProfit ? (
+                <GapLine label="距当前价" gap={result.gapToTakeProfit} spaced />
+              ) : null}
+            </View>
           </View>
 
           <View style={styles.riskRewardDivider}>
             <View style={styles.riskRewardLine} />
             <View style={styles.riskRewardBadge}>
               <Text style={styles.riskRewardBadgeLabel}>盈亏比</Text>
-              <Text style={styles.riskRewardBadgeValue}>
+              <Text style={styles.riskRewardBadgeValue} numberOfLines={1}>
                 {result?.riskRewardLabel || form.riskReward || "--"}
               </Text>
             </View>
@@ -341,63 +377,46 @@ export default function ContractRoiScreen({ addHistory, prefill, isDesktop }) {
             <Text style={[styles.triggerCardValue, result?.hasStopLoss ? styles.gapDownText : null]}>
               {result?.hasStopLoss ? formatUsdt(result.stopLossPrice) : "--"}
             </Text>
-            <View style={styles.triggerMetaRow}>
-              <Text style={[styles.triggerMetaText, result?.hasStopLoss ? styles.gapDownText : null]}>
-                亏损率 {result?.hasStopLoss ? `-${formatNumber(result.stopLossRoi)}%` : "--"}
-              </Text>
-              <Text style={[styles.triggerMetaText, result?.hasStopLoss && result?.notionalValue ? styles.gapDownText : null]}>
-                预计亏损{" "}
-                {result?.hasStopLoss && result?.notionalValue
-                  ? formatUsdt(result.estimatedLoss)
-                  : "--"}
-              </Text>
+            <View style={[styles.gapMetrics, styles.triggerStatsRow]}>
+              <View style={styles.gapMetricItem}>
+                <Text style={styles.gapMetricLabel}>亏损率</Text>
+                <Text style={[styles.gapMetricValue, result?.hasStopLoss ? styles.gapDownText : null]}>
+                  {result?.hasStopLoss ? `-${formatNumber(result.stopLossRoi)}%` : "--"}
+                </Text>
+              </View>
+              <View style={styles.gapMetricItem}>
+                <Text style={styles.gapMetricLabel}>预计亏损</Text>
+                <Text
+                  style={[
+                    styles.gapMetricValue,
+                    result?.hasStopLoss && result?.notionalValue ? styles.gapDownText : null,
+                  ]}
+                >
+                  {result?.hasStopLoss && result?.notionalValue
+                    ? formatUsdt(result.estimatedLoss)
+                    : "--"}
+                </Text>
+              </View>
             </View>
-            {result?.gapToStopLoss ? (
+            {result?.hasStopLoss ? (
               <View style={styles.triggerGapBlock}>
-                <GapLine label="距当前价" gap={result.gapToStopLoss} />
+                <GapLine
+                  label="距开仓价"
+                  gap={buildEntryGap(result.entryPrice, result.stopLossPrice)}
+                />
+                {result.gapToStopLoss ? (
+                  <GapLine label="距当前价" gap={result.gapToStopLoss} spaced />
+                ) : null}
               </View>
             ) : (
-              <Text style={styles.triggerGapHint}>
-                {result?.hasStopLoss ? "填写当前价格后显示距止损差距" : "设置止损价后显示差距"}
-              </Text>
+              <Text style={styles.triggerGapHint}>设置止损价后显示差距</Text>
             )}
           </View>
 
-          <View style={styles.roiCardRow}>
-            <View style={styles.roiCard}>
-              <Text style={styles.roiCardLabel}>所需涨跌幅</Text>
-              <Text style={styles.roiCardValue}>
-                {result ? `${formatNumber(result.takeProfitMovePercent)}%` : "--"}
-              </Text>
-            </View>
-            <View style={styles.roiCard}>
-              <Text style={styles.roiCardLabel}>止盈价差</Text>
-              <Text style={styles.roiCardValue}>
-                {result ? formatUsdt(result.takeProfitMoveAmount) : "--"}
-              </Text>
-            </View>
-          </View>
-
-          <View style={styles.gapCard}>
+          <View style={[styles.gapCard, styles.triggerCardSpaced]}>
             <Text style={styles.gapCardTitle}>当前持仓</Text>
             {result?.hasCurrentPrice ? (
               <View style={styles.roiCardRow}>
-                <View
-                  style={[
-                    styles.roiCard,
-                    result.currentRoi >= 0 ? styles.roiCardGain : styles.roiCardLoss,
-                  ]}
-                >
-                  <Text style={styles.roiCardLabel}>当前投资回报率</Text>
-                  <Text
-                    style={[
-                      styles.roiCardValue,
-                      result.currentRoi >= 0 ? styles.gapUpText : styles.gapDownText,
-                    ]}
-                  >
-                    {`${result.currentRoi >= 0 ? "+" : ""}${formatNumber(result.currentRoi)}%`}
-                  </Text>
-                </View>
                 <View
                   style={[
                     styles.roiCard,
@@ -424,6 +443,22 @@ export default function ContractRoiScreen({ addHistory, prefill, isDesktop }) {
                       : `${result.unrealizedPnl >= 0 ? "+" : ""}${formatUsdt(result.unrealizedPnl)}`}
                   </Text>
                 </View>
+                <View
+                  style={[
+                    styles.roiCard,
+                    result.currentRoi >= 0 ? styles.roiCardGain : styles.roiCardLoss,
+                  ]}
+                >
+                  <Text style={styles.roiCardLabel}>当前投资回报率</Text>
+                  <Text
+                    style={[
+                      styles.roiCardValue,
+                      result.currentRoi >= 0 ? styles.gapUpText : styles.gapDownText,
+                    ]}
+                  >
+                    {`${result.currentRoi >= 0 ? "+" : ""}${formatNumber(result.currentRoi)}%`}
+                  </Text>
+                </View>
               </View>
             ) : (
               <Text style={styles.gapEmpty}>填写当前价格后，显示未实现盈亏和当前回报率</Text>
@@ -433,12 +468,15 @@ export default function ContractRoiScreen({ addHistory, prefill, isDesktop }) {
           <View style={styles.metrics}>
             <Metric label="名义仓位" value={result?.notionalValue ? formatUsdt(result.notionalValue) : "--"} />
             <Metric label="保证金" value={form.quantity ? `${form.quantity} USDT` : "--"} />
-            <Metric label="方向" value={`${sideText} ${form.leverage || "--"}x`} />
-            <Metric label="开仓价" value={result ? formatUsdt(result.entryPrice) : "--"} />
-            <Metric label="当前价" value={result?.currentPrice ? formatUsdt(result.currentPrice) : "--"} />
           </View>
 
-          <Text style={styles.formula}>{description}</Text>
+          <View style={styles.formulaBox}>
+            {descriptionLines.map((line) => (
+              <Text key={line} style={styles.formulaLine}>
+                {line}
+              </Text>
+            ))}
+          </View>
           <Pressable onPress={saveContract} style={[styles.confirmButton, !result && styles.disabledButton]}>
             <Text style={styles.confirmText}>确认并存入历史</Text>
           </Pressable>
@@ -452,23 +490,38 @@ function formatNumber(value) {
   return typeof value === "number" && Number.isFinite(value) ? Number(value.toFixed(4)).toString() : "--";
 }
 
+function buildEntryGap(entryPrice, targetPrice) {
+  const diff = targetPrice - entryPrice;
+  return {
+    amount: Math.abs(diff),
+    percent: entryPrice ? (Math.abs(diff) / entryPrice) * 100 : 0,
+    direction: diff > 0 ? "up" : diff < 0 ? "down" : "flat",
+  };
+}
+
 function GapLine({ label, gap, spaced }) {
-  const toneStyle = gap.direction === "up" ? styles.gapUpText : gap.direction === "down" ? styles.gapDownText : styles.gapValue;
+  const toneStyle = gap.direction === "up" ? styles.gapUpText : gap.direction === "down" ? styles.gapDownText : null;
   const sign = gap.direction === "up" ? "+" : gap.direction === "down" ? "-" : "";
 
   return (
-    <>
-      <View style={[styles.gapRow, spaced && styles.gapRowSpaced]}>
-        <Text style={styles.gapLabel}>{label}</Text>
-        <Text style={[styles.gapValue, toneStyle]}>
-          {sign}
-          {formatUsdt(gap.amount)}
-        </Text>
+    <View style={[styles.gapBlock, spaced && styles.gapRowSpaced]}>
+      <Text style={styles.gapLabel}>{label}</Text>
+      <View style={styles.gapMetrics}>
+        <View style={styles.gapMetricItem}>
+          <Text style={styles.gapMetricLabel}>价差</Text>
+          <Text style={[styles.gapMetricValue, toneStyle]}>
+            {sign}
+            {formatUsdt(gap.amount)}
+          </Text>
+        </View>
+        <View style={styles.gapMetricItem}>
+          <Text style={styles.gapMetricLabel}>涨跌幅</Text>
+          <Text style={[styles.gapMetricValue, toneStyle]}>
+            {sign}
+            {formatNumber(gap.percent)}%
+          </Text>
+        </View>
       </View>
-      <Text style={[styles.gapSub, toneStyle]}>
-        {sign}
-        {formatNumber(gap.percent)}%
-      </Text>
-    </>
+    </View>
   );
 }
