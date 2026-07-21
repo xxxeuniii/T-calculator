@@ -21,8 +21,8 @@ const RISK_REWARD_QUICK = ["1:1", "1:2", "1:3", "1:4", "1:5"];
 const MARGIN_QUICK = ["5", "10", "15", "20"];
 
 const defaultForm = {
-  entryPrice: "66714.9",
-  currentPrice: "66660",
+  entryPrice: "",
+  currentPrice: "",
   leverage: "100",
   targetRoi: "100",
   riskReward: "1:3",
@@ -114,6 +114,7 @@ function syncTakeProfitFromRoi(form, side) {
 export default function ContractRoiScreen({ addHistory, prefill, isDesktop }) {
   const [side, setSide] = useState("long");
   const [form, setForm] = useState(() => syncTakeProfitFromRoi(defaultForm, "long"));
+  const [reachFocus, setReachFocus] = useState("takeProfit");
 
   const result = useMemo(() => calculateRoiContract({ ...form, side }), [form, side]);
   const sideText = side === "long" ? "做多" : "做空";
@@ -340,31 +341,42 @@ export default function ContractRoiScreen({ addHistory, prefill, isDesktop }) {
             <Field label="当前价格" value={form.currentPrice} onChangeText={(value) => updateField("currentPrice", value)} />
             {result?.hasCurrentPrice ? (
               <View style={styles.gapCard}>
-                <Text style={styles.gapCardTitle}>距当前价</Text>
+                <View style={styles.gapCardHeader}>
+                  <Text style={styles.gapCardTitleInline}>距当前价</Text>
+                  <Segment
+                    compact
+                    value={reachFocus}
+                    onChange={setReachFocus}
+                    items={[
+                      { label: "到止盈", value: "takeProfit" },
+                      { label: "到止损", value: "stopLoss" },
+                    ]}
+                  />
+                </View>
                 <View style={styles.reachStack}>
-                  {result.gapToTakeProfit ? (
-                    <ReachMetric
-                      targetName="止盈"
-                      gap={result.gapToTakeProfit}
-                      currentRoi={result.currentRoi}
-                      unrealizedPnl={result.unrealizedPnl}
-                    />
-                  ) : (
-                    <View style={styles.reachStackItem}>
-                      <Text style={styles.roiCardLabel}>到止盈</Text>
-                      <Text style={styles.gapEmpty}>填写止盈价格后显示</Text>
-                    </View>
-                  )}
-                  {result.gapToStopLoss ? (
+                  {reachFocus === "takeProfit" ? (
+                    result.gapToTakeProfit ? (
+                      <ReachMetric
+                        targetName="止盈"
+                        gap={result.gapToTakeProfit}
+                        currentRoi={result.currentRoi}
+                        unrealizedPnl={result.unrealizedPnl}
+                      />
+                    ) : (
+                      <View style={styles.reachStackItem}>
+                        <Text style={styles.roiCardLabel}>到止盈</Text>
+                        <Text style={styles.gapEmpty}>填写止盈价格后显示</Text>
+                      </View>
+                    )
+                  ) : result.gapToStopLoss ? (
                     <ReachMetric
                       targetName="止损"
                       gap={result.gapToStopLoss}
                       currentRoi={result.currentRoi}
                       unrealizedPnl={result.unrealizedPnl}
-                      spaced
                     />
                   ) : (
-                    <View style={[styles.reachStackItem, styles.reachStackItemSpaced]}>
+                    <View style={styles.reachStackItem}>
                       <Text style={styles.roiCardLabel}>到止损</Text>
                       <Text style={styles.gapEmpty}>填写止损价格后显示</Text>
                     </View>
@@ -608,7 +620,7 @@ function ReachLabel({ targetName, direction, reached }) {
   if (direction === "up") {
     return (
       <Text style={styles.roiCardLabel}>
-        {`到${targetName}还需`}
+        {`到${targetName}目标价还需`}
         <Text style={styles.gapUpText}>涨</Text>
       </Text>
     );
@@ -616,7 +628,7 @@ function ReachLabel({ targetName, direction, reached }) {
   if (direction === "down") {
     return (
       <Text style={styles.roiCardLabel}>
-        {`到${targetName}还需`}
+        {`到${targetName}目标价还需`}
         <Text style={styles.gapDownText}>跌</Text>
       </Text>
     );

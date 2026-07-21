@@ -156,6 +156,17 @@ const styles = StyleSheet.create({
   segmentTextActive: {
     color: "#f8fff5",
   },
+  segmentCompact: {
+    padding: 2,
+  },
+  segmentItemCompact: {
+    paddingVertical: 4,
+    paddingHorizontal: 10,
+  },
+  segmentTextCompact: {
+    fontSize: 12,
+    fontWeight: "700",
+  },
   clearButton: {
     borderWidth: 1,
     borderColor: "#e6e6e6",
@@ -311,6 +322,19 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "800",
     marginBottom: 4,
+  },
+  gapCardHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 10,
+    marginBottom: 4,
+  },
+  gapCardTitleInline: {
+    color: palette.ink,
+    fontSize: 14,
+    fontWeight: "800",
+    flexShrink: 0,
   },
   gapBlock: {
     gap: 6,
