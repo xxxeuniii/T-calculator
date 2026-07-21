@@ -20,7 +20,6 @@ const ROI_QUICK_RATES = ["50", "100", "150", "200", "300"];
 const RISK_REWARD_QUICK = ["1:1", "1:2", "1:3", "1:4", "1:5"];
 
 const defaultForm = {
-  symbol: "BTCUSDT",
   entryPrice: "",
   currentPrice: "",
   leverage: "100",
@@ -94,12 +93,11 @@ export default function ContractRoiScreen({ addHistory, prefill, isDesktop }) {
 
   const result = useMemo(() => calculateRoiContract({ ...form, side }), [form, side]);
   const sideText = side === "long" ? "做多" : "做空";
-  const symbolText = form.symbol.trim() || "合约";
 
   const description = result
     ? result.hasStopLoss
-      ? `${symbolText} ${sideText} ${result.leverage}x：止盈价 ${formatUsdt(result.takeProfitPrice)}（+${formatNumber(result.takeProfitRoi)}%），止损价 ${formatUsdt(result.stopLossPrice)}（亏损 ${formatNumber(result.stopLossRoi)}%），盈亏比 ${result.riskRewardLabel || form.riskReward || "--"}。`
-      : `${symbolText} ${sideText} ${result.leverage}x：止盈价 ${formatUsdt(result.takeProfitPrice)}（回报率 ${formatNumber(result.takeProfitRoi)}%）。可填盈亏比自动算止损，或手填止损反推盈亏比。`
+      ? `${sideText} ${result.leverage}x：止盈价 ${formatUsdt(result.takeProfitPrice)}（+${formatNumber(result.takeProfitRoi)}%），止损价 ${formatUsdt(result.stopLossPrice)}（亏损 ${formatNumber(result.stopLossRoi)}%），盈亏比 ${result.riskRewardLabel || form.riskReward || "--"}。`
+      : `${sideText} ${result.leverage}x：止盈价 ${formatUsdt(result.takeProfitPrice)}（回报率 ${formatNumber(result.takeProfitRoi)}%）。可填盈亏比自动算止损，或手填止损反推盈亏比。`
     : "输入开仓价后，用回报率算出止盈价；盈亏比默认 1:3，可与止损价互相换算。";
 
   useEffect(() => {
@@ -194,10 +192,9 @@ export default function ContractRoiScreen({ addHistory, prefill, isDesktop }) {
       form,
       isProfit: true,
       type: "止盈止损",
-      title: `${symbolText} ${sideText}`,
+      title: sideText,
       summary: `止盈价：${formatUsdt(result.takeProfitPrice)}`,
       detail: [
-        { label: "品种", value: symbolText },
         { label: "开仓价", value: formatUsdt(result.entryPrice) },
         { label: "当前价", value: result.currentPrice ? formatUsdt(result.currentPrice) : "--" },
         { label: "杠杆", value: `${result.leverage}x` },
@@ -235,14 +232,6 @@ export default function ContractRoiScreen({ addHistory, prefill, isDesktop }) {
           </View>
 
           <View style={styles.fieldGrid}>
-            <Field
-              label="品种"
-              value={form.symbol}
-              onChangeText={(value) => updateField("symbol", value.toUpperCase())}
-              placeholder="BTCUSDT"
-              keyboardType="default"
-              autoCapitalize="characters"
-            />
             <Field label="开仓价格（USDT）" value={form.entryPrice} onChangeText={changeEntryPrice} />
             <Field label="当前价格（USDT）" value={form.currentPrice} onChangeText={(value) => updateField("currentPrice", value)} />
             <StepField
@@ -327,6 +316,13 @@ export default function ContractRoiScreen({ addHistory, prefill, isDesktop }) {
                 预计收益 {result?.notionalValue ? `+${formatUsdt(result.estimatedProfit)}` : "--"}
               </Text>
             </View>
+            {result?.gapToTakeProfit ? (
+              <View style={styles.triggerGapBlock}>
+                <GapLine label="距当前价" gap={result.gapToTakeProfit} />
+              </View>
+            ) : (
+              <Text style={styles.triggerGapHint}>填写当前价格后显示距止盈差距</Text>
+            )}
           </View>
 
           <View style={styles.riskRewardDivider}>
@@ -356,6 +352,15 @@ export default function ContractRoiScreen({ addHistory, prefill, isDesktop }) {
                   : "--"}
               </Text>
             </View>
+            {result?.gapToStopLoss ? (
+              <View style={styles.triggerGapBlock}>
+                <GapLine label="距当前价" gap={result.gapToStopLoss} />
+              </View>
+            ) : (
+              <Text style={styles.triggerGapHint}>
+                {result?.hasStopLoss ? "填写当前价格后显示距止损差距" : "设置止损价后显示差距"}
+              </Text>
+            )}
           </View>
 
           <View style={styles.roiCardRow}>
@@ -425,22 +430,9 @@ export default function ContractRoiScreen({ addHistory, prefill, isDesktop }) {
             )}
           </View>
 
-          <View style={styles.gapCard}>
-            <Text style={styles.gapCardTitle}>距当前价格</Text>
-            {result?.gapToTakeProfit ? (
-              <>
-                <GapLine label="距止盈" gap={result.gapToTakeProfit} />
-                {result.gapToStopLoss ? <GapLine label="距止损" gap={result.gapToStopLoss} spaced /> : null}
-              </>
-            ) : (
-              <Text style={styles.gapEmpty}>填写当前价格后，显示距止盈还差多少</Text>
-            )}
-          </View>
-
           <View style={styles.metrics}>
             <Metric label="名义仓位" value={result?.notionalValue ? formatUsdt(result.notionalValue) : "--"} />
             <Metric label="保证金" value={form.quantity ? `${form.quantity} USDT` : "--"} />
-            <Metric label="品种" value={symbolText} />
             <Metric label="方向" value={`${sideText} ${form.leverage || "--"}x`} />
             <Metric label="开仓价" value={result ? formatUsdt(result.entryPrice) : "--"} />
             <Metric label="当前价" value={result?.currentPrice ? formatUsdt(result.currentPrice) : "--"} />

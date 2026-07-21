@@ -387,6 +387,21 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: "700",
   },
+  triggerGapBlock: {
+    marginTop: 12,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: "rgba(0, 0, 0, 0.06)",
+  },
+  triggerGapHint: {
+    marginTop: 12,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: "rgba(0, 0, 0, 0.06)",
+    color: palette.muted,
+    fontSize: 12,
+    fontWeight: "600",
+  },
   riskRewardDivider: {
     marginVertical: 14,
     flexDirection: "row",
