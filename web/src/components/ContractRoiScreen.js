@@ -87,14 +87,14 @@ function syncStopLossFromRiskReward(form, side) {
 }
 
 function syncTakeProfitFromRoi(form, side) {
+  const leverageForCalc = form.leverage && Number(form.leverage) > 0 ? form.leverage : "100";
   const nextForm = {
     ...form,
-    leverage: form.leverage && Number(form.leverage) > 0 ? form.leverage : "100",
     targetRoi: form.targetRoi === "" || form.targetRoi === undefined ? "100" : form.targetRoi,
     riskReward: form.riskReward || "1:3",
     quantity: form.quantity === "" || form.quantity === undefined ? "10" : form.quantity,
   };
-  const derived = calculatePricesFromRoi(nextForm.entryPrice, nextForm.leverage, nextForm.targetRoi, side);
+  const derived = calculatePricesFromRoi(nextForm.entryPrice, leverageForCalc, nextForm.targetRoi, side);
   if (!derived) {
     return {
       ...nextForm,
@@ -145,8 +145,7 @@ export default function ContractRoiScreen({ addHistory, prefill, isDesktop }) {
   }
 
   function changeLeverage(value) {
-    const normalized = value === "" ? "100" : value;
-    setForm((current) => syncTakeProfitFromRoi({ ...current, leverage: normalized }, side));
+    setForm((current) => syncTakeProfitFromRoi({ ...current, leverage: value }, side));
   }
 
   function changeRoi(value) {
