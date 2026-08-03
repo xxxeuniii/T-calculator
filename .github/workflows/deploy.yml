@@ -42,7 +42,7 @@ jobs:
             set -euo pipefail
             cd /opt/apps/t-calculator
 
-            # HTTPS 访问 github.com 在该机不稳定，强制走 SSH
+            # GitHub HTTPS access is unreliable on this server, so use SSH.
             git remote set-url origin git@github.com:xxxeuniii/T-calculator.git
             mkdir -p ~/.ssh
             chmod 700 ~/.ssh
@@ -58,7 +58,7 @@ jobs:
             sudo docker build -t t-calculator-frontend .
             sudo docker run -d --name t-calculator-frontend-1 -p 127.0.0.1:3002:80 t-calculator-frontend
 
-            # 容器刚起来时 nginx 可能尚未就绪，重试探测
+            # Nginx may need a moment to become ready after the container starts.
             for i in 1 2 3 4 5 6 7 8 9 10; do
               if curl -fsS -o /dev/null http://127.0.0.1:3002/t-calculator/ \
                 && curl -fsS -o /dev/null http://127.0.0.1:3002/trade-tool/; then
