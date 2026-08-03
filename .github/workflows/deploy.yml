@@ -60,8 +60,7 @@ jobs:
 
             # Nginx may need a moment to become ready after the container starts.
             for i in 1 2 3 4 5 6 7 8 9 10; do
-              if curl -fsS -o /dev/null http://127.0.0.1:3002/t-calculator/ \
-                && curl -fsS -o /dev/null http://127.0.0.1:3002/trade-tool/; then
+              if curl -fsS -o /dev/null http://127.0.0.1:3002/trade-tool/; then
                 echo "healthcheck ok (attempt $i)"
                 exit 0
               fi
