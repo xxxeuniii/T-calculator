@@ -17,6 +17,7 @@ const { calculateTrade, calculateTrailingContract } = require("./calculator");
 import KlineCountScreen from "./components/KlineCountScreen";
 import SessionHoursScreen from "./components/SessionHoursScreen";
 import ContractRoiScreen from "./components/ContractRoiScreen";
+import Mt5LiquidationScreen from "./components/Mt5LiquidationScreen";
 
 const palette = {
   ink: "#151515",
@@ -507,6 +508,7 @@ const screenOptions = [
   { label: "股票", value: "trade" },
   { label: "合约", value: "contract" },
   { label: "止盈止损", value: "contractRoi" },
+  { label: "MT5强平价", value: "mt5Liquidation" },
   { label: "数K线", value: "klineCount" },
   { label: "历史", value: "history" },
 ];
@@ -534,6 +536,7 @@ export default function App() {
   const [tradePrefill, setTradePrefill] = useState(null);
   const [contractPrefill, setContractPrefill] = useState(null);
   const [contractRoiPrefill, setContractRoiPrefill] = useState(null);
+  const [mt5LiquidationPrefill, setMt5LiquidationPrefill] = useState(null);
 
   function addHistory(record) {
     const time = new Date().toLocaleString("zh-CN", {
@@ -583,6 +586,12 @@ export default function App() {
     if (item.screen === "contractRoi") {
       setContractRoiPrefill({ id: item.id, side: item.side, form: item.form });
       setScreen("contractRoi");
+      return;
+    }
+
+    if (item.screen === "mt5Liquidation") {
+      setMt5LiquidationPrefill({ id: item.id, side: item.side, form: item.form });
+      setScreen("mt5Liquidation");
     }
   }
 
@@ -625,6 +634,7 @@ export default function App() {
             {screen === "trade" && <TradeCalculator addHistory={addHistory} prefill={tradePrefill} isDesktop={isDesktop} />}
             {screen === "contract" && <ContractCalculator addHistory={addHistory} prefill={contractPrefill} isDesktop={isDesktop} />}
             {screen === "contractRoi" && <ContractRoiScreen addHistory={addHistory} prefill={contractRoiPrefill} isDesktop={isDesktop} />}
+            {screen === "mt5Liquidation" && <Mt5LiquidationScreen addHistory={addHistory} prefill={mt5LiquidationPrefill} isDesktop={isDesktop} />}
             {screen === "klineCount" && <KlineCountScreen isDesktop={isDesktop} />}
             {screen === "sessions" && <SessionHoursScreen isDesktop={isDesktop} />}
             {screen === "history" && <HistoryScreen history={history} clearHistory={clearHistory} onSelectHistory={selectHistory} isDesktop={isDesktop} />}

@@ -465,6 +465,47 @@ const styles = StyleSheet.create({
     lineHeight: 36,
     fontWeight: "900",
   },
+  leverageBadge: {
+    borderWidth: 1,
+    borderColor: "#e0e0e0",
+    borderRadius: 999,
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+    backgroundColor: "#f7f7f7",
+  },
+  topRowRight: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  leverageBadgeText: {
+    color: palette.ink,
+    fontSize: 13,
+    fontWeight: "800",
+  },
+  marginLevelRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 12,
+  },
+  riskBadge: {
+    borderWidth: 1,
+    borderRadius: 999,
+    paddingVertical: 4,
+    paddingHorizontal: 10,
+    backgroundColor: "#ffffff",
+  },
+  riskBadgeText: {
+    fontSize: 13,
+    fontWeight: "800",
+  },
+  riskDesc: {
+    color: palette.muted,
+    fontSize: 12,
+    lineHeight: 18,
+    marginTop: 8,
+  },
   triggerHeroRow: {
     flexDirection: "row",
     alignItems: "baseline",

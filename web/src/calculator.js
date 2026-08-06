@@ -306,6 +306,119 @@ function calculateRoiContract(values) {
   };
 }
 
+function calculateMt5Liquidation(values) {
+  const entryPrice = toNumber(values.entryPrice);
+  const lotSize = toNumber(values.lotSize);
+  const balance = toNumber(values.balance);
+  const credit = toNumber(values.credit);
+  const currentPrice = toNumber(values.currentPrice);
+  const side = values.side === "short" ? "short" : "long";
+  const contractSize = values.contractSize ? toNumber(values.contractSize) : 100;
+  const leverage = 500;
+  const stopOutLevel = 0.2;
+
+  if (!entryPrice || !lotSize || lotSize <= 0) {
+    return null;
+  }
+
+  const positionValue = entryPrice * lotSize * contractSize;
+  const usedMargin = positionValue / leverage;
+
+  const hasCurrentPrice = currentPrice > 0;
+
+  let floatingPnl = 0;
+  let equity = balance + credit;
+  let availableMargin = 0;
+  let marginLevel = null;
+  let riskLevel = "unknown";
+
+  if (hasCurrentPrice) {
+    floatingPnl =
+      side === "short"
+        ? (entryPrice - currentPrice) * lotSize * contractSize
+        : (currentPrice - entryPrice) * lotSize * contractSize;
+    equity = balance + credit + floatingPnl;
+    availableMargin = equity - usedMargin;
+    marginLevel = usedMargin > 0 ? (equity / usedMargin) * 100 : null;
+
+    if (marginLevel !== null) {
+      if (marginLevel <= 20) {
+        riskLevel = "stopout";
+      } else if (marginLevel <= 50) {
+        riskLevel = "high";
+      } else if (marginLevel <= 150) {
+        riskLevel = "medium";
+      } else {
+        riskLevel = "low";
+      }
+    }
+  }
+
+  const drainRatio = 1 - stopOutLevel;
+  const priceMoveRatio = drainRatio / leverage;
+
+  const balanceCredit = balance + credit;
+  const lotContract = lotSize * contractSize;
+
+  let liquidationPrice;
+  if (side === "short") {
+    liquidationPrice =
+      entryPrice * (1 + priceMoveRatio) + (balanceCredit / lotContract);
+  } else {
+    liquidationPrice =
+      entryPrice * (1 - priceMoveRatio) - (balanceCredit / lotContract);
+  }
+
+  const simplifiedLiquidationPrice =
+    side === "short"
+      ? entryPrice * (1 + priceMoveRatio)
+      : entryPrice * (1 - priceMoveRatio);
+
+  const priceMoveAmount = Math.abs(liquidationPrice - entryPrice);
+  const priceMovePercent = (priceMoveAmount / entryPrice) * 100;
+
+  let gapToLiquidation = null;
+  if (hasCurrentPrice) {
+    const diff = liquidationPrice - currentPrice;
+    const reached =
+      side === "short" ? currentPrice >= liquidationPrice : currentPrice <= liquidationPrice;
+    gapToLiquidation = {
+      amount: Math.abs(diff),
+      percent: currentPrice > 0 ? (Math.abs(diff) / currentPrice) * 100 : 0,
+      direction: reached ? "flat" : diff > 0 ? "up" : diff < 0 ? "down" : "flat",
+      reached,
+      signedAmount: diff,
+    };
+  }
+
+  const lossAtStopOut = -usedMargin * drainRatio;
+
+  return {
+    side,
+    entryPrice,
+    lotSize,
+    balance,
+    credit,
+    currentPrice: currentPrice || 0,
+    leverage,
+    contractSize,
+    positionValue,
+    usedMargin,
+    floatingPnl,
+    equity,
+    availableMargin,
+    marginLevel,
+    riskLevel,
+    liquidationPrice,
+    simplifiedLiquidationPrice,
+    priceMoveAmount,
+    priceMovePercent,
+    lossAtStopOut,
+    hasCurrentPrice,
+    gapToLiquidation,
+  };
+}
+
 module.exports = {
   COMMISSION_RATE,
   MIN_COMMISSION,
@@ -320,4 +433,5 @@ module.exports = {
   calculateRiskRewardFromPrices,
   calculateRoiContract,
   calculateTrade,
+  calculateMt5Liquidation,
 };
