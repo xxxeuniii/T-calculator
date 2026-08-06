@@ -3,11 +3,11 @@ import { View, Text, Pressable } from "react-native";
 import { calculateTrailingContract } from "../../calculator";
 import { formatUsdt } from "../../utils";
 import styles from "./styles";
-import Field from "../common/Field";
-import StepField from "../common/StepField";
-import Segment from "../common/Segment";
-import Metric from "../common/Metric";
-import ProfitMetric from "../common/ProfitMetric";
+import Field from "../../components/common/Field";
+import StepField from "../../components/common/StepField";
+import Segment from "../../components/common/Segment";
+import Metric from "../../components/common/Metric";
+import ProfitMetric from "../../components/common/ProfitMetric";
 
 export default function ContractCalculator({ addHistory, prefill, isDesktop }) {
   const [side, setSide] = useState("long");

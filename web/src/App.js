@@ -14,13 +14,13 @@ import {
 import palette from "./styles/theme";
 import styles from "./AppStyles";
 
-import TradeCalculator from "./components/TradeCalculator";
-import ContractCalculator from "./components/ContractCalculator";
-import HistoryScreen from "./components/HistoryScreen";
-import KlineCountScreen from "./components/KlineCountScreen";
-import SessionHoursScreen from "./components/SessionHoursScreen";
-import ContractRoiScreen from "./components/ContractRoiScreen";
-import Mt5LiquidationScreen from "./components/Mt5LiquidationScreen";
+import TradeCalculator from "./pages/TradeCalculator";
+import ContractCalculator from "./pages/ContractCalculator";
+import HistoryScreen from "./pages/HistoryScreen";
+import KlineCountScreen from "./pages/KlineCountScreen";
+import SessionHoursScreen from "./pages/SessionHoursScreen";
+import ContractRoiScreen from "./pages/ContractRoiScreen";
+import Mt5LiquidationScreen from "./pages/Mt5LiquidationScreen";
 
 const screenOptions = [
   { label: "盘口时间", value: "sessions" },
