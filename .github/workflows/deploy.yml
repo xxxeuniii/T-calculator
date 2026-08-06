@@ -59,18 +59,20 @@ jobs:
           script_stop: true
           script: |
             set -euo pipefail
-            mkdir -p /opt/apps/t-calculator/web
-            cd /opt/apps/t-calculator/web
+            mkdir -p /opt/apps/trade-tool/web
+            cd /opt/apps/trade-tool/web
             tar -xzf /tmp/deploy.tar.gz
             rm -f /tmp/deploy.tar.gz
 
             # Use official nginx image + volume mount, no docker build needed.
             sudo docker pull nginx:1.27-alpine
+            # Clean up both legacy (t-calculator) and current (trade-tool) container names.
             sudo docker rm -f t-calculator-frontend-1 || true
-            sudo docker run -d --name t-calculator-frontend-1 \
+            sudo docker rm -f trade-tool-frontend-1 || true
+            sudo docker run -d --name trade-tool-frontend-1 \
               -p 127.0.0.1:3002:80 \
-              -v /opt/apps/t-calculator/web/dist:/usr/share/nginx/html:ro \
-              -v /opt/apps/t-calculator/web/nginx.conf:/etc/nginx/conf.d/default.conf:ro \
+              -v /opt/apps/trade-tool/web/dist:/usr/share/nginx/html:ro \
+              -v /opt/apps/trade-tool/web/nginx.conf:/etc/nginx/conf.d/default.conf:ro \
               nginx:1.27-alpine
 
             # Nginx may need a moment to become ready after the container starts.
@@ -82,5 +84,5 @@ jobs:
               sleep 1
             done
             echo "healthcheck failed"
-            sudo docker logs --tail 50 t-calculator-frontend-1 || true
+            sudo docker logs --tail 50 trade-tool-frontend-1 || true
             exit 1
