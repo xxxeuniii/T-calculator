@@ -1,7 +1,7 @@
 import React from "react";
 import { Text, View } from "react-native";
-import { formatUsdt } from "../../utils";
-import styles from "../../styles";
+import { formatUsdt } from "../../../utils";
+import styles from "./styles";
 
 export default function ProfitMetric({ value }) {
   const isPositive = value !== undefined && value >= 0;

@@ -1,19 +1,25 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { View, Text, Pressable } from "react-native";
-import { calculateMt5Liquidation } from "../calculator";
-import { formatUsdt } from "../utils";
-import styles from "../styles";
-import Field from "./common/Field";
-import StepField from "./common/StepField";
-import Segment from "./common/Segment";
-import Metric from "./common/Metric";
+import { View, Text, Pressable, Modal } from "react-native";
+import { calculateMt5Liquidation } from "../../calculator";
+import { formatUsdt } from "../../utils";
+import styles from "./styles";
+import Field from "../common/Field";
+import StepField from "../common/StepField";
+import Segment from "../common/Segment";
+import Metric from "../common/Metric";
 
 const LOT_QUICK = ["0.01", "0.10", "0.50", "1.00"];
 const BALANCE_QUICK = ["100", "500", "1000", "5000"];
 
+let _posId = 0;
+const nextId = () => { _posId += 1; return `pos_${_posId}`; };
+
+const defaultPosition = () => ({ id: nextId(), entryPrice: "", lotSize: "0.01" });
+
 const defaultForm = {
-  entryPrice: "4257.56",
-  lotSize: "0.01",
+  positions: [
+    { id: nextId(), entryPrice: "4257.56", lotSize: "0.01" },
+  ],
   balance: "350",
   credit: "",
   currentPrice: "4232.73",
@@ -45,31 +51,115 @@ function formatGapPercent(gap) {
   return `${sign}${formatNumber(gap.percent)}%`;
 }
 
+function aggregatePositions(positions) {
+  let totalValue = 0;
+  let totalLot = 0;
+  for (const p of positions) {
+    const price = Number(p.entryPrice) || 0;
+    const lot = Number(p.lotSize) || 0;
+    totalValue += price * lot;
+    totalLot += lot;
+  }
+  const avgEntry = totalLot > 0 ? totalValue / totalLot : 0;
+  return { avgEntry, totalLot };
+}
+
 export default function Mt5LiquidationScreen({ addHistory, prefill, isDesktop }) {
   const [side, setSide] = useState("long");
   const [form, setForm] = useState(defaultForm);
+  const [showMarginHelp, setShowMarginHelp] = useState(false);
 
-  const result = useMemo(() => calculateMt5Liquidation({ ...form, side }), [form, side]);
+  const { avgEntry, totalLot } = useMemo(
+    () => aggregatePositions(form.positions),
+    [form.positions]
+  );
+
+  const result = useMemo(
+    () =>
+      calculateMt5Liquidation({
+        entryPrice: avgEntry,
+        lotSize: totalLot,
+        balance: form.balance,
+        credit: form.credit,
+        currentPrice: form.currentPrice,
+        side,
+      }),
+    [avgEntry, totalLot, form.balance, form.credit, form.currentPrice, side]
+  );
+
   const sideText = side === "long" ? "做多" : "做空";
 
   useEffect(() => {
     if (!prefill) return;
     setSide(prefill.side || "long");
-    setForm({ ...defaultForm, ...prefill.form });
+    if (prefill.form) {
+      if (prefill.form.positions) {
+        const positions = prefill.form.positions.map((p) => ({
+          id: p.id || nextId(),
+          entryPrice: p.entryPrice || "",
+          lotSize: p.lotSize || "0.01",
+        }));
+        setForm({ ...defaultForm, ...prefill.form, positions });
+      } else {
+        setForm({
+          ...defaultForm,
+          balance: prefill.form.balance || defaultForm.balance,
+          credit: prefill.form.credit || "",
+          currentPrice: prefill.form.currentPrice || "",
+          positions: [
+            {
+              id: nextId(),
+              entryPrice: prefill.form.entryPrice || "",
+              lotSize: prefill.form.lotSize || "0.01",
+            },
+          ],
+        });
+      }
+    }
   }, [prefill]);
 
   function updateField(key, value) {
     setForm((current) => ({ ...current, [key]: value }));
   }
 
+  function updatePosition(index, key, value) {
+    setForm((current) => {
+      const positions = current.positions.map((p, i) =>
+        i === index ? { ...p, [key]: value } : p
+      );
+      return { ...current, positions };
+    });
+  }
+
+  function addPosition() {
+    setForm((current) => ({
+      ...current,
+      positions: [...current.positions, defaultPosition()],
+    }));
+  }
+
+  function removePosition(index) {
+    setForm((current) => {
+      if (current.positions.length <= 1) return current;
+      const positions = current.positions.filter((_, i) => i !== index);
+      return { ...current, positions };
+    });
+  }
+
   function changeSide(nextSide) {
     setSide(nextSide);
   }
 
-  function stepLotSize(delta) {
-    const current = Number(form.lotSize) || 0;
-    const next = Math.max(0.01, Number((current + delta).toFixed(2)));
-    updateField("lotSize", next.toString());
+  function stepLotSize(index, delta) {
+    setForm((current) => {
+      const positions = current.positions.map((p, i) => {
+        if (i !== index) return p;
+        const currentLot = Number(p.lotSize) || 0;
+        const next = Math.max(0.01, Number((currentLot + delta).toFixed(2)));
+        return { ...p, lotSize: next.toString() };
+      });
+      return { ...current, positions };
+    });
   }
 
   function stepBalance(delta) {
@@ -90,22 +180,28 @@ export default function Mt5LiquidationScreen({ addHistory, prefill, isDesktop })
 
   function saveLiquidation() {
     if (!result) return;
+    const posSummary = form.positions
+      .map((p, i) => `#${i + 1}: ${formatUsdt(Number(p.entryPrice))} × ${p.lotSize}手`)
+      .join("，");
     addHistory({
       screen: "mt5Liquidation",
       side,
       form,
       isProfit: false,
       type: "MT5强平",
-      title: sideText,
-      summary: `强平价：${formatUsdt(result.liquidationPrice)}`,
+      title: `${sideText} · ${form.positions.length}仓`,
+      summary: `均价：${formatUsdt(avgEntry)}，强平：${formatUsdt(result.liquidationPrice)}`,
       detail: [
-        { label: "开仓价", value: formatUsdt(result.entryPrice) },
-        { label: "手数", value: `${result.lotSize} 手` },
-        { label: "保证金", value: formatUsdt(result.usedMargin) },
+        { label: "加权均价", value: formatUsdt(avgEntry) },
+        { label: "总手数", value: `${formatNumber(totalLot, 2)} 手` },
+        { label: "仓位明细", value: posSummary },
         ...(result.hasCurrentPrice
           ? [
               { label: "净值", value: formatUsdt(result.equity) },
-              { label: "浮动盈亏", value: `${result.floatingPnl >= 0 ? "+" : ""}${formatUsdt(result.floatingPnl)}` },
+              {
+                label: "浮动盈亏",
+                value: `${result.floatingPnl >= 0 ? "+" : ""}${formatUsdt(result.floatingPnl)}`,
+              },
               { label: "保证金水平", value: `${formatNumber(result.marginLevel)}%` },
               { label: "可用保证金", value: formatUsdt(result.availableMargin) },
             ]
@@ -142,27 +238,64 @@ export default function Mt5LiquidationScreen({ addHistory, prefill, isDesktop })
           </View>
 
           <View style={styles.fieldGrid}>
-            <Field label="开仓价格 (USD)" value={form.entryPrice} onChangeText={(value) => updateField("entryPrice", value)} />
-            <StepField
-              label="交易手数"
-              value={form.lotSize}
-              onChangeText={(value) => updateField("lotSize", value)}
-              onStepDown={() => stepLotSize(-0.01)}
-              onStepUp={() => stepLotSize(0.01)}
-            />
-            <View style={styles.quickRates}>
-              {LOT_QUICK.map((value) => {
-                const active = form.lotSize === value;
-                return (
-                  <Pressable
-                    key={value}
-                    onPress={() => updateField("lotSize", value)}
-                    style={[styles.quickRate, active && styles.quickRateActive]}
-                  >
-                    <Text style={[styles.quickRateText, active && styles.quickRateTextActive]}>{value}</Text>
+            <View style={styles.positionCard}>
+              <View style={styles.positionCardHeader}>
+                <Text style={styles.positionCardTitle}>仓位 ({form.positions.length})</Text>
+                <View style={styles.positionCardHeaderRight}>
+                  <Text style={styles.positionTotalLot}>
+                    合计 {formatNumber(totalLot, 2)} 手
+                  </Text>
+                  <Pressable onPress={addPosition} style={styles.addPositionButton}>
+                    <Text style={styles.addPositionText}>+ 添加仓位</Text>
                   </Pressable>
-                );
-              })}
+                </View>
+              </View>
+
+              {form.positions.map((pos, index) => (
+                <View key={pos.id} style={styles.positionItem}>
+                  <View style={styles.positionItemHeader}>
+                    <Text style={styles.positionItemLabel}>#{index + 1} 仓</Text>
+                    {form.positions.length > 1 ? (
+                      <Pressable onPress={() => removePosition(index)} style={styles.removePositionButton}>
+                        <Text style={styles.removePositionText}>删除</Text>
+                      </Pressable>
+                    ) : null}
+                  </View>
+                  <Field
+                    label="开仓价格 (USD)"
+                    value={pos.entryPrice}
+                    onChangeText={(value) => updatePosition(index, "entryPrice", value)}
+                  />
+                  <StepField
+                    label="交易手数"
+                    value={pos.lotSize}
+                    onChangeText={(value) => updatePosition(index, "lotSize", value)}
+                    onStepDown={() => stepLotSize(index, -0.01)}
+                    onStepUp={() => stepLotSize(index, 0.01)}
+                  />
+                  <View style={styles.quickRates}>
+                    {LOT_QUICK.map((value) => {
+                      const active = pos.lotSize === value;
+                      return (
+                        <Pressable
+                          key={value}
+                          onPress={() => updatePosition(index, "lotSize", value)}
+                          style={[styles.quickRate, active && styles.quickRateActive]}
+                        >
+                          <Text style={[styles.quickRateText, active && styles.quickRateTextActive]}>{value}</Text>
+                        </Pressable>
+                      );
+                    })}
+                  </View>
+                </View>
+              ))}
+
+              {totalLot > 0 ? (
+                <View style={styles.avgCostRow}>
+                  <Text style={styles.avgCostLabel}>加权均价</Text>
+                  <Text style={styles.avgCostValue}>{formatUsdt(avgEntry)}</Text>
+                </View>
+              ) : null}
             </View>
 
             <StepField
@@ -214,8 +347,14 @@ export default function Mt5LiquidationScreen({ addHistory, prefill, isDesktop })
       <View style={{ width: isDesktop ? "48%" : "100%", maxWidth: isDesktop ? 420 : "100%" }}>
         <View style={styles.resultPanel}>
           {result?.hasCurrentPrice ? (
-            <View style={[styles.triggerCard, styles.triggerCardLoss]}>
-              <Text style={styles.triggerCardLabel}>保证金水平</Text>
+            <Pressable
+              style={[styles.triggerCard, styles.triggerCardLoss]}
+              onPress={() => setShowMarginHelp(true)}
+            >
+              <View style={styles.marginCardHeader}>
+                <Text style={styles.triggerCardLabel}>保证金水平</Text>
+                <Text style={styles.marginCardHelpIcon}>ⓘ</Text>
+              </View>
               <View style={styles.marginLevelRow}>
                 <Text style={[styles.triggerCardValue, { color: risk.color }]}>
                   {result.marginLevel != null ? `${formatNumber(result.marginLevel)}%` : "--"}
@@ -225,10 +364,10 @@ export default function Mt5LiquidationScreen({ addHistory, prefill, isDesktop })
                 </View>
               </View>
               <Text style={styles.riskDesc}>{risk.desc}</Text>
-            </View>
+            </Pressable>
           ) : null}
 
-          <View style={styles.triggerCard}>
+          <View style={[styles.triggerCard, styles.triggerCardSpaced]}>
             <Text style={styles.triggerCardLabel}>强平价 (爆仓价)</Text>
             <Text style={[styles.triggerCardValue, styles.gapDownText]}>
               {result ? formatUsdt(result.liquidationPrice) : "--"}
@@ -295,8 +434,8 @@ export default function Mt5LiquidationScreen({ addHistory, prefill, isDesktop })
 
           <View style={styles.metrics}>
             <Metric label="方向" value={sideText} />
-            <Metric label="手数" value={result ? `${result.lotSize} 手` : "--"} />
-            <Metric label="开仓价" value={result ? formatUsdt(result.entryPrice) : "--"} />
+            <Metric label="总手数" value={result ? `${formatNumber(totalLot, 2)} 手` : "--"} />
+            <Metric label="加权均价" value={result ? formatUsdt(avgEntry) : "--"} />
             <Metric label="占用保证金" value={result ? formatUsdt(result.usedMargin) : "--"} />
             {result?.hasCurrentPrice ? (
               <>
@@ -315,6 +454,90 @@ export default function Mt5LiquidationScreen({ addHistory, prefill, isDesktop })
           </Pressable>
         </View>
       </View>
+
+      <Modal
+        visible={showMarginHelp}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowMarginHelp(false)}
+      >
+        <View style={styles.marginHelpOverlay}>
+          <Pressable style={styles.marginHelpBackdrop} onPress={() => setShowMarginHelp(false)} />
+          <View style={styles.marginHelpSheet}>
+            <View style={styles.marginHelpHeader}>
+              <Text style={styles.marginHelpTitle}>保证金水平说明</Text>
+              <Pressable onPress={() => setShowMarginHelp(false)} style={styles.marginHelpCloseBtn}>
+                <Text style={styles.marginHelpCloseText}>关闭</Text>
+              </Pressable>
+            </View>
+
+            <View style={styles.marginHelpSection}>
+              <Text style={styles.marginHelpSectionTitle}>计算公式</Text>
+              <View style={styles.marginHelpFormulaBox}>
+                <Text style={styles.marginHelpFormula}>保证金水平 = 净值 ÷ 占用保证金 × 100%</Text>
+              </View>
+              <View style={styles.marginHelpFormulaBox}>
+                <Text style={styles.marginHelpFormula}>净值 = 余额 + 信用额 + 浮动盈亏</Text>
+              </View>
+              <View style={styles.marginHelpFormulaBox}>
+                <Text style={styles.marginHelpFormula}>占用保证金 = 开仓价 × 手数 × 合约规模 ÷ 杠杆</Text>
+              </View>
+            </View>
+
+            <View style={styles.marginHelpSection}>
+              <Text style={styles.marginHelpSectionTitle}>风险等级</Text>
+
+              <View style={styles.marginHelpRiskRow}>
+                <View style={[styles.marginHelpRiskDot, { backgroundColor: "#0f7b55" }]} />
+                <View style={styles.marginHelpRiskContent}>
+                  <Text style={styles.marginHelpRiskLevel}>
+                    低风险（保证金水平 {">"} 150%）
+                  </Text>
+                  <Text style={styles.marginHelpRiskDesc}>
+                    账户有足够的资金来维持当前的持仓，不处于爆仓的风险中。
+                  </Text>
+                </View>
+              </View>
+
+              <View style={styles.marginHelpRiskRow}>
+                <View style={[styles.marginHelpRiskDot, { backgroundColor: "#d48806" }]} />
+                <View style={styles.marginHelpRiskContent}>
+                  <Text style={styles.marginHelpRiskLevel}>
+                    中风险（50% {"<"} 保证金水平 ≤ 150%）
+                  </Text>
+                  <Text style={styles.marginHelpRiskDesc}>
+                    账户可用保证金越来越少。您需要关注账户风险。
+                  </Text>
+                </View>
+              </View>
+
+              <View style={styles.marginHelpRiskRow}>
+                <View style={[styles.marginHelpRiskDot, { backgroundColor: "#d32f2f" }]} />
+                <View style={styles.marginHelpRiskContent}>
+                  <Text style={styles.marginHelpRiskLevel}>
+                    高风险（20% {"<"} 保证金水平 ≤ 50%）
+                  </Text>
+                  <Text style={styles.marginHelpRiskDesc}>
+                    账户可用保证金越来越少。为避免爆仓，您可能需要存入额外资金或平部分仓位。
+                  </Text>
+                </View>
+              </View>
+
+              <View style={styles.marginHelpRiskRow}>
+                <View style={[styles.marginHelpRiskDot, { backgroundColor: "#000000" }]} />
+                <View style={styles.marginHelpRiskContent}>
+                  <Text style={styles.marginHelpRiskLevel}>
+                    爆仓（保证金水平 ≤ 20%）
+                  </Text>
+                  <Text style={styles.marginHelpRiskDesc}>
+                    如果保证金水平低于 20%，您的持仓将自动关闭，从最大亏损的持仓开始（如果有多个持仓）。
+                  </Text>
+                </View>
+              </View>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </>
   );
 }

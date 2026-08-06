@@ -1,12 +1,12 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { View, Text, Pressable } from "react-native";
-import { calculateTrade } from "../calculator";
-import { formatCurrency, formatPrice } from "../utils";
-import styles from "../styles";
-import Field from "./common/Field";
-import StepField from "./common/StepField";
-import Segment from "./common/Segment";
-import Metric from "./common/Metric";
+import { calculateTrade } from "../../calculator";
+import { formatCurrency, formatPrice } from "../../utils";
+import styles from "./styles";
+import Field from "../common/Field";
+import StepField from "../common/StepField";
+import Segment from "../common/Segment";
+import Metric from "../common/Metric";
 
 export default function TradeCalculator({ addHistory, prefill, isDesktop }) {
   const [mode, setMode] = useState("positive");

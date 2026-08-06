@@ -1,13 +1,9 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Linking, Modal, Pressable, Text, View } from "react-native";
-import styles from "../styles";
+import styles from "./styles";
 
 const TV_CHART_BASE = "https://cn.tradingview.com/chart/p9kPk3Fp/";
 
-/**
- * 盘口时段（北京时间）。
- * 亚盘按中日韩股市；美盘按纽约，区分冬夏令时。
- */
 const MARKETS = [
   {
     id: "china",

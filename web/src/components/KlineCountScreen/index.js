@@ -1,6 +1,6 @@
 import React, { createElement, useEffect, useMemo, useRef, useState } from "react";
 import { Platform, Pressable, Text, TextInput, View } from "react-native";
-import styles from "../styles";
+import styles from "./styles";
 import {
   KLINE_PERIODS,
   alignDateToPeriod,
@@ -10,7 +10,7 @@ import {
   getDateOnlyValue,
   getPeriodTimeSlots,
   getTimeOfDayValue,
-} from "../klineCount";
+} from "../../klineCount";
 
 const webControlStyle = {
   minHeight: 46,
@@ -33,11 +33,6 @@ const webControlStyle = {
   overflow: "visible",
 };
 
-/**
- * 纯 DOM 日期/时间控件。
- * 避免 RN Web 的 View / unstable_createElement 导致原生 date picker 无法点击。
- * 额外提供「选择」按钮，兼容部分浏览器日历图标被裁切/点不到的情况。
- */
 function PeriodDateTimeInput({ value, period, onChange }) {
   const dateRef = useRef(null);
 
@@ -68,7 +63,6 @@ function PeriodDateTimeInput({ value, period, onChange }) {
         return;
       }
     } catch (_) {
-      // Fallback to focus/click below.
     }
     input.focus();
     input.click();

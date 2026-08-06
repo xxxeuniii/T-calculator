@@ -1,6 +1,6 @@
 import React from "react";
 import { View, Text, Pressable } from "react-native";
-import styles from "../styles";
+import styles from "./styles";
 
 export default function HistoryScreen({ history, onSelect, onClear }) {
   if (!history || history.length === 0) {
@@ -15,7 +15,7 @@ export default function HistoryScreen({ history, onSelect, onClear }) {
     <View style={{ width: "100%" }}>
       <View style={styles.panel}>
         <View style={styles.historyHeader}>
-          <Text style={{ color: styles.panel.color, fontSize: 16, fontWeight: "900" }}>
+          <Text style={{ color: "#151515", fontSize: 16, fontWeight: "900" }}>
             历史记录 ({history.length})
           </Text>
           <Pressable onPress={onClear} style={styles.clearButton}>

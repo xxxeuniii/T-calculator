@@ -1,6 +1,6 @@
 import React from "react";
 import { Text, View, Pressable } from "react-native";
-import styles from "../../styles";
+import styles from "./styles";
 
 export default function Segment({ value, onChange, items, compact = false }) {
   return (

@@ -8,13 +8,13 @@ import {
   calculateStopLossFromRiskReward,
   formatRiskRewardRatio,
   parseRiskRewardRatio,
-} from "../calculator";
-import { formatUsdt } from "../utils";
-import styles from "../styles";
-import Field from "./common/Field";
-import StepField from "./common/StepField";
-import Segment from "./common/Segment";
-import Metric from "./common/Metric";
+} from "../../calculator";
+import { formatUsdt } from "../../utils";
+import styles from "./styles";
+import Field from "../common/Field";
+import StepField from "../common/StepField";
+import Segment from "../common/Segment";
+import Metric from "../common/Metric";
 
 const ROI_QUICK_RATES = ["50", "100", "150", "200", "300"];
 const RISK_REWARD_QUICK = ["1:1", "1:2", "1:3", "1:4", "1:5"];
