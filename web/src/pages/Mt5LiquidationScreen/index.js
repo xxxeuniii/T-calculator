@@ -18,11 +18,11 @@ const defaultPosition = () => ({ id: nextId(), entryPrice: "", lotSize: "0.01" }
 
 const defaultForm = {
   positions: [
-    { id: nextId(), entryPrice: "4257.56", lotSize: "0.01" },
+    { id: nextId(), entryPrice: "", lotSize: "0.01" },
   ],
-  balance: "350",
+  balance: "",
   credit: "",
-  currentPrice: "4232.73",
+  currentPrice: "",
 };
 
 const RISK_LABELS = {
