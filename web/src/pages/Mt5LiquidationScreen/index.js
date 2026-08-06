@@ -334,12 +334,13 @@ export default function Mt5LiquidationScreen({ addHistory, prefill, isDesktop })
               onChangeText={(value) => updateField("currentPrice", value)}
               placeholder="选填，计算保证金水平"
             />
-          </View>
-
-          <View style={styles.feeRow}>
-            <Text style={styles.feeChip}>MT5 保证金规则</Text>
-            <Text style={styles.feeChip}>保证金水平 = 净值 ÷ 保证金 × 100</Text>
-            <Text style={styles.feeChip}>净值 = 余额 + 信用额 + 浮动盈亏</Text>
+            <View style={styles.feeRow}>
+              <Text style={styles.feeChip}>净值 = 余额 + 信用额 + 浮动盈亏</Text>
+              <Text style={styles.feeChip}>保证金水平 = 净值 ÷ 占用保证金 × 100%</Text>
+              <Text style={styles.feeChip}>占用保证金 = 开仓价 × 手数 × 100 ÷ 500</Text>
+              <Text style={styles.feeChip}>强平价（做多）= 开仓价 × 0.9984 − (余额+信用额) ÷ (手数×100)</Text>
+              <Text style={styles.feeChip}>强平价（做空）= 开仓价 × 1.0016 + (余额+信用额) ÷ (手数×100)</Text>
+            </View>
           </View>
         </View>
       </View>
