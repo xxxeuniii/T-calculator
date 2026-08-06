@@ -390,8 +390,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   feeRow: {
-    flexDirection: "row",
-    flexWrap: "wrap",
+    flexDirection: "column",
     gap: 8,
     marginTop: 14,
   },
@@ -406,6 +405,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#f7f7f7",
     fontSize: 13,
     fontWeight: "700",
+    width: "100%",
   },
   resultPanel: {
     borderWidth: 0,

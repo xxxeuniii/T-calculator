@@ -12,11 +12,11 @@ const LOT_QUICK = ["0.01", "0.10", "0.50", "1.00"];
 const BALANCE_QUICK = ["100", "500", "1000", "5000"];
 
 const defaultForm = {
-  entryPrice: "",
+  entryPrice: "4257.56",
   lotSize: "0.01",
-  balance: "",
+  balance: "350",
   credit: "",
-  currentPrice: "",
+  currentPrice: "4232.73",
 };
 
 const RISK_LABELS = {
