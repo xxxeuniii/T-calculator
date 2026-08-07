@@ -357,7 +357,7 @@ export default function Mt5LiquidationScreen({ addHistory, prefill, isDesktop })
                   ÷ {result ? formatU(result.usedMargin) : "--"} × 100%
                 </Text>
               </View>
-              {result?.hasCurrentPrice ? (
+              {result ? (
                 <View style={styles.feeChip}>
                   <Text style={styles.feeChipTitle}>可用保证金 = 净值 − 保证金</Text>
                   <View style={styles.feeChipDivider} />
@@ -389,31 +389,29 @@ export default function Mt5LiquidationScreen({ addHistory, prefill, isDesktop })
 
       <View style={{ width: isDesktop ? "48%" : "100%", maxWidth: isDesktop ? 420 : "100%" }}>
         <View style={styles.resultPanel}>
-          {result?.hasCurrentPrice ? (
-            <Pressable
-              style={[
-                styles.triggerCard,
-                {
-                  borderColor: risk.color,
-                },
-              ]}
-              onPress={() => setShowMarginHelp(true)}
-            >
-              <View style={styles.marginCardHeader}>
-                <Text style={[styles.triggerCardLabel, { color: risk.color }]}>保证金水平</Text>
-                <Text style={[styles.marginCardHelpIcon, { color: risk.color }]}>ⓘ</Text>
+          <Pressable
+            style={[
+              styles.triggerCard,
+              {
+                borderColor: risk.color,
+              },
+            ]}
+            onPress={() => setShowMarginHelp(true)}
+          >
+            <View style={styles.marginCardHeader}>
+              <Text style={[styles.triggerCardLabel, { color: risk.color }]}>保证金水平</Text>
+              <Text style={[styles.marginCardHelpIcon, { color: risk.color }]}>ⓘ</Text>
+            </View>
+            <View style={styles.marginLevelRow}>
+              <Text style={[styles.triggerCardValue, { color: risk.color }]}>
+                {result?.marginLevel != null ? `${formatNumber(result.marginLevel)}%` : "--"}
+              </Text>
+              <View style={[styles.riskBadge, { borderColor: risk.color }]}>
+                <Text style={[styles.riskBadgeText, { color: risk.color }]}>{risk.text}</Text>
               </View>
-              <View style={styles.marginLevelRow}>
-                <Text style={[styles.triggerCardValue, { color: risk.color }]}>
-                  {result.marginLevel != null ? `${formatNumber(result.marginLevel)}%` : "--"}
-                </Text>
-                <View style={[styles.riskBadge, { borderColor: risk.color }]}>
-                  <Text style={[styles.riskBadgeText, { color: risk.color }]}>{risk.text}</Text>
-                </View>
-              </View>
-              <Text style={[styles.riskDesc, { color: risk.color, opacity: 0.9 }]}>{risk.desc}</Text>
-            </Pressable>
-          ) : null}
+            </View>
+            <Text style={[styles.riskDesc, { color: risk.color, opacity: 0.9 }]}>{risk.desc}</Text>
+          </Pressable>
 
           <View style={[styles.triggerCard, styles.triggerCardSpaced]}>
             <Text style={styles.triggerCardLabel}>强平价</Text>
@@ -444,50 +442,44 @@ export default function Mt5LiquidationScreen({ addHistory, prefill, isDesktop })
             )}
           </View>
 
-          {result?.hasCurrentPrice ? (
-            <View style={[styles.gapCard, styles.triggerCardSpaced]}>
-              <View style={styles.roiCardRow}>
-                <View
+          <View style={[styles.gapCard, styles.triggerCardSpaced]}>
+            <View style={styles.roiCardRow}>
+              <View
+                style={[
+                  styles.roiCard,
+                  result && result.floatingPnl >= 0 ? styles.roiCardGain : styles.roiCardLoss,
+                ]}
+              >
+                <Text style={styles.roiCardLabel}>浮动盈亏</Text>
+                <Text
                   style={[
-                    styles.roiCard,
-                    result.floatingPnl >= 0 ? styles.roiCardGain : styles.roiCardLoss,
+                    styles.roiCardValue,
+                    result && result.floatingPnl >= 0 ? styles.gapUpText : styles.gapDownText,
                   ]}
                 >
-                  <Text style={styles.roiCardLabel}>浮动盈亏</Text>
-                  <Text
-                    style={[
-                      styles.roiCardValue,
-                      result.floatingPnl >= 0 ? styles.gapUpText : styles.gapDownText,
-                    ]}
-                  >
-                    {`${result.floatingPnl >= 0 ? "+" : ""}${formatUsdt(result.floatingPnl)}`}
-                  </Text>
-                </View>
-                <View style={styles.roiCard}>
-                  <Text style={styles.roiCardLabel}>净值</Text>
-                  <Text style={styles.roiCardValue}>
-                    {formatUsdt(result.equity)}
-                  </Text>
-                </View>
+                  {result ? `${result.floatingPnl >= 0 ? "+" : ""}${formatUsdt(result.floatingPnl)}` : "--"}
+                </Text>
+              </View>
+              <View style={styles.roiCard}>
+                <Text style={styles.roiCardLabel}>净值</Text>
+                <Text style={styles.roiCardValue}>
+                  {result ? formatUsdt(result.equity) : "--"}
+                </Text>
               </View>
             </View>
-          ) : null}
+          </View>
 
           <View style={styles.metrics}>
             <Metric label="占用保证金" value={result ? formatUsdt(result.usedMargin) : "--"} valueStyle={{ color: "#d32f2f" }} />
             <Metric label="方向" value={sideText} />
             <Metric label="总手数" value={result ? `${formatNumber(totalLot, 2)} 手` : "--"} />
             <Metric label="加权均价" value={result ? formatUsdt(avgEntry) : "--"} />
-            {result?.hasCurrentPrice ? (
-              <>
-                <Metric label="可用保证金" value={formatUsdt(result.availableMargin)} />
-                <Metric
-                  label="保证金水平"
-                  value={result ? `${formatNumber(result.marginLevel)}%` : "--"}
-                  valueStyle={result?.hasCurrentPrice && result.marginLevel != null ? { color: risk.color, fontWeight: "900" } : undefined}
-                />
-              </>
-            ) : null}
+            <Metric label="可用保证金" value={result ? formatUsdt(result.availableMargin) : "--"} />
+            <Metric
+              label="保证金水平"
+              value={result?.marginLevel != null ? `${formatNumber(result.marginLevel)}%` : "--"}
+              valueStyle={result?.hasCurrentPrice && result.marginLevel != null ? { color: risk.color, fontWeight: "900" } : undefined}
+            />
             <Metric label="余额" value={form.balance ? formatUsdt(result?.balance) : "--"} />
           </View>
 
@@ -545,7 +537,7 @@ export default function Mt5LiquidationScreen({ addHistory, prefill, isDesktop })
                   ÷ {result ? formatU(result.usedMargin) : "--"} × 100%
                 </Text>
               </View>
-              {result?.hasCurrentPrice ? (
+              {result ? (
                 <View style={[styles.feeChip, { marginTop: 10 }]}>
                   <Text style={styles.feeChipTitle}>可用保证金 = 净值 − 保证金</Text>
                   <View style={styles.feeChipDivider} />

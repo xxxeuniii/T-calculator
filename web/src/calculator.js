@@ -328,7 +328,7 @@ function calculateMt5Liquidation(values) {
 
   let floatingPnl = 0;
   let equity = balance + credit;
-  let availableMargin = 0;
+  let availableMargin = equity - usedMargin;
   let marginLevel = null;
   let riskLevel = "unknown";
 
