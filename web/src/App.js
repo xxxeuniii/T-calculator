@@ -28,7 +28,7 @@ const screenOptions = [
   { label: "合约", value: "contract" },
   { label: "止盈止损", value: "contractRoi" },
   { label: "MT5强平价", value: "mt5Liquidation" },
-  { label: "数K线", value: "klineCount" },
+  // { label: "数K线", value: "klineCount" }, // 暂时隐藏，功能还未完成
   { label: "历史", value: "history" },
 ];
 
@@ -153,7 +153,7 @@ export default function App() {
             {screen === "contract" && <ContractCalculator addHistory={addHistory} prefill={contractPrefill} isDesktop={isDesktop} />}
             {screen === "contractRoi" && <ContractRoiScreen addHistory={addHistory} prefill={contractRoiPrefill} isDesktop={isDesktop} />}
             {screen === "mt5Liquidation" && <Mt5LiquidationScreen addHistory={addHistory} prefill={mt5LiquidationPrefill} isDesktop={isDesktop} />}
-            {screen === "klineCount" && <KlineCountScreen isDesktop={isDesktop} />}
+            {/* {screen === "klineCount" && <KlineCountScreen isDesktop={isDesktop} />} 暂时隐藏，功能还未完成 */}
             {screen === "sessions" && <SessionHoursScreen isDesktop={isDesktop} />}
             {screen === "history" && <HistoryScreen history={history} onClear={clearHistory} onSelect={selectHistory} />}
           </View>
