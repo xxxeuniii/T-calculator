@@ -357,6 +357,16 @@ export default function Mt5LiquidationScreen({ addHistory, prefill, isDesktop })
                   ÷ {result ? formatU(result.usedMargin) : "--"} × 100%
                 </Text>
               </View>
+              {result?.hasCurrentPrice ? (
+                <View style={styles.feeChip}>
+                  <Text style={styles.feeChipTitle}>可用保证金 = 净值 − 占用保证金</Text>
+                  <View style={styles.feeChipDivider} />
+                  <Text style={styles.feeChipBody}>
+                    {formatU(result.availableMargin)}
+                    {" = "}{formatU(result.equity)} − {formatU(result.usedMargin)}
+                  </Text>
+                </View>
+              ) : null}
               {result ? (
                 <View style={styles.feeChip}>
                   <Text style={styles.feeChipTitle}>
@@ -535,6 +545,16 @@ export default function Mt5LiquidationScreen({ addHistory, prefill, isDesktop })
                   ÷ {result ? formatU(result.usedMargin) : "--"} × 100%
                 </Text>
               </View>
+              {result?.hasCurrentPrice ? (
+                <View style={[styles.feeChip, { marginTop: 10 }]}>
+                  <Text style={styles.feeChipTitle}>可用保证金 = 净值 − 占用保证金</Text>
+                  <View style={styles.feeChipDivider} />
+                  <Text style={styles.feeChipBody}>
+                    {formatU(result.availableMargin)}
+                    {" = "}{formatU(result.equity)} − {formatU(result.usedMargin)}
+                  </Text>
+                </View>
+              ) : null}
             </View>
 
             <View style={styles.marginHelpSection}>
