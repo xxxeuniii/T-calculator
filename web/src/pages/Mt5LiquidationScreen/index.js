@@ -406,30 +406,6 @@ export default function Mt5LiquidationScreen({ addHistory, prefill, isDesktop })
 
       <View style={{ width: isDesktop ? "48%" : "100%", maxWidth: isDesktop ? 420 : "100%" }}>
         <View style={styles.resultPanel}>
-          <Pressable
-            style={[
-              styles.triggerCard,
-              {
-                borderColor: risk.color,
-              },
-            ]}
-            onPress={() => setShowMarginHelp(true)}
-          >
-            <View style={styles.marginCardHeader}>
-              <Text style={[styles.triggerCardLabel, { color: risk.color }]}>保证金水平</Text>
-              <Text style={[styles.marginCardHelpIcon, { color: risk.color }]}>ⓘ</Text>
-            </View>
-            <View style={styles.marginLevelRow}>
-              <Text style={[styles.triggerCardValue, { color: risk.color }]}>
-                {result?.marginLevel != null ? `${formatNumber(result.marginLevel)}%` : "--"}
-              </Text>
-              <View style={[styles.riskBadge, { borderColor: risk.color }]}>
-                <Text style={[styles.riskBadgeText, { color: risk.color }]}>{risk.text}</Text>
-              </View>
-            </View>
-            <Text style={[styles.riskDesc, { color: risk.color, opacity: 0.9 }]}>{risk.desc}</Text>
-          </Pressable>
-
           <View style={[styles.triggerCard, styles.triggerCardSpaced]}>
             <Text style={styles.triggerCardLabel}>强平价</Text>
             <Text style={[styles.triggerCardValue, styles.gapDownText]}>
@@ -488,9 +464,6 @@ export default function Mt5LiquidationScreen({ addHistory, prefill, isDesktop })
 
           <View style={styles.metrics}>
             <Metric label="占用保证金" value={result ? formatUsdt(result.usedMargin) : "--"} valueStyle={{ color: "#d32f2f" }} />
-            <Metric label="方向" value={sideText} />
-            <Metric label="总手数" value={result ? `${formatNumber(totalLot, 2)} 手` : "--"} />
-            <Metric label="加权均价" value={result ? formatUsdt(avgEntry) : "--"} />
             <Metric label="可用保证金" value={result ? formatUsdt(result.availableMargin) : "--"} />
             <Metric
               label="保证金水平"
