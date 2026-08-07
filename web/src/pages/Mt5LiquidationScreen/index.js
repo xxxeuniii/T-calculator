@@ -197,14 +197,14 @@ export default function Mt5LiquidationScreen({ addHistory, prefill, isDesktop })
         { label: "仓位明细", value: posSummary },
         ...(result.hasCurrentPrice
           ? [
-              { label: "净值", value: formatUsdt(result.equity) },
-              {
-                label: "浮动盈亏",
-                value: `${result.floatingPnl >= 0 ? "+" : ""}${formatUsdt(result.floatingPnl)}`,
-              },
-              { label: "保证金水平", value: `${formatNumber(result.marginLevel)}%` },
-              { label: "可用保证金", value: formatUsdt(result.availableMargin) },
-            ]
+            { label: "净值", value: formatUsdt(result.equity) },
+            {
+              label: "浮动盈亏",
+              value: `${result.floatingPnl >= 0 ? "+" : ""}${formatUsdt(result.floatingPnl)}`,
+            },
+            { label: "保证金水平", value: `${formatNumber(result.marginLevel)}%` },
+            { label: "可用保证金", value: formatUsdt(result.availableMargin) },
+          ]
           : []),
         { label: "强平价", value: formatUsdt(result.liquidationPrice) },
       ],
@@ -220,12 +220,12 @@ export default function Mt5LiquidationScreen({ addHistory, prefill, isDesktop })
   const riskCardBg =
     result?.hasCurrentPrice
       ? ({
-          low: "#eefbf4",
-          medium: "#fff7e0",
-          high: "#fff1f0",
-          stopout: "#fff1f2",
-          unknown: "#ffffff",
-        }[result.riskLevel] || "#ffffff")
+        low: "#eefbf4",
+        medium: "#fff7e0",
+        high: "#fff1f0",
+        stopout: "#fff1f2",
+        unknown: "#ffffff",
+      }[result.riskLevel] || "#ffffff")
       : "#ffffff";
 
   return (
@@ -252,32 +252,35 @@ export default function Mt5LiquidationScreen({ addHistory, prefill, isDesktop })
           </View>
 
           <View style={styles.fieldGrid}>
-            <View style={styles.summaryCard}>
-              <Metric
-                label="总手数"
-                value={totalLot > 0 ? `${formatNumber(totalLot, 2)} 手` : "--"}
-                containerStyle={{
-                  flex: 1,
-                  width: "auto",
-                  minWidth: 0,
-                  borderWidth: 0,
-                  padding: 0,
-                  backgroundColor: "transparent",
-                }}
-              />
-              <Metric
-                label="加权均价"
-                value={totalLot > 0 ? formatUsdt(avgEntry) : "--"}
-                containerStyle={{
-                  flex: 1,
-                  width: "auto",
-                  minWidth: 0,
-                  borderWidth: 0,
-                  padding: 0,
-                  backgroundColor: "transparent",
-                }}
-              />
-            </View>
+            {form.positions.length > 1 && (
+              <View style={styles.summaryCard}>
+                <Metric
+                  label="总手数"
+                  value={totalLot > 0 ? `${formatNumber(totalLot, 2)} 手` : "--"}
+                  containerStyle={{
+                    flex: 1,
+                    width: "auto",
+                    minWidth: 0,
+                    borderWidth: 0,
+                    padding: 0,
+                    backgroundColor: "transparent",
+                  }}
+                />
+
+                <Metric
+                  label="加权均价"
+                  value={totalLot > 0 ? formatUsdt(avgEntry) : "--"}
+                  containerStyle={{
+                    flex: 1,
+                    width: "auto",
+                    minWidth: 0,
+                    borderWidth: 0,
+                    padding: 0,
+                    backgroundColor: "transparent",
+                  }}
+                />
+              </View>
+            )}
 
             <View style={styles.positionCard}>
               <View style={styles.positionCardHeader}>
@@ -533,118 +536,118 @@ export default function Mt5LiquidationScreen({ addHistory, prefill, isDesktop })
             </View>
 
             <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 6 }} showsVerticalScrollIndicator={true}>
-            <View style={styles.marginHelpSection}>
-              <Text style={styles.marginHelpSectionTitle}>计算公式</Text>
-              <View style={styles.feeChip}>
-                <Text style={styles.feeChipTitle}>占用保证金 = 开仓价 × 手数 × 合约规模 ÷ 杠杆</Text>
-                <View style={styles.feeChipDivider} />
-                <Text style={styles.feeChipBody}>
-                  <Text style={styles.feeChipResultHighlight}>{result ? formatU(result.usedMargin) : "--"}</Text>
-                  {" = "}{formatU(avgEntry)} × {formatNumber(totalLot, 2)} 手 × 100 ÷ 500
-                </Text>
-              </View>
-              <View style={[styles.feeChip, { marginTop: 10 }]}>
-                <Text style={styles.feeChipTitle}>净值 = 余额 + 信用额 + 浮动盈亏</Text>
-                <View style={styles.feeChipDivider} />
-                <Text style={styles.feeChipBody}>
-                  {result?.hasCurrentPrice ? formatU(result.equity) : formatU((result?.balance || 0) + (result?.credit || 0))}
-                  {" = "}{formatU(result?.balance)} + {formatU(result?.credit)}
-                  {result?.hasCurrentPrice
-                    ? ` ${result.floatingPnl >= 0 ? "+" : "−"} ${formatU(Math.abs(result.floatingPnl))}`
-                    : ""}
-                </Text>
-              </View>
-              <View style={[styles.feeChip, { marginTop: 10 }]}>
-                <Text style={styles.feeChipTitle}>保证金水平 = 净值 ÷ 占用保证金 × 100%</Text>
-                <View style={styles.feeChipDivider} />
-                <Text style={styles.feeChipBody}>
-                  <Text style={result?.hasCurrentPrice && result.marginLevel != null ? { color: risk.color, fontWeight: "900" } : undefined}>
-                    {result?.hasCurrentPrice && result.marginLevel != null ? `${formatNumber(result.marginLevel)}%` : "--"}
-                  </Text>
-                  {" = "}{result?.hasCurrentPrice ? formatU(result.equity) : "--"}
-                  ÷ {result ? formatU(result.usedMargin) : "--"} × 100%
-                </Text>
-              </View>
-              {result ? (
-                <View style={[styles.feeChip, { marginTop: 10 }]}>
-                  <Text style={styles.feeChipTitle}>可用保证金 = 净值 − 保证金</Text>
+              <View style={styles.marginHelpSection}>
+                <Text style={styles.marginHelpSectionTitle}>计算公式</Text>
+                <View style={styles.feeChip}>
+                  <Text style={styles.feeChipTitle}>占用保证金 = 开仓价 × 手数 × 合约规模 ÷ 杠杆</Text>
                   <View style={styles.feeChipDivider} />
                   <Text style={styles.feeChipBody}>
-                    {formatU(result.availableMargin)}
-                    {" = "}{formatU(result.equity)} − {formatU(result.usedMargin)}
+                    <Text style={styles.feeChipResultHighlight}>{result ? formatU(result.usedMargin) : "--"}</Text>
+                    {" = "}{formatU(avgEntry)} × {formatNumber(totalLot, 2)} 手 × 100 ÷ 500
                   </Text>
                 </View>
-              ) : null}
-            </View>
-
-            <View style={styles.marginHelpSection}>
-              <Text style={styles.marginHelpSectionTitle}>强平价系数来源（MT5 500 倍杠杆）</Text>
-              <View style={styles.feeChip}>
-                <Text style={styles.feeChipTitle}>做多 0.9984 / 做空 1.0016 的推导</Text>
-                <View style={styles.feeChipDivider} />
-                <Text style={styles.feeChipBody}>• stopOutLevel = 20%（MT5 强平线：保证金水平 ≤ 20% 就爆仓）</Text>
-                <Text style={[styles.feeChipBody, { marginTop: 2 }]}>• drainRatio = 1 − 20% = 80%（占用保证金最多允许亏掉 80%）</Text>
-                <Text style={[styles.feeChipBody, { marginTop: 2 }]}>• priceMoveRatio = 80% ÷ 500 = 0.16%（换算成价格：最大允许反向波动 0.16%）</Text>
-                <Text style={[styles.feeChipBody, { marginTop: 2 }]}>
-                  • 做多：1 − 0.16% = 1 − 0.0016 = <Text style={styles.feeChipEmph}>0.9984</Text>（开仓价最多跌 0.16%）
-                </Text>
-                <Text style={[styles.feeChipBody, { marginTop: 2 }]}>
-                  • 做空：1 + 0.16% = 1 + 0.0016 = <Text style={styles.feeChipEmph}>1.0016</Text>（开仓价最多涨 0.16%）
-                </Text>
-              </View>
-            </View>
-
-            <View style={styles.marginHelpSection}>
-              <Text style={styles.marginHelpSectionTitle}>风险等级</Text>
-
-              <View style={styles.marginHelpRiskRow}>
-                <View style={[styles.marginHelpRiskDot, { backgroundColor: "#0f7b55" }]} />
-                <View style={styles.marginHelpRiskContent}>
-                  <Text style={styles.marginHelpRiskLevel}>
-                    低风险（保证金水平 {">"} 150%）
-                  </Text>
-                  <Text style={styles.marginHelpRiskDesc}>
-                    账户有足够的资金来维持当前的持仓，不处于爆仓的风险中。
+                <View style={[styles.feeChip, { marginTop: 10 }]}>
+                  <Text style={styles.feeChipTitle}>净值 = 余额 + 信用额 + 浮动盈亏</Text>
+                  <View style={styles.feeChipDivider} />
+                  <Text style={styles.feeChipBody}>
+                    {result?.hasCurrentPrice ? formatU(result.equity) : formatU((result?.balance || 0) + (result?.credit || 0))}
+                    {" = "}{formatU(result?.balance)} + {formatU(result?.credit)}
+                    {result?.hasCurrentPrice
+                      ? ` ${result.floatingPnl >= 0 ? "+" : "−"} ${formatU(Math.abs(result.floatingPnl))}`
+                      : ""}
                   </Text>
                 </View>
-              </View>
-
-              <View style={styles.marginHelpRiskRow}>
-                <View style={[styles.marginHelpRiskDot, { backgroundColor: "#d48806" }]} />
-                <View style={styles.marginHelpRiskContent}>
-                  <Text style={styles.marginHelpRiskLevel}>
-                    中风险（50% {"<"} 保证金水平 ≤ 150%）
-                  </Text>
-                  <Text style={styles.marginHelpRiskDesc}>
-                    账户可用保证金越来越少。您需要关注账户风险。
+                <View style={[styles.feeChip, { marginTop: 10 }]}>
+                  <Text style={styles.feeChipTitle}>保证金水平 = 净值 ÷ 占用保证金 × 100%</Text>
+                  <View style={styles.feeChipDivider} />
+                  <Text style={styles.feeChipBody}>
+                    <Text style={result?.hasCurrentPrice && result.marginLevel != null ? { color: risk.color, fontWeight: "900" } : undefined}>
+                      {result?.hasCurrentPrice && result.marginLevel != null ? `${formatNumber(result.marginLevel)}%` : "--"}
+                    </Text>
+                    {" = "}{result?.hasCurrentPrice ? formatU(result.equity) : "--"}
+                    ÷ {result ? formatU(result.usedMargin) : "--"} × 100%
                   </Text>
                 </View>
+                {result ? (
+                  <View style={[styles.feeChip, { marginTop: 10 }]}>
+                    <Text style={styles.feeChipTitle}>可用保证金 = 净值 − 保证金</Text>
+                    <View style={styles.feeChipDivider} />
+                    <Text style={styles.feeChipBody}>
+                      {formatU(result.availableMargin)}
+                      {" = "}{formatU(result.equity)} − {formatU(result.usedMargin)}
+                    </Text>
+                  </View>
+                ) : null}
               </View>
 
-              <View style={styles.marginHelpRiskRow}>
-                <View style={[styles.marginHelpRiskDot, { backgroundColor: "#d32f2f" }]} />
-                <View style={styles.marginHelpRiskContent}>
-                  <Text style={styles.marginHelpRiskLevel}>
-                    高风险（20% {"<"} 保证金水平 ≤ 50%）
+              <View style={styles.marginHelpSection}>
+                <Text style={styles.marginHelpSectionTitle}>强平价系数来源（MT5 500 倍杠杆）</Text>
+                <View style={styles.feeChip}>
+                  <Text style={styles.feeChipTitle}>做多 0.9984 / 做空 1.0016 的推导</Text>
+                  <View style={styles.feeChipDivider} />
+                  <Text style={styles.feeChipBody}>• stopOutLevel = 20%（MT5 强平线：保证金水平 ≤ 20% 就爆仓）</Text>
+                  <Text style={[styles.feeChipBody, { marginTop: 2 }]}>• drainRatio = 1 − 20% = 80%（占用保证金最多允许亏掉 80%）</Text>
+                  <Text style={[styles.feeChipBody, { marginTop: 2 }]}>• priceMoveRatio = 80% ÷ 500 = 0.16%（换算成价格：最大允许反向波动 0.16%）</Text>
+                  <Text style={[styles.feeChipBody, { marginTop: 2 }]}>
+                    • 做多：1 − 0.16% = 1 − 0.0016 = <Text style={styles.feeChipEmph}>0.9984</Text>（开仓价最多跌 0.16%）
                   </Text>
-                  <Text style={styles.marginHelpRiskDesc}>
-                    账户可用保证金越来越少。为避免爆仓，您可能需要存入额外资金或平部分仓位。
+                  <Text style={[styles.feeChipBody, { marginTop: 2 }]}>
+                    • 做空：1 + 0.16% = 1 + 0.0016 = <Text style={styles.feeChipEmph}>1.0016</Text>（开仓价最多涨 0.16%）
                   </Text>
                 </View>
               </View>
 
-              <View style={styles.marginHelpRiskRow}>
-                <View style={[styles.marginHelpRiskDot, { backgroundColor: RISK_LABELS.stopout.color }]} />
-                <View style={styles.marginHelpRiskContent}>
-                  <Text style={[styles.marginHelpRiskLevel, { color: RISK_LABELS.stopout.color }]}>
-                    爆仓（保证金水平 ≤ 20%）
-                  </Text>
-                  <Text style={styles.marginHelpRiskDesc}>
-                    如果保证金水平低于 20%，您的持仓将自动关闭，从最大亏损的持仓开始（如果有多个持仓）。
-                  </Text>
+              <View style={styles.marginHelpSection}>
+                <Text style={styles.marginHelpSectionTitle}>风险等级</Text>
+
+                <View style={styles.marginHelpRiskRow}>
+                  <View style={[styles.marginHelpRiskDot, { backgroundColor: "#0f7b55" }]} />
+                  <View style={styles.marginHelpRiskContent}>
+                    <Text style={styles.marginHelpRiskLevel}>
+                      低风险（保证金水平 {">"} 150%）
+                    </Text>
+                    <Text style={styles.marginHelpRiskDesc}>
+                      账户有足够的资金来维持当前的持仓，不处于爆仓的风险中。
+                    </Text>
+                  </View>
+                </View>
+
+                <View style={styles.marginHelpRiskRow}>
+                  <View style={[styles.marginHelpRiskDot, { backgroundColor: "#d48806" }]} />
+                  <View style={styles.marginHelpRiskContent}>
+                    <Text style={styles.marginHelpRiskLevel}>
+                      中风险（50% {"<"} 保证金水平 ≤ 150%）
+                    </Text>
+                    <Text style={styles.marginHelpRiskDesc}>
+                      账户可用保证金越来越少。您需要关注账户风险。
+                    </Text>
+                  </View>
+                </View>
+
+                <View style={styles.marginHelpRiskRow}>
+                  <View style={[styles.marginHelpRiskDot, { backgroundColor: "#d32f2f" }]} />
+                  <View style={styles.marginHelpRiskContent}>
+                    <Text style={styles.marginHelpRiskLevel}>
+                      高风险（20% {"<"} 保证金水平 ≤ 50%）
+                    </Text>
+                    <Text style={styles.marginHelpRiskDesc}>
+                      账户可用保证金越来越少。为避免爆仓，您可能需要存入额外资金或平部分仓位。
+                    </Text>
+                  </View>
+                </View>
+
+                <View style={styles.marginHelpRiskRow}>
+                  <View style={[styles.marginHelpRiskDot, { backgroundColor: RISK_LABELS.stopout.color }]} />
+                  <View style={styles.marginHelpRiskContent}>
+                    <Text style={[styles.marginHelpRiskLevel, { color: RISK_LABELS.stopout.color }]}>
+                      爆仓（保证金水平 ≤ 20%）
+                    </Text>
+                    <Text style={styles.marginHelpRiskDesc}>
+                      如果保证金水平低于 20%，您的持仓将自动关闭，从最大亏损的持仓开始（如果有多个持仓）。
+                    </Text>
+                  </View>
                 </View>
               </View>
-            </View>
             </ScrollView>
           </View>
         </View>
