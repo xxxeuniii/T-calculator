@@ -464,18 +464,6 @@ export default function Mt5LiquidationScreen({ addHistory, prefill, isDesktop })
           ) : null}
 
           <View style={styles.metrics}>
-            <Metric
-              label="净值"
-              value={
-                result
-                  ? formatUsdt(
-                      result.hasCurrentPrice
-                        ? result.equity
-                        : (result.balance || 0) + (result.credit || 0),
-                    )
-                  : "--"
-              }
-            />
             <Metric label="占用保证金" value={result ? formatUsdt(result.usedMargin) : "--"} valueStyle={{ color: "#d32f2f" }} />
             <Metric label="方向" value={sideText} />
             <Metric label="总手数" value={result ? `${formatNumber(totalLot, 2)} 手` : "--"} />
