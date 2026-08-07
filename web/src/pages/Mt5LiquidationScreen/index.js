@@ -494,7 +494,6 @@ export default function Mt5LiquidationScreen({ addHistory, prefill, isDesktop })
           <Pressable style={styles.marginHelpBackdrop} onPress={() => setShowMarginHelp(false)} />
           <View style={styles.marginHelpSheet}>
             <View style={styles.marginHelpHeader}>
-              <Text style={styles.marginHelpTitle}>保证金水平说明</Text>
               <Pressable onPress={() => setShowMarginHelp(false)} style={styles.marginHelpCloseBtn}>
                 <Text style={styles.marginHelpCloseText}>关闭</Text>
               </Pressable>

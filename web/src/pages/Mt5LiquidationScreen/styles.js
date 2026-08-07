@@ -458,7 +458,7 @@ const styles = StyleSheet.create({
   marginHelpHeader: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
+    justifyContent: "flex-end",
     marginBottom: 14,
   },
   marginHelpTitle: {
