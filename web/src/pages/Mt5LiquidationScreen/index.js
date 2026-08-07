@@ -253,8 +253,30 @@ export default function Mt5LiquidationScreen({ addHistory, prefill, isDesktop })
 
           <View style={styles.fieldGrid}>
             <View style={styles.summaryCard}>
-              <Metric label="总手数" value={totalLot > 0 ? `${formatNumber(totalLot, 2)} 手` : "--"} containerStyle={{ flex: 1 }} />
-              <Metric label="加权均价" value={totalLot > 0 ? formatUsdt(avgEntry) : "--"} containerStyle={{ flex: 1 }} />
+              <Metric
+                label="总手数"
+                value={totalLot > 0 ? `${formatNumber(totalLot, 2)} 手` : "--"}
+                containerStyle={{
+                  flex: 1,
+                  width: "auto",
+                  minWidth: 0,
+                  borderWidth: 0,
+                  padding: 0,
+                  backgroundColor: "transparent",
+                }}
+              />
+              <Metric
+                label="加权均价"
+                value={totalLot > 0 ? formatUsdt(avgEntry) : "--"}
+                containerStyle={{
+                  flex: 1,
+                  width: "auto",
+                  minWidth: 0,
+                  borderWidth: 0,
+                  padding: 0,
+                  backgroundColor: "transparent",
+                }}
+              />
             </View>
 
             <View style={styles.positionCard}>
