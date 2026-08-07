@@ -230,6 +230,10 @@ const styles = StyleSheet.create({
     color: "#d32f2f",
     fontWeight: "900",
   },
+  formulaBlock: {
+    gap: 4,
+    padding: 0,
+  },
   resultPanel: {
     borderWidth: 0,
     borderRadius: 7,

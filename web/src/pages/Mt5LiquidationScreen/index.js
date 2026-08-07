@@ -387,7 +387,7 @@ export default function Mt5LiquidationScreen({ addHistory, prefill, isDesktop })
             </View>
 
             <View style={styles.nestedDivider} />
-            <View style={styles.feeChip}>
+            <View style={styles.formulaBlock}>
               <Text style={styles.feeChipTitle}>占用保证金 = 开仓价 × 手数 × 合约规模 ÷ 杠杆</Text>
               <View style={styles.feeChipDivider} />
               <Text style={styles.feeChipBody}>
@@ -395,7 +395,7 @@ export default function Mt5LiquidationScreen({ addHistory, prefill, isDesktop })
                 {" = "}{formatU(avgEntry)} × {formatNumber(totalLot, 2)} 手 × 100 ÷ 500
               </Text>
             </View>
-            <View style={[styles.feeChip, { marginTop: 10 }]}>
+            <View style={[styles.formulaBlock, { marginTop: 14 }]}>
               <Text style={styles.feeChipTitle}>保证金水平 = 净值 ÷ 占用保证金 × 100%</Text>
               <View style={styles.feeChipDivider} />
               <Text style={styles.feeChipBody}>
@@ -407,7 +407,7 @@ export default function Mt5LiquidationScreen({ addHistory, prefill, isDesktop })
               </Text>
             </View>
             {result ? (
-              <View style={[styles.feeChip, { marginTop: 10 }]}>
+              <View style={[styles.formulaBlock, { marginTop: 14 }]}>
                 <Text style={styles.feeChipTitle}>可用保证金 = 净值 − 保证金</Text>
                 <View style={styles.feeChipDivider} />
                 <Text style={styles.feeChipBody}>
@@ -455,7 +455,7 @@ export default function Mt5LiquidationScreen({ addHistory, prefill, isDesktop })
             {result ? (
               <>
                 <View style={styles.nestedDivider} />
-                <View style={styles.feeChip}>
+                <View style={styles.formulaBlock}>
                   <Text style={styles.feeChipTitle}>
                     {side === "long"
                       ? "强平价 = 开仓价 × 0.9984 − (余额 + 信用额) ÷ (手数 × 合约规模)"
@@ -507,7 +507,7 @@ export default function Mt5LiquidationScreen({ addHistory, prefill, isDesktop })
             </View>
 
             <View style={styles.nestedDivider} />
-            <View style={styles.feeChip}>
+            <View style={styles.formulaBlock}>
               <Text style={styles.feeChipTitle}>净值 = 余额 + 信用额 + 浮动盈亏</Text>
               <View style={styles.feeChipDivider} />
               <Text style={styles.feeChipBody}>
