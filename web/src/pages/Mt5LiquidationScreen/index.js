@@ -289,43 +289,48 @@ export default function Mt5LiquidationScreen({ addHistory, prefill, isDesktop })
                 </View>
               </View>
 
+              <View style={styles.positionDivider} />
+
               {form.positions.map((pos, index) => (
-                <View key={pos.id} style={styles.positionItem}>
-                  <View style={styles.positionItemHeader}>
-                    <Text style={styles.positionItemLabel}>#{index + 1} 仓</Text>
-                    {form.positions.length > 1 ? (
-                      <Pressable onPress={() => removePosition(index)} style={styles.removePositionButton} accessibilityLabel="删除仓位">
-                        <Text style={styles.removePositionText}>×</Text>
-                      </Pressable>
-                    ) : null}
-                  </View>
-                  <Field
-                    label="开仓价格 (USD)"
-                    value={pos.entryPrice}
-                    onChangeText={(value) => updatePosition(index, "entryPrice", value)}
-                  />
-                  <StepField
-                    label="交易手数"
-                    value={pos.lotSize}
-                    onChangeText={(value) => updatePosition(index, "lotSize", value)}
-                    onStepDown={() => stepLotSize(index, -0.01)}
-                    onStepUp={() => stepLotSize(index, 0.01)}
-                  />
-                  <View style={styles.quickRates}>
-                    {LOT_QUICK.map((value) => {
-                      const active = pos.lotSize === value;
-                      return (
-                        <Pressable
-                          key={value}
-                          onPress={() => updatePosition(index, "lotSize", value)}
-                          style={[styles.quickRate, active && styles.quickRateActive]}
-                        >
-                          <Text style={[styles.quickRateText, active && styles.quickRateTextActive]}>{value}</Text>
+                <React.Fragment key={pos.id}>
+                  {index > 0 ? <View style={styles.positionDivider} /> : null}
+                  <View style={styles.positionItem}>
+                    <View style={styles.positionItemHeader}>
+                      <Text style={styles.positionItemLabel}>#{index + 1} 仓</Text>
+                      {form.positions.length > 1 ? (
+                        <Pressable onPress={() => removePosition(index)} style={styles.removePositionButton} accessibilityLabel="删除仓位">
+                          <Text style={styles.removePositionText}>×</Text>
                         </Pressable>
-                      );
-                    })}
+                      ) : null}
+                    </View>
+                    <Field
+                      label="开仓价格 (USD)"
+                      value={pos.entryPrice}
+                      onChangeText={(value) => updatePosition(index, "entryPrice", value)}
+                    />
+                    <StepField
+                      label="交易手数"
+                      value={pos.lotSize}
+                      onChangeText={(value) => updatePosition(index, "lotSize", value)}
+                      onStepDown={() => stepLotSize(index, -0.01)}
+                      onStepUp={() => stepLotSize(index, 0.01)}
+                    />
+                    <View style={styles.quickRates}>
+                      {LOT_QUICK.map((value) => {
+                        const active = pos.lotSize === value;
+                        return (
+                          <Pressable
+                            key={value}
+                            onPress={() => updatePosition(index, "lotSize", value)}
+                            style={[styles.quickRate, active && styles.quickRateActive]}
+                          >
+                            <Text style={[styles.quickRateText, active && styles.quickRateTextActive]}>{value}</Text>
+                          </Pressable>
+                        );
+                      })}
+                    </View>
                   </View>
-                </View>
+                </React.Fragment>
               ))}
             </View>
 

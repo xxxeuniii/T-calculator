@@ -63,8 +63,8 @@ const styles = StyleSheet.create({
     borderColor: "#e2e2e2",
     borderRadius: 10,
     padding: 12,
-    gap: 10,
-    backgroundColor: "#fafafa",
+    gap: 0,
+    backgroundColor: "#ffffff",
   },
   positionCardHeader: {
     flexDirection: "row",
@@ -104,12 +104,14 @@ const styles = StyleSheet.create({
     color: palette.ink,
   },
   positionItem: {
-    borderWidth: 1,
-    borderColor: "#e6e6e6",
-    borderRadius: 8,
-    padding: 10,
+    paddingVertical: 6,
+    paddingHorizontal: 0,
     gap: 8,
-    backgroundColor: "#ffffff",
+  },
+  positionDivider: {
+    height: 1,
+    backgroundColor: "#ececec",
+    marginVertical: 10,
   },
   positionItemHeader: {
     flexDirection: "row",
@@ -201,7 +203,7 @@ const styles = StyleSheet.create({
   feeChipTitle: {
     color: palette.ink,
     fontSize: 13,
-    fontWeight: "800",
+    fontWeight: "400",
     lineHeight: 18,
   },
   feeChipBody: {
