@@ -467,6 +467,7 @@ const styles = StyleSheet.create({
     fontWeight: "900",
   },
   marginHelpCloseBtn: {
+    alignSelf: "flex-end",
     paddingVertical: 4,
     paddingHorizontal: 8,
     backgroundColor: "#f0f0f0",
