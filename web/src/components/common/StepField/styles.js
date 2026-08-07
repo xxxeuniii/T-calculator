@@ -28,11 +28,14 @@ const styles = StyleSheet.create({
   stepInput: {
     flex: 1,
     paddingHorizontal: 14,
+    paddingVertical: 0,
+    minHeight: 44,
     color: palette.ink,
     fontSize: 17,
   },
   stepButton: {
     width: 46,
+    flexShrink: 0,
     alignItems: "center",
     justifyContent: "center",
     borderLeftWidth: 1,
@@ -42,6 +45,7 @@ const styles = StyleSheet.create({
   stepButtonText: {
     color: palette.ink,
     fontSize: 20,
+    lineHeight: 20,
     fontWeight: "900",
   },
 });
