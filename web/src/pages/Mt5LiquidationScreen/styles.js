@@ -202,9 +202,9 @@ const styles = StyleSheet.create({
   },
   feeChipTitle: {
     color: palette.ink,
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: "400",
-    lineHeight: 18,
+    lineHeight: 16,
   },
   feeChipBody: {
     color: palette.ink,
