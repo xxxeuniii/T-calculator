@@ -212,7 +212,7 @@ const styles = StyleSheet.create({
     color: palette.ink,
   },
   feeChipResultHighlight: {
-    color: "#9f1239",
+    color: "#d32f2f",
     fontWeight: "900",
   },
   resultPanel: {
@@ -239,7 +239,7 @@ const styles = StyleSheet.create({
     borderTopColor: "#e8e8e8",
   },
   triggerReachedText: {
-    color: "#9f1239",
+    color: "#d32f2f",
     fontSize: 14,
     fontWeight: "900",
     textAlign: "left",

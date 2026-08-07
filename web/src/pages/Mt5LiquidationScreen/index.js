@@ -29,7 +29,7 @@ const RISK_LABELS = {
   low: { text: "低风险", color: "#0f7b55", desc: "保证金水平 > 150%，账户资金充足" },
   medium: { text: "中风险", color: "#d48806", desc: "50% < 保证金水平 ≤ 150%，注意风险" },
   high: { text: "高风险", color: "#d32f2f", desc: "20% < 保证金水平 ≤ 50%，随时可能爆仓" },
-  stopout: { text: "爆仓", color: "#9f1239", desc: "保证金水平 ≤ 20%，持仓将被强制平仓" },
+  stopout: { text: "爆仓", color: "#d32f2f", desc: "保证金水平 ≤ 20%，持仓将被强制平仓" },
   unknown: { text: "待计算", color: "#6d6d6d", desc: "填写当前价后计算保证金水平" },
 };
 
@@ -476,7 +476,7 @@ export default function Mt5LiquidationScreen({ addHistory, prefill, isDesktop })
                   : "--"
               }
             />
-            <Metric label="占用保证金" value={result ? formatUsdt(result.usedMargin) : "--"} valueStyle={{ color: "#9f1239" }} />
+            <Metric label="占用保证金" value={result ? formatUsdt(result.usedMargin) : "--"} valueStyle={{ color: "#d32f2f" }} />
             <Metric label="方向" value={sideText} />
             <Metric label="总手数" value={result ? `${formatNumber(totalLot, 2)} 手` : "--"} />
             <Metric label="加权均价" value={result ? formatUsdt(avgEntry) : "--"} />
