@@ -309,6 +309,26 @@ const styles = StyleSheet.create({
     lineHeight: 18,
     marginTop: 8,
   },
+  nestedDivider: {
+    height: 1,
+    backgroundColor: "#eeeeee",
+    marginVertical: 12,
+  },
+  nestedKvRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  nestedKvLabel: {
+    color: palette.muted,
+    fontSize: 12,
+    fontWeight: "700",
+  },
+  nestedKvValue: {
+    color: palette.ink,
+    fontSize: 17,
+    fontWeight: "900",
+  },
   triggerKvList: {
     marginTop: 14,
     gap: 10,

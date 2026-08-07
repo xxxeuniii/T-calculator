@@ -406,6 +406,44 @@ export default function Mt5LiquidationScreen({ addHistory, prefill, isDesktop })
 
       <View style={{ width: isDesktop ? "48%" : "100%", maxWidth: isDesktop ? 420 : "100%" }}>
         <View style={styles.resultPanel}>
+          <Pressable
+            style={[
+              styles.triggerCard,
+              {
+                borderColor: risk.color,
+              },
+            ]}
+            onPress={() => setShowMarginHelp(true)}
+          >
+            <View style={styles.marginCardHeader}>
+              <Text style={[styles.triggerCardLabel, { color: risk.color }]}>保证金水平</Text>
+              <Text style={[styles.marginCardHelpIcon, { color: risk.color }]}>ⓘ</Text>
+            </View>
+            <View style={styles.marginLevelRow}>
+              <Text style={[styles.triggerCardValue, { color: risk.color }]}>
+                {result?.marginLevel != null ? `${formatNumber(result.marginLevel)}%` : "--"}
+              </Text>
+              <View style={[styles.riskBadge, { borderColor: risk.color }]}>
+                <Text style={[styles.riskBadgeText, { color: risk.color }]}>{risk.text}</Text>
+              </View>
+            </View>
+            <Text style={[styles.riskDesc, { color: risk.color, opacity: 0.9 }]}>{risk.desc}</Text>
+
+            <View style={styles.nestedDivider} />
+            <View style={styles.nestedKvRow}>
+              <Text style={styles.nestedKvLabel}>占用保证金</Text>
+              <Text style={[styles.nestedKvValue, { color: "#d32f2f" }]}>
+                {result ? formatUsdt(result.usedMargin) : "--"}
+              </Text>
+            </View>
+            <View style={[styles.nestedKvRow, { marginTop: 10 }]}>
+              <Text style={styles.nestedKvLabel}>可用保证金</Text>
+              <Text style={styles.nestedKvValue}>
+                {result ? formatUsdt(result.availableMargin) : "--"}
+              </Text>
+            </View>
+          </Pressable>
+
           <View style={[styles.triggerCard, styles.triggerCardSpaced]}>
             <Text style={styles.triggerCardLabel}>强平价</Text>
             <Text style={[styles.triggerCardValue, styles.gapDownText]}>
@@ -433,6 +471,12 @@ export default function Mt5LiquidationScreen({ addHistory, prefill, isDesktop })
                 </View>
               </View>
             )}
+
+            <View style={styles.nestedDivider} />
+            <View style={styles.nestedKvRow}>
+              <Text style={styles.nestedKvLabel}>方向</Text>
+              <Text style={styles.nestedKvValue}>{sideText}</Text>
+            </View>
           </View>
 
           <View style={[styles.gapCard, styles.triggerCardSpaced]}>
@@ -460,17 +504,14 @@ export default function Mt5LiquidationScreen({ addHistory, prefill, isDesktop })
                 </Text>
               </View>
             </View>
-          </View>
 
-          <View style={styles.metrics}>
-            <Metric label="占用保证金" value={result ? formatUsdt(result.usedMargin) : "--"} valueStyle={{ color: "#d32f2f" }} />
-            <Metric label="可用保证金" value={result ? formatUsdt(result.availableMargin) : "--"} />
-            <Metric
-              label="保证金水平"
-              value={result?.marginLevel != null ? `${formatNumber(result.marginLevel)}%` : "--"}
-              valueStyle={result?.hasCurrentPrice && result.marginLevel != null ? { color: risk.color, fontWeight: "900" } : undefined}
-            />
-            <Metric label="余额" value={form.balance ? formatUsdt(result?.balance) : "--"} />
+            <View style={styles.nestedDivider} />
+            <View style={styles.nestedKvRow}>
+              <Text style={styles.nestedKvLabel}>余额</Text>
+              <Text style={styles.nestedKvValue}>
+                {form.balance ? formatUsdt(result?.balance) : "--"}
+              </Text>
+            </View>
           </View>
 
           <Pressable onPress={saveLiquidation} style={[styles.confirmButton, !result && styles.disabledButton]}>
