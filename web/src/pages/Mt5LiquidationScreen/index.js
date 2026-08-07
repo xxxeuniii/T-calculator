@@ -446,12 +446,6 @@ export default function Mt5LiquidationScreen({ addHistory, prefill, isDesktop })
               </View>
             )}
 
-            <View style={styles.nestedDivider} />
-            <View style={styles.nestedKvRow}>
-              <Text style={styles.nestedKvLabel}>方向</Text>
-              <Text style={styles.nestedKvValue}>{sideText}</Text>
-            </View>
-
             {result ? (
               <>
                 <View style={styles.nestedDivider} />
@@ -496,14 +490,6 @@ export default function Mt5LiquidationScreen({ addHistory, prefill, isDesktop })
                   {result ? formatUsdt(result.equity) : "--"}
                 </Text>
               </View>
-            </View>
-
-            <View style={styles.nestedDivider} />
-            <View style={styles.nestedKvRow}>
-              <Text style={styles.nestedKvLabel}>余额</Text>
-              <Text style={styles.nestedKvValue}>
-                {form.balance ? formatUsdt(result?.balance) : "--"}
-              </Text>
             </View>
 
             <View style={styles.nestedDivider} />
