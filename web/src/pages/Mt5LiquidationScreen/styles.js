@@ -49,6 +49,15 @@ const styles = StyleSheet.create({
     gap: 10,
     marginTop: 14,
   },
+  summaryCard: {
+    borderWidth: 1,
+    borderColor: "#e2e2e2",
+    borderRadius: 10,
+    padding: 12,
+    backgroundColor: "#ffffff",
+    flexDirection: "row",
+    gap: 12,
+  },
   positionCard: {
     borderWidth: 1,
     borderColor: "#e2e2e2",

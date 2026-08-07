@@ -252,13 +252,15 @@ export default function Mt5LiquidationScreen({ addHistory, prefill, isDesktop })
           </View>
 
           <View style={styles.fieldGrid}>
+            <View style={styles.summaryCard}>
+              <Metric label="总手数" value={totalLot > 0 ? `${formatNumber(totalLot, 2)} 手` : "--"} containerStyle={{ flex: 1 }} />
+              <Metric label="加权均价" value={totalLot > 0 ? formatUsdt(avgEntry) : "--"} containerStyle={{ flex: 1 }} />
+            </View>
+
             <View style={styles.positionCard}>
               <View style={styles.positionCardHeader}>
                 <Text style={styles.positionCardTitle}>仓位 ({form.positions.length})</Text>
                 <View style={styles.positionCardHeaderRight}>
-                  <Text style={styles.positionTotalLot}>
-                    合计 {formatNumber(totalLot, 2)} 手
-                  </Text>
                   <Pressable onPress={addPosition} style={styles.addPositionButton} accessibilityLabel="添加仓位">
                     <Text style={styles.addPositionText}>+</Text>
                   </Pressable>
@@ -303,13 +305,6 @@ export default function Mt5LiquidationScreen({ addHistory, prefill, isDesktop })
                   </View>
                 </View>
               ))}
-
-              {totalLot > 0 ? (
-                <View style={styles.avgCostRow}>
-                  <Text style={styles.avgCostLabel}>加权均价</Text>
-                  <Text style={styles.avgCostValue}>{formatUsdt(avgEntry)}</Text>
-                </View>
-              ) : null}
             </View>
 
             <StepField
