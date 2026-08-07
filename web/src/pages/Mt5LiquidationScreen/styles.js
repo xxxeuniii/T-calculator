@@ -226,10 +226,26 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 18,
     borderWidth: 1,
+    borderColor: "#e8e8e8",
     backgroundColor: "#ffffff",
   },
   triggerCardSpaced: {
     marginTop: 14,
+  },
+  triggerReachedHint: {
+    marginTop: 14,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderRadius: 8,
+    backgroundColor: "#fff1f2",
+    borderWidth: 1,
+    borderColor: "#9f1239",
+  },
+  triggerReachedText: {
+    color: "#9f1239",
+    fontSize: 14,
+    fontWeight: "900",
+    textAlign: "center",
   },
   triggerCardLoss: {
     borderColor: "rgba(211, 47, 47, 0.45)",

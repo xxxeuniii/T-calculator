@@ -385,7 +385,6 @@ export default function Mt5LiquidationScreen({ addHistory, prefill, isDesktop })
                 styles.triggerCard,
                 {
                   borderColor: risk.color,
-                  backgroundColor: riskCardBg,
                 },
               ]}
               onPress={() => setShowMarginHelp(true)}
@@ -398,7 +397,7 @@ export default function Mt5LiquidationScreen({ addHistory, prefill, isDesktop })
                 <Text style={[styles.triggerCardValue, { color: risk.color }]}>
                   {result.marginLevel != null ? `${formatNumber(result.marginLevel)}%` : "--"}
                 </Text>
-                <View style={[styles.riskBadge, { borderColor: risk.color, backgroundColor: riskCardBg }]}>
+                <View style={[styles.riskBadge, { borderColor: risk.color }]}>
                   <Text style={[styles.riskBadgeText, { color: risk.color }]}>{risk.text}</Text>
                 </View>
               </View>
@@ -411,35 +410,29 @@ export default function Mt5LiquidationScreen({ addHistory, prefill, isDesktop })
             <Text style={[styles.triggerCardValue, styles.gapDownText]}>
               {result ? formatUsdt(result.liquidationPrice) : "--"}
             </Text>
-            <View style={styles.triggerKvList}>
-              <View style={[styles.roiCardRow, styles.triggerMetricRow]}>
-                <View style={styles.roiCard}>
-                  <Text style={styles.roiCardLabel}>{priceMoveLabel}</Text>
-                  <Text style={[styles.roiCardValue, result ? styles.gapDownText : null]}>
-                    {result ? `${side === "long" ? "-" : "+"}${formatNumber(result.priceMovePercent)}%` : "--"}
-                  </Text>
-                </View>
-                <View style={styles.roiCard}>
-                  <Text style={styles.roiCardLabel}>强平价差</Text>
-                  <Text style={[styles.roiCardValue, result ? styles.gapDownText : null]}>
-                    {result ? formatUsdt(result.priceMoveAmount) : "--"}
-                  </Text>
+            {result?.hasCurrentPrice && (result.gapToLiquidation?.reached || result.gapToLiquidation?.direction === "flat") ? (
+              <View style={styles.triggerReachedHint}>
+                <Text style={styles.triggerReachedText}>当前价格已到强平价</Text>
+              </View>
+            ) : (
+              <View style={styles.triggerKvList}>
+                <View style={[styles.roiCardRow, styles.triggerMetricRow]}>
+                  <View style={styles.roiCard}>
+                    <Text style={styles.roiCardLabel}>{priceMoveLabel}</Text>
+                    <Text style={[styles.roiCardValue, result ? styles.gapDownText : null]}>
+                      {result ? `${side === "long" ? "-" : "+"}${formatNumber(result.priceMovePercent)}%` : "--"}
+                    </Text>
+                  </View>
+                  <View style={styles.roiCard}>
+                    <Text style={styles.roiCardLabel}>强平价差</Text>
+                    <Text style={[styles.roiCardValue, result ? styles.gapDownText : null]}>
+                      {result ? formatUsdt(result.priceMoveAmount) : "--"}
+                    </Text>
+                  </View>
                 </View>
               </View>
-            </View>
+            )}
           </View>
-
-          {result?.hasCurrentPrice && result.gapToLiquidation ? (
-            <View style={[styles.gapCard, styles.triggerCardSpaced]}>
-              <Text style={styles.gapCardTitle}>距强平价</Text>
-              <Text style={styles.gapCardPrice}>
-                {result ? formatUsdt(result.liquidationPrice) : "--"}
-              </Text>
-              <View style={styles.reachStack}>
-                <GapToLiquidationMetric gap={result.gapToLiquidation} floatingPnl={result.floatingPnl} marginLevel={result.marginLevel} />
-              </View>
-            </View>
-          ) : null}
 
           {result?.hasCurrentPrice ? (
             <View style={[styles.gapCard, styles.triggerCardSpaced]}>
@@ -471,6 +464,18 @@ export default function Mt5LiquidationScreen({ addHistory, prefill, isDesktop })
           ) : null}
 
           <View style={styles.metrics}>
+            <Metric
+              label="净值"
+              value={
+                result
+                  ? formatUsdt(
+                      result.hasCurrentPrice
+                        ? result.equity
+                        : (result.balance || 0) + (result.credit || 0),
+                    )
+                  : "--"
+              }
+            />
             <Metric label="占用保证金" value={result ? formatUsdt(result.usedMargin) : "--"} valueStyle={{ color: "#9f1239" }} />
             <Metric label="方向" value={sideText} />
             <Metric label="总手数" value={result ? `${formatNumber(totalLot, 2)} 手` : "--"} />
