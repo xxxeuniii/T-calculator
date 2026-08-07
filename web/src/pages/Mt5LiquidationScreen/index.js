@@ -305,20 +305,6 @@ export default function Mt5LiquidationScreen({ addHistory, prefill, isDesktop })
               onStepDown={() => stepBalance(-10)}
               onStepUp={() => stepBalance(10)}
             />
-            <View style={styles.quickRates}>
-              {BALANCE_QUICK.map((value) => {
-                const active = form.balance === value;
-                return (
-                  <Pressable
-                    key={value}
-                    onPress={() => updateField("balance", value)}
-                    style={[styles.quickRate, active && styles.quickRateActive]}
-                  >
-                    <Text style={[styles.quickRateText, active && styles.quickRateTextActive]}>{value}</Text>
-                  </Pressable>
-                );
-              })}
-            </View>
 
             <StepField
               label="信用额 (USD)"
@@ -335,26 +321,42 @@ export default function Mt5LiquidationScreen({ addHistory, prefill, isDesktop })
               placeholder="选填，计算保证金水平"
             />
             <View style={styles.feeRow}>
-              <Text style={styles.feeChip}>
-                占用保证金 = {formatUsdt(avgEntry)} × {formatNumber(totalLot, 2)} 手 × 100 ÷ 500 = {result ? formatUsdt(result.usedMargin) : "--"}
-              </Text>
-              <Text style={styles.feeChip}>
-                净值 = {formatUsdt(result?.balance)} + {formatUsdt(result?.credit)}
-                {result?.hasCurrentPrice
-                  ? ` ${result.floatingPnl >= 0 ? "+" : "−"} ${formatUsdt(Math.abs(result.floatingPnl))}`
-                  : ""} = {result?.hasCurrentPrice ? formatUsdt(result.equity) : formatUsdt((result?.balance || 0) + (result?.credit || 0))}
-              </Text>
-              <Text style={styles.feeChip}>
-                保证金水平 = {result?.hasCurrentPrice ? formatUsdt(result.equity) : "--"}
-                ÷ {result ? formatUsdt(result.usedMargin) : "--"} × 100%
-                = {result?.hasCurrentPrice && result.marginLevel != null ? `${formatNumber(result.marginLevel)}%` : "--"}
-              </Text>
-              {result ? (
-                <Text style={styles.feeChip}>
-                  {side === "long" ? "强平价（做多）" : "强平价（做空）"} = {formatUsdt(avgEntry)} × {side === "long" ? "0.9984" : "1.0016"}
-                  {` ${side === "long" ? "−" : "+"} ${formatUsdt((result?.balance || 0) + (result?.credit || 0))} ÷ ${formatNumber((totalLot || 0) * 100, 2)}`}
-                  = {formatUsdt(result.liquidationPrice)}
+              <View style={styles.feeChip}>
+                <Text style={styles.feeChipTitle}>占用保证金 = 开仓价 × 手数 × 合约规模 ÷ 杠杆</Text>
+                <Text style={styles.feeChipBody}>
+                  = {formatUsdt(avgEntry)} × {formatNumber(totalLot, 2)} 手 × 100 ÷ 500 = {result ? formatUsdt(result.usedMargin) : "--"}
                 </Text>
+              </View>
+              <View style={styles.feeChip}>
+                <Text style={styles.feeChipTitle}>净值 = 余额 + 信用额 + 浮动盈亏</Text>
+                <Text style={styles.feeChipBody}>
+                  = {formatUsdt(result?.balance)} + {formatUsdt(result?.credit)}
+                  {result?.hasCurrentPrice
+                    ? ` ${result.floatingPnl >= 0 ? "+" : "−"} ${formatUsdt(Math.abs(result.floatingPnl))}`
+                    : ""} = {result?.hasCurrentPrice ? formatUsdt(result.equity) : formatUsdt((result?.balance || 0) + (result?.credit || 0))}
+                </Text>
+              </View>
+              <View style={styles.feeChip}>
+                <Text style={styles.feeChipTitle}>保证金水平 = 净值 ÷ 占用保证金 × 100%</Text>
+                <Text style={styles.feeChipBody}>
+                  = {result?.hasCurrentPrice ? formatUsdt(result.equity) : "--"}
+                  ÷ {result ? formatUsdt(result.usedMargin) : "--"} × 100%
+                  = {result?.hasCurrentPrice && result.marginLevel != null ? `${formatNumber(result.marginLevel)}%` : "--"}
+                </Text>
+              </View>
+              {result ? (
+                <View style={styles.feeChip}>
+                  <Text style={styles.feeChipTitle}>
+                    {side === "long"
+                      ? "强平价（做多） = 开仓价 × 0.9984 − (余额 + 信用额) ÷ (手数 × 合约规模)"
+                      : "强平价（做空） = 开仓价 × 1.0016 + (余额 + 信用额) ÷ (手数 × 合约规模)"}
+                  </Text>
+                  <Text style={styles.feeChipBody}>
+                    = {formatUsdt(avgEntry)} × {side === "long" ? "0.9984" : "1.0016"}
+                    {` ${side === "long" ? "−" : "+"} ${formatUsdt((result?.balance || 0) + (result?.credit || 0))} ÷ ${formatNumber((totalLot || 0) * 100, 2)}`}
+                    = {formatUsdt(result.liquidationPrice)}
+                  </Text>
+                </View>
               ) : null}
             </View>
           </View>
