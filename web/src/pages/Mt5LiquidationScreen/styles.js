@@ -441,6 +441,7 @@ const styles = StyleSheet.create({
     paddingBottom: 18,
     zIndex: 1,
     maxHeight: "85%",
+    overflow: "hidden",
   },
   marginHelpHeader: {
     flexDirection: "row",

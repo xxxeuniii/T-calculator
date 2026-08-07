@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { View, Text, Pressable, Modal } from "react-native";
+import { View, Text, Pressable, Modal, ScrollView } from "react-native";
 import { calculateMt5Liquidation } from "../../calculator";
 import { formatUsdt } from "../../utils";
 import styles from "./styles";
@@ -505,6 +505,7 @@ export default function Mt5LiquidationScreen({ addHistory, prefill, isDesktop })
               </Pressable>
             </View>
 
+            <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 6 }} showsVerticalScrollIndicator={true}>
             <View style={styles.marginHelpSection}>
               <Text style={styles.marginHelpSectionTitle}>计算公式</Text>
               <View style={styles.feeChip}>
@@ -617,6 +618,7 @@ export default function Mt5LiquidationScreen({ addHistory, prefill, isDesktop })
                 </View>
               </View>
             </View>
+            </ScrollView>
           </View>
         </View>
       </Modal>
