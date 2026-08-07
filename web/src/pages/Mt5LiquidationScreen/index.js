@@ -18,11 +18,11 @@ const defaultPosition = () => ({ id: nextId(), entryPrice: "", lotSize: "0.01" }
 
 const defaultForm = {
   positions: [
-    { id: nextId(), entryPrice: "", lotSize: "0.01" },
+    { id: nextId(), entryPrice: "4257.56", lotSize: "0.01" },
   ],
-  balance: "",
+  balance: "358.65",
   credit: "0",
-  currentPrice: "",
+  currentPrice: "4232.73",
 };
 
 const RISK_LABELS = {
@@ -270,8 +270,8 @@ export default function Mt5LiquidationScreen({ addHistory, prefill, isDesktop })
                   <View style={styles.positionItemHeader}>
                     <Text style={styles.positionItemLabel}>#{index + 1} 仓</Text>
                     {form.positions.length > 1 ? (
-                      <Pressable onPress={() => removePosition(index)} style={styles.removePositionButton} accessibilityLabel="删除仓位">
-                        <Text style={styles.removePositionText}>×</Text>
+                      <Pressable onPress={() => removePosition(index)} style={styles.removePositionButton}>
+                        <Text style={styles.removePositionText}>删除</Text>
                       </Pressable>
                     ) : null}
                   </View>
@@ -359,7 +359,7 @@ export default function Mt5LiquidationScreen({ addHistory, prefill, isDesktop })
               </View>
               {result?.hasCurrentPrice ? (
                 <View style={styles.feeChip}>
-                  <Text style={styles.feeChipTitle}>可用保证金 = 净值 − 占用保证金</Text>
+                  <Text style={styles.feeChipTitle}>可用保证金 = 净值 − 保证金</Text>
                   <View style={styles.feeChipDivider} />
                   <Text style={styles.feeChipBody}>
                     {formatU(result.availableMargin)}
@@ -378,7 +378,7 @@ export default function Mt5LiquidationScreen({ addHistory, prefill, isDesktop })
                   <Text style={styles.feeChipBody}>
                     {formatU(result.liquidationPrice)}
                     {" = "}{formatU(avgEntry)} × {side === "long" ? "0.9984" : "1.0016"}
-                    {` ${side === "long" ? "−" : "+"} ${formatU((result?.balance || 0) + (result?.credit || 0))} ÷ ${formatNumber((totalLot || 0) * 100, 2)}`}
+                    {` ${side === "long" ? "−" : "+"} ${formatU((result?.balance || 0) + (result?.credit || 0))} ÷ (${formatNumber(totalLot || 0, 2)} 手 × 100)`}
                   </Text>
                 </View>
               ) : null}
@@ -547,7 +547,7 @@ export default function Mt5LiquidationScreen({ addHistory, prefill, isDesktop })
               </View>
               {result?.hasCurrentPrice ? (
                 <View style={[styles.feeChip, { marginTop: 10 }]}>
-                  <Text style={styles.feeChipTitle}>可用保证金 = 净值 − 占用保证金</Text>
+                  <Text style={styles.feeChipTitle}>可用保证金 = 净值 − 保证金</Text>
                   <View style={styles.feeChipDivider} />
                   <Text style={styles.feeChipBody}>
                     {formatU(result.availableMargin)}
