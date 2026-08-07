@@ -196,6 +196,25 @@ const styles = StyleSheet.create({
     lineHeight: 18,
     opacity: 0.92,
   },
+  feeChipDivider: {
+    width: "100%",
+    height: 1,
+    backgroundColor: "#dcdcdc",
+  },
+  feeChipHint: {
+    color: "#8a8a8a",
+    fontSize: 11.5,
+    fontWeight: "500",
+    lineHeight: 16,
+  },
+  feeChipEmph: {
+    fontWeight: "900",
+    color: palette.ink,
+  },
+  feeChipResultHighlight: {
+    color: "#9f1239",
+    fontWeight: "900",
+  },
   resultPanel: {
     borderWidth: 0,
     borderRadius: 7,

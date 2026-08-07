@@ -21,7 +21,7 @@ const defaultForm = {
     { id: nextId(), entryPrice: "", lotSize: "0.01" },
   ],
   balance: "",
-  credit: "",
+  credit: "0",
   currentPrice: "",
 };
 
@@ -29,7 +29,7 @@ const RISK_LABELS = {
   low: { text: "低风险", color: "#0f7b55", desc: "保证金水平 > 150%，账户资金充足" },
   medium: { text: "中风险", color: "#d48806", desc: "50% < 保证金水平 ≤ 150%，注意风险" },
   high: { text: "高风险", color: "#d32f2f", desc: "20% < 保证金水平 ≤ 50%，随时可能爆仓" },
-  stopout: { text: "爆仓", color: "#000000", desc: "保证金水平 ≤ 20%，持仓将被强制平仓" },
+  stopout: { text: "爆仓", color: "#9f1239", desc: "保证金水平 ≤ 20%，持仓将被强制平仓" },
   unknown: { text: "待计算", color: "#6d6d6d", desc: "填写当前价后计算保证金水平" },
 };
 
@@ -213,6 +213,20 @@ export default function Mt5LiquidationScreen({ addHistory, prefill, isDesktop })
 
   const risk = result ? RISK_LABELS[result.riskLevel] : RISK_LABELS.unknown;
   const priceMoveLabel = side === "long" ? "强平跌幅" : "强平涨幅";
+  const formatU = (v) => {
+    const s = formatUsdt(v);
+    return s === "--" ? "--" : s.replace(/ USDT$/, " U");
+  };
+  const riskCardBg =
+    result?.hasCurrentPrice
+      ? ({
+          low: "#eefbf4",
+          medium: "#fff7e0",
+          high: "#fff1f0",
+          stopout: "#fff1f2",
+          unknown: "#ffffff",
+        }[result.riskLevel] || "#ffffff")
+      : "#ffffff";
 
   return (
     <>
@@ -299,23 +313,15 @@ export default function Mt5LiquidationScreen({ addHistory, prefill, isDesktop })
             </View>
 
             <StepField
-              label="账户余额 (USD)"
+              label="账户余额"
               value={form.balance}
               onChangeText={(value) => updateField("balance", value)}
               onStepDown={() => stepBalance(-10)}
               onStepUp={() => stepBalance(10)}
             />
 
-            <StepField
-              label="信用额 (USD)"
-              value={form.credit}
-              onChangeText={(value) => updateField("credit", value)}
-              onStepDown={() => stepCredit(-1)}
-              onStepUp={() => stepCredit(1)}
-            />
-
             <Field
-              label="当前价格 (USD)"
+              label="当前价格"
               value={form.currentPrice}
               onChangeText={(value) => updateField("currentPrice", value)}
               placeholder="选填，计算保证金水平"
@@ -323,38 +329,46 @@ export default function Mt5LiquidationScreen({ addHistory, prefill, isDesktop })
             <View style={styles.feeRow}>
               <View style={styles.feeChip}>
                 <Text style={styles.feeChipTitle}>占用保证金 = 开仓价 × 手数 × 合约规模 ÷ 杠杆</Text>
+                <View style={styles.feeChipDivider} />
                 <Text style={styles.feeChipBody}>
-                  = {formatUsdt(avgEntry)} × {formatNumber(totalLot, 2)} 手 × 100 ÷ 500 = {result ? formatUsdt(result.usedMargin) : "--"}
+                  <Text style={styles.feeChipResultHighlight}>{result ? formatU(result.usedMargin) : "--"}</Text>
+                  {" = "}{formatU(avgEntry)} × {formatNumber(totalLot, 2)} 手 × 100 ÷ 500
                 </Text>
               </View>
               <View style={styles.feeChip}>
                 <Text style={styles.feeChipTitle}>净值 = 余额 + 信用额 + 浮动盈亏</Text>
+                <View style={styles.feeChipDivider} />
                 <Text style={styles.feeChipBody}>
-                  = {formatUsdt(result?.balance)} + {formatUsdt(result?.credit)}
+                  {result?.hasCurrentPrice ? formatU(result.equity) : formatU((result?.balance || 0) + (result?.credit || 0))}
+                  {" = "}{formatU(result?.balance)} + {formatU(result?.credit)}
                   {result?.hasCurrentPrice
-                    ? ` ${result.floatingPnl >= 0 ? "+" : "−"} ${formatUsdt(Math.abs(result.floatingPnl))}`
-                    : ""} = {result?.hasCurrentPrice ? formatUsdt(result.equity) : formatUsdt((result?.balance || 0) + (result?.credit || 0))}
+                    ? ` ${result.floatingPnl >= 0 ? "+" : "−"} ${formatU(Math.abs(result.floatingPnl))}`
+                    : ""}
                 </Text>
               </View>
               <View style={styles.feeChip}>
                 <Text style={styles.feeChipTitle}>保证金水平 = 净值 ÷ 占用保证金 × 100%</Text>
+                <View style={styles.feeChipDivider} />
                 <Text style={styles.feeChipBody}>
-                  = {result?.hasCurrentPrice ? formatUsdt(result.equity) : "--"}
-                  ÷ {result ? formatUsdt(result.usedMargin) : "--"} × 100%
-                  = {result?.hasCurrentPrice && result.marginLevel != null ? `${formatNumber(result.marginLevel)}%` : "--"}
+                  <Text style={result?.hasCurrentPrice && result.marginLevel != null ? { color: risk.color, fontWeight: "900" } : undefined}>
+                    {result?.hasCurrentPrice && result.marginLevel != null ? `${formatNumber(result.marginLevel)}%` : "--"}
+                  </Text>
+                  {" = "}{result?.hasCurrentPrice ? formatU(result.equity) : "--"}
+                  ÷ {result ? formatU(result.usedMargin) : "--"} × 100%
                 </Text>
               </View>
               {result ? (
                 <View style={styles.feeChip}>
                   <Text style={styles.feeChipTitle}>
                     {side === "long"
-                      ? "强平价（做多） = 开仓价 × 0.9984 − (余额 + 信用额) ÷ (手数 × 合约规模)"
-                      : "强平价（做空） = 开仓价 × 1.0016 + (余额 + 信用额) ÷ (手数 × 合约规模)"}
+                      ? "强平价 = 开仓价 × 0.9984 − (余额 + 信用额) ÷ (手数 × 合约规模)"
+                      : "强平价 = 开仓价 × 1.0016 + (余额 + 信用额) ÷ (手数 × 合约规模)"}
                   </Text>
+                  <View style={styles.feeChipDivider} />
                   <Text style={styles.feeChipBody}>
-                    = {formatUsdt(avgEntry)} × {side === "long" ? "0.9984" : "1.0016"}
-                    {` ${side === "long" ? "−" : "+"} ${formatUsdt((result?.balance || 0) + (result?.credit || 0))} ÷ ${formatNumber((totalLot || 0) * 100, 2)}`}
-                    = {formatUsdt(result.liquidationPrice)}
+                    {formatU(result.liquidationPrice)}
+                    {" = "}{formatU(avgEntry)} × {side === "long" ? "0.9984" : "1.0016"}
+                    {` ${side === "long" ? "−" : "+"} ${formatU((result?.balance || 0) + (result?.credit || 0))} ÷ ${formatNumber((totalLot || 0) * 100, 2)}`}
                   </Text>
                 </View>
               ) : null}
@@ -367,27 +381,33 @@ export default function Mt5LiquidationScreen({ addHistory, prefill, isDesktop })
         <View style={styles.resultPanel}>
           {result?.hasCurrentPrice ? (
             <Pressable
-              style={[styles.triggerCard, styles.triggerCardLoss]}
+              style={[
+                styles.triggerCard,
+                {
+                  borderColor: risk.color,
+                  backgroundColor: riskCardBg,
+                },
+              ]}
               onPress={() => setShowMarginHelp(true)}
             >
               <View style={styles.marginCardHeader}>
-                <Text style={styles.triggerCardLabel}>保证金水平</Text>
-                <Text style={styles.marginCardHelpIcon}>ⓘ</Text>
+                <Text style={[styles.triggerCardLabel, { color: risk.color }]}>保证金水平</Text>
+                <Text style={[styles.marginCardHelpIcon, { color: risk.color }]}>ⓘ</Text>
               </View>
               <View style={styles.marginLevelRow}>
                 <Text style={[styles.triggerCardValue, { color: risk.color }]}>
                   {result.marginLevel != null ? `${formatNumber(result.marginLevel)}%` : "--"}
                 </Text>
-                <View style={[styles.riskBadge, { borderColor: risk.color }]}>
+                <View style={[styles.riskBadge, { borderColor: risk.color, backgroundColor: riskCardBg }]}>
                   <Text style={[styles.riskBadgeText, { color: risk.color }]}>{risk.text}</Text>
                 </View>
               </View>
-              <Text style={styles.riskDesc}>{risk.desc}</Text>
+              <Text style={[styles.riskDesc, { color: risk.color, opacity: 0.9 }]}>{risk.desc}</Text>
             </Pressable>
           ) : null}
 
           <View style={[styles.triggerCard, styles.triggerCardSpaced]}>
-            <Text style={styles.triggerCardLabel}>强平价 (爆仓价)</Text>
+            <Text style={styles.triggerCardLabel}>强平价</Text>
             <Text style={[styles.triggerCardValue, styles.gapDownText]}>
               {result ? formatUsdt(result.liquidationPrice) : "--"}
             </Text>
@@ -423,7 +443,6 @@ export default function Mt5LiquidationScreen({ addHistory, prefill, isDesktop })
 
           {result?.hasCurrentPrice ? (
             <View style={[styles.gapCard, styles.triggerCardSpaced]}>
-              <Text style={styles.gapCardTitle}>当前账户</Text>
               <View style={styles.roiCardRow}>
                 <View
                   style={[
@@ -452,20 +471,21 @@ export default function Mt5LiquidationScreen({ addHistory, prefill, isDesktop })
           ) : null}
 
           <View style={styles.metrics}>
+            <Metric label="占用保证金" value={result ? formatUsdt(result.usedMargin) : "--"} valueStyle={{ color: "#9f1239" }} />
             <Metric label="方向" value={sideText} />
             <Metric label="总手数" value={result ? `${formatNumber(totalLot, 2)} 手` : "--"} />
             <Metric label="加权均价" value={result ? formatUsdt(avgEntry) : "--"} />
-            <Metric label="占用保证金" value={result ? formatUsdt(result.usedMargin) : "--"} />
             {result?.hasCurrentPrice ? (
               <>
                 <Metric label="可用保证金" value={formatUsdt(result.availableMargin)} />
-                <Metric label="保证金水平" value={result ? `${formatNumber(result.marginLevel)}%` : "--"} />
+                <Metric
+                  label="保证金水平"
+                  value={result ? `${formatNumber(result.marginLevel)}%` : "--"}
+                  valueStyle={result?.hasCurrentPrice && result.marginLevel != null ? { color: risk.color, fontWeight: "900" } : undefined}
+                />
               </>
             ) : null}
             <Metric label="余额" value={form.balance ? formatUsdt(result?.balance) : "--"} />
-            {form.credit ? (
-              <Metric label="信用额" value={formatUsdt(result?.credit)} />
-            ) : null}
           </View>
 
           <Pressable onPress={saveLiquidation} style={[styles.confirmButton, !result && styles.disabledButton]}>
@@ -492,14 +512,52 @@ export default function Mt5LiquidationScreen({ addHistory, prefill, isDesktop })
 
             <View style={styles.marginHelpSection}>
               <Text style={styles.marginHelpSectionTitle}>计算公式</Text>
-              <View style={styles.marginHelpFormulaBox}>
-                <Text style={styles.marginHelpFormula}>保证金水平 = 净值 ÷ 占用保证金 × 100%</Text>
+              <View style={styles.feeChip}>
+                <Text style={styles.feeChipTitle}>占用保证金 = 开仓价 × 手数 × 合约规模 ÷ 杠杆</Text>
+                <View style={styles.feeChipDivider} />
+                <Text style={styles.feeChipBody}>
+                  <Text style={styles.feeChipResultHighlight}>{result ? formatU(result.usedMargin) : "--"}</Text>
+                  {" = "}{formatU(avgEntry)} × {formatNumber(totalLot, 2)} 手 × 100 ÷ 500
+                </Text>
               </View>
-              <View style={styles.marginHelpFormulaBox}>
-                <Text style={styles.marginHelpFormula}>净值 = 余额 + 信用额 + 浮动盈亏</Text>
+              <View style={[styles.feeChip, { marginTop: 10 }]}>
+                <Text style={styles.feeChipTitle}>净值 = 余额 + 信用额 + 浮动盈亏</Text>
+                <View style={styles.feeChipDivider} />
+                <Text style={styles.feeChipBody}>
+                  {result?.hasCurrentPrice ? formatU(result.equity) : formatU((result?.balance || 0) + (result?.credit || 0))}
+                  {" = "}{formatU(result?.balance)} + {formatU(result?.credit)}
+                  {result?.hasCurrentPrice
+                    ? ` ${result.floatingPnl >= 0 ? "+" : "−"} ${formatU(Math.abs(result.floatingPnl))}`
+                    : ""}
+                </Text>
               </View>
-              <View style={styles.marginHelpFormulaBox}>
-                <Text style={styles.marginHelpFormula}>占用保证金 = 开仓价 × 手数 × 合约规模 ÷ 杠杆</Text>
+              <View style={[styles.feeChip, { marginTop: 10 }]}>
+                <Text style={styles.feeChipTitle}>保证金水平 = 净值 ÷ 占用保证金 × 100%</Text>
+                <View style={styles.feeChipDivider} />
+                <Text style={styles.feeChipBody}>
+                  <Text style={result?.hasCurrentPrice && result.marginLevel != null ? { color: risk.color, fontWeight: "900" } : undefined}>
+                    {result?.hasCurrentPrice && result.marginLevel != null ? `${formatNumber(result.marginLevel)}%` : "--"}
+                  </Text>
+                  {" = "}{result?.hasCurrentPrice ? formatU(result.equity) : "--"}
+                  ÷ {result ? formatU(result.usedMargin) : "--"} × 100%
+                </Text>
+              </View>
+            </View>
+
+            <View style={styles.marginHelpSection}>
+              <Text style={styles.marginHelpSectionTitle}>强平价系数来源（MT5 500 倍杠杆）</Text>
+              <View style={styles.feeChip}>
+                <Text style={styles.feeChipTitle}>做多 0.9984 / 做空 1.0016 的推导</Text>
+                <View style={styles.feeChipDivider} />
+                <Text style={styles.feeChipBody}>• stopOutLevel = 20%（MT5 强平线：保证金水平 ≤ 20% 就爆仓）</Text>
+                <Text style={[styles.feeChipBody, { marginTop: 2 }]}>• drainRatio = 1 − 20% = 80%（占用保证金最多允许亏掉 80%）</Text>
+                <Text style={[styles.feeChipBody, { marginTop: 2 }]}>• priceMoveRatio = 80% ÷ 500 = 0.16%（换算成价格：最大允许反向波动 0.16%）</Text>
+                <Text style={[styles.feeChipBody, { marginTop: 2 }]}>
+                  • 做多：1 − 0.16% = 1 − 0.0016 = <Text style={styles.feeChipEmph}>0.9984</Text>（开仓价最多跌 0.16%）
+                </Text>
+                <Text style={[styles.feeChipBody, { marginTop: 2 }]}>
+                  • 做空：1 + 0.16% = 1 + 0.0016 = <Text style={styles.feeChipEmph}>1.0016</Text>（开仓价最多涨 0.16%）
+                </Text>
               </View>
             </View>
 
@@ -543,9 +601,9 @@ export default function Mt5LiquidationScreen({ addHistory, prefill, isDesktop })
               </View>
 
               <View style={styles.marginHelpRiskRow}>
-                <View style={[styles.marginHelpRiskDot, { backgroundColor: "#000000" }]} />
+                <View style={[styles.marginHelpRiskDot, { backgroundColor: RISK_LABELS.stopout.color }]} />
                 <View style={styles.marginHelpRiskContent}>
-                  <Text style={styles.marginHelpRiskLevel}>
+                  <Text style={[styles.marginHelpRiskLevel, { color: RISK_LABELS.stopout.color }]}>
                     爆仓（保证金水平 ≤ 20%）
                   </Text>
                   <Text style={styles.marginHelpRiskDesc}>
