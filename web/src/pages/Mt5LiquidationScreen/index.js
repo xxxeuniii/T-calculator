@@ -346,7 +346,7 @@ export default function Mt5LiquidationScreen({ addHistory, prefill, isDesktop })
               label="当前价格"
               value={form.currentPrice}
               onChangeText={(value) => updateField("currentPrice", value)}
-              placeholder="选填，计算保证金水平"
+              placeholder=""
             />
           </View>
         </View>
