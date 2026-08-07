@@ -259,8 +259,8 @@ export default function Mt5LiquidationScreen({ addHistory, prefill, isDesktop })
                   <Text style={styles.positionTotalLot}>
                     合计 {formatNumber(totalLot, 2)} 手
                   </Text>
-                  <Pressable onPress={addPosition} style={styles.addPositionButton}>
-                    <Text style={styles.addPositionText}>+ 添加仓位</Text>
+                  <Pressable onPress={addPosition} style={styles.addPositionButton} accessibilityLabel="添加仓位">
+                    <Text style={styles.addPositionText}>+</Text>
                   </Pressable>
                 </View>
               </View>
