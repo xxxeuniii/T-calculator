@@ -113,14 +113,17 @@ const styles = StyleSheet.create({
     color: palette.muted,
   },
   removePositionButton: {
-    paddingVertical: 2,
-    paddingHorizontal: 8,
+    width: 24,
+    height: 24,
+    borderRadius: 6,
     backgroundColor: "#fdecea",
-    borderRadius: 5,
+    alignItems: "center",
+    justifyContent: "center",
   },
   removePositionText: {
-    fontSize: 12,
-    fontWeight: "700",
+    fontSize: 18,
+    lineHeight: 18,
+    fontWeight: "900",
     color: "#d32f2f",
   },
   avgCostRow: {

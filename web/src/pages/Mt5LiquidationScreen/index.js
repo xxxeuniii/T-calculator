@@ -270,8 +270,8 @@ export default function Mt5LiquidationScreen({ addHistory, prefill, isDesktop })
                   <View style={styles.positionItemHeader}>
                     <Text style={styles.positionItemLabel}>#{index + 1} 仓</Text>
                     {form.positions.length > 1 ? (
-                      <Pressable onPress={() => removePosition(index)} style={styles.removePositionButton}>
-                        <Text style={styles.removePositionText}>删除</Text>
+                      <Pressable onPress={() => removePosition(index)} style={styles.removePositionButton} accessibilityLabel="删除仓位">
+                        <Text style={styles.removePositionText}>×</Text>
                       </Pressable>
                     ) : null}
                   </View>
