@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Pressable, Text, View } from "react-native";
 import styles from "./styles";
 
-const WEEKDAYS = ["一", "二", "三", "四", "五", "六", "日"];
+const WEEKDAYS = ["日", "一", "二", "三", "四", "五", "六"];
 const STATUS = [undefined, "present", "absent"];
 
 function keyFor(date) {
@@ -25,7 +25,7 @@ export default function AttendanceCalendar({ attendance, onChange, onMonthChange
 
   const days = useMemo(() => {
     const count = new Date(year, month + 1, 0).getDate();
-    const leading = (new Date(year, month, 1).getDay() + 6) % 7;
+    const leading = new Date(year, month, 1).getDay();
     return Array.from(
       { length: 42 },
       (_, index) => new Date(year, month, index - leading + 1)
@@ -43,7 +43,7 @@ export default function AttendanceCalendar({ attendance, onChange, onMonthChange
     const present = entries.filter(([, value]) => value === "present").length;
     const absent = entries.filter(([, value]) => value === "absent").length;
     const expected = workdayKeys.length;
-    return { present, absent, expected, rate: expected ? Math.round((present / expected) * 100) : 0 };
+    return { present, absent, expected, rate: expected ? ((present / expected) * 100).toFixed(1) : "0.0" };
   }, [attendance, days, year, month]);
 
   function moveMonth(step) {
@@ -61,9 +61,9 @@ export default function AttendanceCalendar({ attendance, onChange, onMonthChange
     <View style={[styles.page, isDesktop && styles.pageDesktop]}>
       <View style={styles.metrics}>
         <View style={styles.metric}><Text style={styles.metricValue}>{stats.expected}</Text><Text style={styles.metricLabel}>应出勤</Text></View>
-        <View style={styles.metric}><Text style={[styles.metricValue, styles.presentText]}>{stats.present}</Text><Text style={styles.metricLabel}>WIO</Text></View>
-        <View style={styles.metric}><Text style={[styles.metricValue, styles.absentText]}>{stats.absent}</Text><Text style={styles.metricLabel}>WFO</Text></View>
-        <View style={styles.metric}><Text style={[styles.metricValue, styles.rateText]}>{stats.rate}%</Text><Text style={styles.metricLabel}>当前出勤率</Text></View>
+        <View style={[styles.metric, styles.metricDivider]}><Text style={[styles.metricValue, styles.presentText]}>{stats.present}</Text><Text style={styles.metricLabel}>WIO</Text></View>
+        <View style={[styles.metric, styles.metricDivider]}><Text style={[styles.metricValue, styles.absentText]}>{stats.absent}</Text><Text style={styles.metricLabel}>WFO</Text></View>
+        <View style={[styles.metric, styles.metricDivider]}><Text style={[styles.metricValue, styles.rateText]}>{stats.rate}%</Text><Text style={styles.metricLabel}>出勤率</Text></View>
       </View>
 
       <View style={styles.calendar}>
@@ -74,7 +74,7 @@ export default function AttendanceCalendar({ attendance, onChange, onMonthChange
         </View>
 
         <View style={styles.weekRow}>
-          {WEEKDAYS.map((day, index) => <Text key={day} style={[styles.weekday, index > 4 && styles.weekend]}>{day}</Text>)}
+          {WEEKDAYS.map((day, index) => <Text key={day} style={[styles.weekday, (index === 0 || index === 6) && styles.weekend]}>{day}</Text>)}
         </View>
         <View style={styles.daysGrid}>
           {days.map((date, index) => {
@@ -97,6 +97,14 @@ export default function AttendanceCalendar({ attendance, onChange, onMonthChange
           <View style={styles.legendItem}><View style={[styles.legendDot, styles.presentDot]} /><Text style={styles.legendText}>WIO</Text></View>
           <View style={styles.legendItem}><View style={[styles.legendDot, styles.absentDot]} /><Text style={styles.legendText}>WFO</Text></View>
           <Text style={styles.formula}>出勤率 = WIO 工作日 ÷ 当月工作日</Text>
+        </View>
+        <View style={styles.todayButtonRow}>
+          <Pressable
+            onPress={() => setCursor(new Date(today.getFullYear(), today.getMonth(), 1))}
+            style={({ pressed }) => [styles.todayButton, pressed && styles.todayButtonPressed]}
+          >
+            <Text style={styles.todayButtonText}>回到今天</Text>
+          </Pressable>
         </View>
       </View>
     </View>
