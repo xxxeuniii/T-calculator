@@ -38,10 +38,9 @@ jobs:
           cd web
           npm run build:web
 
-      - name: Pack dist
+      - name: Pack dist and service
         run: |
-          cd web
-          tar -czf ../deploy.tar.gz dist nginx.conf
+          tar -czf deploy.tar.gz web/dist web/nginx.conf service
 
       - name: Upload artifact to server
         uses: appleboy/scp-action@v0.1.7
@@ -62,7 +61,8 @@ jobs:
           script: |
             set -euo pipefail
             mkdir -p /opt/apps/trade-tool/web
-            cd /opt/apps/trade-tool/web
+            mkdir -p /opt/apps/trade-tool/service/data
+            cd /opt/apps/trade-tool
             tar -xzf /tmp/deploy.tar.gz
             rm -f /tmp/deploy.tar.gz
 
@@ -71,6 +71,12 @@ jobs:
             # Clean up both legacy (t-calculator) and current (trade-tool) container names.
             sudo docker rm -f t-calculator-frontend-1 || true
             sudo docker rm -f trade-tool-frontend-1 || true
+            sudo docker rm -f trade-tool-service-1 || true
+            sudo docker build -t trade-tool-service:latest service
+            sudo docker run -d --name trade-tool-service-1 \
+              -p 127.0.0.1:3003:8000 \
+              -v /opt/apps/trade-tool/service/data:/data \
+              trade-tool-service:latest
             sudo docker run -d --name trade-tool-frontend-1 \
               -p 127.0.0.1:3002:80 \
               -v /opt/apps/trade-tool/web/dist:/usr/share/nginx/html:ro \
@@ -79,7 +85,7 @@ jobs:
 
             # Nginx may need a moment to become ready after the container starts.
             for i in 1 2 3 4 5 6 7 8 9 10; do
-              if curl -fsS -o /dev/null http://127.0.0.1:3002/trade-tool/; then
+              if curl -fsS -o /dev/null http://127.0.0.1:3002/trade-tool/ && curl -fsS -o /dev/null http://127.0.0.1:3003/api/health; then
                 echo "healthcheck ok (attempt $i)"
                 exit 0
               fi

@@ -23,6 +23,7 @@ import ContractRoiScreen from "./pages/ContractRoiScreen";
 import Mt5LiquidationScreen from "./pages/Mt5LiquidationScreen";
 import AttendanceCalendar from "./pages/AttendanceCalendar";
 import { fetchAttendanceMonth, saveAttendanceDate } from "./attendanceApi";
+import { clearTradeHistory, fetchTradeHistory, saveTradeHistory } from "./historyApi";
 
 const screenOptions = [
   { label: "出勤日历", value: "attendance" },
@@ -68,6 +69,24 @@ export default function App() {
     }
   });
   const [attendanceSync, setAttendanceSync] = useState("idle");
+
+  useEffect(() => {
+    async function syncHistory() {
+      try {
+        const local = loadHistory();
+        const remote = await fetchTradeHistory();
+        const remoteIds = new Set(remote.map((item) => item.id));
+        const localOnly = local.filter((item) => !remoteIds.has(item.id));
+        if (localOnly.length > 0) await Promise.all(localOnly.map(saveTradeHistory));
+        const merged = [...localOnly, ...remote].sort((a, b) => String(b.id).localeCompare(String(a.id)));
+        localStorage.setItem("tradeHistory", JSON.stringify(merged));
+        setHistory(merged);
+      } catch (error) {
+        console.error("Failed to load history", error);
+      }
+    }
+    syncHistory();
+  }, []);
 
   async function loadAttendanceMonth(month) {
     setAttendanceSync("loading");
@@ -123,25 +142,20 @@ export default function App() {
   }
 
   function addHistory(record) {
+    const timestamp = Date.now();
     const time = new Date().toLocaleString("zh-CN", {
       month: "2-digit",
       day: "2-digit",
       hour: "2-digit",
       minute: "2-digit",
     });
-
+    const savedRecord = { ...record, id: `${timestamp}-${Math.random().toString(36).slice(2, 8)}`, time };
     setHistory((current) => {
-      const newHistory = [
-        {
-          ...record,
-          id: `${Date.now()}-${current.length}`,
-          time,
-        },
-        ...current,
-      ];
+      const newHistory = [savedRecord, ...current];
       localStorage.setItem("tradeHistory", JSON.stringify(newHistory));
       return newHistory;
     });
+    saveTradeHistory(savedRecord).catch((error) => console.error("Failed to save history", error));
   }
 
   function chooseScreen(value) {
@@ -149,9 +163,14 @@ export default function App() {
     setMenuOpen(false);
   }
 
-  function clearHistory() {
+  async function clearHistory() {
     setHistory([]);
     localStorage.removeItem("tradeHistory");
+    try {
+      await clearTradeHistory();
+    } catch (error) {
+      console.error("Failed to clear history", error);
+    }
   }
 
   function selectHistory(item) {
