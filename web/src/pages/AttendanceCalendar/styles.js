@@ -24,7 +24,7 @@ const styles = StyleSheet.create({
   dayCell: { width: "14.2857%", aspectRatio: 1, alignItems: "center", justifyContent: "center", position: "relative" },
   dayNumber: { color: palette.ink, fontSize: 14, fontWeight: "700" },
   weekendCell: { opacity: 0.42 },
-  weekendNumber: { color: palette.muted, textDecorationLine: "line-through" },
+  weekendNumber: { color: palette.muted },
   outsideMonthCell: { opacity: 0.58 },
   outsideMonthNumber: { color: palette.muted },
   todayCell: { borderWidth: 1, borderColor: palette.ink },

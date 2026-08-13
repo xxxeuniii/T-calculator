@@ -78,9 +78,24 @@ export default function App() {
         return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
       });
       const remoteMonths = await Promise.all(monthKeys.map(fetchAttendanceMonth));
+      const remote = Object.assign({}, ...remoteMonths);
+      let local = {};
+      try {
+        local = JSON.parse(localStorage.getItem("tradeAttendance") || "{}");
+      } catch {
+        local = {};
+      }
+      const missingLocalEntries = Object.entries(local).filter(
+        ([key, status]) => monthKeys.some((item) => key.startsWith(`${item}-`)) && !remote[key] && status
+      );
+      if (missingLocalEntries.length > 0) {
+        await Promise.all(missingLocalEntries.map(([date, status]) => saveAttendanceDate(date, status)));
+      }
+      const merged = { ...local, ...Object.fromEntries(missingLocalEntries), ...remote };
+      localStorage.setItem("tradeAttendance", JSON.stringify(merged));
       setAttendance((current) => ({
         ...Object.fromEntries(Object.entries(current).filter(([key]) => !monthKeys.some((item) => key.startsWith(`${item}-`)))),
-        ...Object.assign({}, ...remoteMonths),
+        ...Object.fromEntries(Object.entries(merged).filter(([key]) => monthKeys.some((item) => key.startsWith(`${item}-`)))),
       }));
       setAttendanceSync("synced");
     } catch (error) {
