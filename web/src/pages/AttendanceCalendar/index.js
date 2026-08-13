@@ -3,7 +3,7 @@ import { Pressable, Text, View } from "react-native";
 import styles from "./styles";
 
 const WEEKDAYS = ["一", "二", "三", "四", "五", "六", "日"];
-const STATUS = [undefined, "present", "leave", "absent"];
+const STATUS = [undefined, "present", "absent"];
 
 function keyFor(date) {
   const year = date.getFullYear();
@@ -12,7 +12,7 @@ function keyFor(date) {
   return `${year}-${month}-${day}`;
 }
 
-export default function AttendanceCalendar({ attendance, onChange, onMonthChange, syncStatus, isDesktop }) {
+export default function AttendanceCalendar({ attendance, onChange, onMonthChange, isDesktop }) {
   const today = new Date();
   const [cursor, setCursor] = useState(new Date(today.getFullYear(), today.getMonth(), 1));
   const year = cursor.getFullYear();
@@ -42,9 +42,8 @@ export default function AttendanceCalendar({ attendance, onChange, onMonthChange
     );
     const present = entries.filter(([, value]) => value === "present").length;
     const absent = entries.filter(([, value]) => value === "absent").length;
-    const leave = entries.filter(([, value]) => value === "leave").length;
     const expected = workdayKeys.length;
-    return { present, absent, leave, expected, rate: expected ? Math.round((present / expected) * 100) : 0 };
+    return { present, absent, expected, rate: expected ? Math.round((present / expected) * 100) : 0 };
   }, [attendance, days, year, month]);
 
   function moveMonth(step) {
@@ -60,22 +59,11 @@ export default function AttendanceCalendar({ attendance, onChange, onMonthChange
 
   return (
     <View style={[styles.page, isDesktop && styles.pageDesktop]}>
-      <View style={styles.hero}>
-        <View>
-          <Text style={styles.heroTitle}>{year} 年 {month + 1} 月</Text>
-          <Text style={styles.heroHint}>点击日期标记，连续点击可切换状态 · {syncStatus === "error" ? "同步失败" : syncStatus === "loading" || syncStatus === "saving" ? "同步中…" : "已同步云端"}</Text>
-        </View>
-        <View style={styles.rateBlock}>
-          <Text style={styles.rateValue}>{stats.rate}%</Text>
-          <Text style={styles.rateLabel}>当前出勤率</Text>
-        </View>
-      </View>
-
       <View style={styles.metrics}>
         <View style={styles.metric}><Text style={styles.metricValue}>{stats.expected}</Text><Text style={styles.metricLabel}>应出勤</Text></View>
-        <View style={styles.metric}><Text style={[styles.metricValue, styles.presentText]}>{stats.present}</Text><Text style={styles.metricLabel}>已出勤</Text></View>
-        <View style={styles.metric}><Text style={[styles.metricValue, styles.leaveText]}>{stats.leave}</Text><Text style={styles.metricLabel}>请假</Text></View>
-        <View style={styles.metric}><Text style={[styles.metricValue, styles.absentText]}>{stats.absent}</Text><Text style={styles.metricLabel}>缺勤</Text></View>
+        <View style={styles.metric}><Text style={[styles.metricValue, styles.presentText]}>{stats.present}</Text><Text style={styles.metricLabel}>WIO</Text></View>
+        <View style={styles.metric}><Text style={[styles.metricValue, styles.absentText]}>{stats.absent}</Text><Text style={styles.metricLabel}>WFH</Text></View>
+        <View style={styles.metric}><Text style={[styles.metricValue, styles.rateText]}>{stats.rate}%</Text><Text style={styles.metricLabel}>当前出勤率</Text></View>
       </View>
 
       <View style={styles.calendar}>
@@ -91,7 +79,8 @@ export default function AttendanceCalendar({ attendance, onChange, onMonthChange
         <View style={styles.daysGrid}>
           {days.map((date, index) => {
             const key = keyFor(date);
-            const status = attendance?.[key];
+            const savedStatus = attendance?.[key];
+            const status = STATUS.includes(savedStatus) ? savedStatus : undefined;
             const isToday = key === keyFor(today);
             const isWeekend = date.getDay() === 0 || date.getDay() === 6;
             const isOutsideMonth = date.getMonth() !== month;
@@ -105,10 +94,9 @@ export default function AttendanceCalendar({ attendance, onChange, onMonthChange
         </View>
 
         <View style={styles.legend}>
-          <View style={styles.legendItem}><View style={[styles.legendDot, styles.presentDot]} /><Text style={styles.legendText}>出勤</Text></View>
-          <View style={styles.legendItem}><View style={[styles.legendDot, styles.leaveDot]} /><Text style={styles.legendText}>请假</Text></View>
-          <View style={styles.legendItem}><View style={[styles.legendDot, styles.absentDot]} /><Text style={styles.legendText}>缺勤</Text></View>
-          <Text style={styles.formula}>出勤率 = 已出勤工作日 ÷ 当月工作日</Text>
+          <View style={styles.legendItem}><View style={[styles.legendDot, styles.presentDot]} /><Text style={styles.legendText}>WIO</Text></View>
+          <View style={styles.legendItem}><View style={[styles.legendDot, styles.absentDot]} /><Text style={styles.legendText}>WFH</Text></View>
+          <Text style={styles.formula}>出勤率 = WIO 工作日 ÷ 当月工作日</Text>
         </View>
       </View>
     </View>
