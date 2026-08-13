@@ -21,8 +21,11 @@ import KlineCountScreen from "./pages/KlineCountScreen";
 import SessionHoursScreen from "./pages/SessionHoursScreen";
 import ContractRoiScreen from "./pages/ContractRoiScreen";
 import Mt5LiquidationScreen from "./pages/Mt5LiquidationScreen";
+import AttendanceCalendar from "./pages/AttendanceCalendar";
+import { fetchAttendanceMonth, saveAttendanceDate } from "./attendanceApi";
 
 const screenOptions = [
+  { label: "出勤日历", value: "attendance" },
   { label: "盘口时间", value: "sessions" },
   { label: "股票", value: "trade" },
   { label: "合约", value: "contract" },
@@ -56,6 +59,53 @@ export default function App() {
   const [contractPrefill, setContractPrefill] = useState(null);
   const [contractRoiPrefill, setContractRoiPrefill] = useState(null);
   const [mt5LiquidationPrefill, setMt5LiquidationPrefill] = useState(null);
+  const [attendance, setAttendance] = useState(() => {
+    try {
+      const saved = localStorage.getItem("tradeAttendance");
+      return saved ? JSON.parse(saved) : {};
+    } catch {
+      return {};
+    }
+  });
+  const [attendanceSync, setAttendanceSync] = useState("idle");
+
+  async function loadAttendanceMonth(month) {
+    setAttendanceSync("loading");
+    try {
+      const [year, monthNumber] = month.split("-").map(Number);
+      const monthKeys = [-1, 0, 1].map((offset) => {
+        const date = new Date(year, monthNumber - 1 + offset, 1);
+        return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+      });
+      const remoteMonths = await Promise.all(monthKeys.map(fetchAttendanceMonth));
+      setAttendance((current) => ({
+        ...Object.fromEntries(Object.entries(current).filter(([key]) => !monthKeys.some((item) => key.startsWith(`${item}-`)))),
+        ...Object.assign({}, ...remoteMonths),
+      }));
+      setAttendanceSync("synced");
+    } catch (error) {
+      console.error("Failed to load attendance", error);
+      setAttendanceSync("error");
+    }
+  }
+
+  async function updateAttendance(date, status) {
+    setAttendance((current) => {
+      const next = { ...current };
+      if (status) next[date] = status;
+      else delete next[date];
+      localStorage.setItem("tradeAttendance", JSON.stringify(next));
+      return next;
+    });
+    setAttendanceSync("saving");
+    try {
+      await saveAttendanceDate(date, status);
+      setAttendanceSync("synced");
+    } catch (error) {
+      console.error("Failed to save attendance", error);
+      setAttendanceSync("error");
+    }
+  }
 
   function addHistory(record) {
     const time = new Date().toLocaleString("zh-CN", {
@@ -155,6 +205,7 @@ export default function App() {
             {screen === "mt5Liquidation" && <Mt5LiquidationScreen addHistory={addHistory} prefill={mt5LiquidationPrefill} isDesktop={isDesktop} />}
             {/* {screen === "klineCount" && <KlineCountScreen isDesktop={isDesktop} />} 暂时隐藏，功能还未完成 */}
             {screen === "sessions" && <SessionHoursScreen isDesktop={isDesktop} />}
+            {screen === "attendance" && <AttendanceCalendar attendance={attendance} onChange={updateAttendance} onMonthChange={loadAttendanceMonth} syncStatus={attendanceSync} isDesktop={isDesktop} />}
             {screen === "history" && <HistoryScreen history={history} onClear={clearHistory} onSelect={selectHistory} />}
           </View>
         </ScrollView>
