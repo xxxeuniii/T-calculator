@@ -8,6 +8,7 @@ dist/
 dist-check/
 build/
 *.log
+*.tar.gz
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*

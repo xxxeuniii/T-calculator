@@ -1,8 +1,8 @@
 function apiBase() {
-  if (typeof window === "undefined") return "http://106.53.77.119/trade-agent/api/v1";
+  if (typeof window === "undefined") return "http://106.53.77.119/trade-tool/api";
   return window.location.hostname === "106.53.77.119"
-    ? "/trade-agent/api/v1"
-    : "http://106.53.77.119/trade-agent/api/v1";
+    ? "/trade-tool/api"
+    : "http://106.53.77.119/trade-tool/api";
 }
 
 async function parseResponse(response) {
