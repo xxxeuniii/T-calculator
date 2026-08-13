@@ -46,41 +46,19 @@ export default function App() {
   const [screen, setScreen] = useState("sessions");
   const [menuOpen, setMenuOpen] = useState(false);
 
-  const loadHistory = () => {
-    try {
-      const saved = localStorage.getItem("tradeHistory");
-      return saved ? JSON.parse(saved) : [];
-    } catch {
-      return [];
-    }
-  };
-
-  const [history, setHistory] = useState(loadHistory);
+  const [history, setHistory] = useState([]);
   const [tradePrefill, setTradePrefill] = useState(null);
   const [contractPrefill, setContractPrefill] = useState(null);
   const [contractRoiPrefill, setContractRoiPrefill] = useState(null);
   const [mt5LiquidationPrefill, setMt5LiquidationPrefill] = useState(null);
-  const [attendance, setAttendance] = useState(() => {
-    try {
-      const saved = localStorage.getItem("tradeAttendance");
-      return saved ? JSON.parse(saved) : {};
-    } catch {
-      return {};
-    }
-  });
+  const [attendance, setAttendance] = useState({});
   const [attendanceSync, setAttendanceSync] = useState("idle");
 
   useEffect(() => {
     async function syncHistory() {
       try {
-        const local = loadHistory();
         const remote = await fetchTradeHistory();
-        const remoteIds = new Set(remote.map((item) => item.id));
-        const localOnly = local.filter((item) => !remoteIds.has(item.id));
-        if (localOnly.length > 0) await Promise.all(localOnly.map(saveTradeHistory));
-        const merged = [...localOnly, ...remote].sort((a, b) => String(b.id).localeCompare(String(a.id)));
-        localStorage.setItem("tradeHistory", JSON.stringify(merged));
-        setHistory(merged);
+        setHistory(remote);
       } catch (error) {
         console.error("Failed to load history", error);
       }
@@ -98,23 +76,9 @@ export default function App() {
       });
       const remoteMonths = await Promise.all(monthKeys.map(fetchAttendanceMonth));
       const remote = Object.assign({}, ...remoteMonths);
-      let local = {};
-      try {
-        local = JSON.parse(localStorage.getItem("tradeAttendance") || "{}");
-      } catch {
-        local = {};
-      }
-      const missingLocalEntries = Object.entries(local).filter(
-        ([key, status]) => monthKeys.some((item) => key.startsWith(`${item}-`)) && !remote[key] && status
-      );
-      if (missingLocalEntries.length > 0) {
-        await Promise.all(missingLocalEntries.map(([date, status]) => saveAttendanceDate(date, status)));
-      }
-      const merged = { ...local, ...Object.fromEntries(missingLocalEntries), ...remote };
-      localStorage.setItem("tradeAttendance", JSON.stringify(merged));
       setAttendance((current) => ({
         ...Object.fromEntries(Object.entries(current).filter(([key]) => !monthKeys.some((item) => key.startsWith(`${item}-`)))),
-        ...Object.fromEntries(Object.entries(merged).filter(([key]) => monthKeys.some((item) => key.startsWith(`${item}-`)))),
+        ...remote,
       }));
       setAttendanceSync("synced");
     } catch (error) {
@@ -128,7 +92,6 @@ export default function App() {
       const next = { ...current };
       if (status) next[date] = status;
       else delete next[date];
-      localStorage.setItem("tradeAttendance", JSON.stringify(next));
       return next;
     });
     setAttendanceSync("saving");
@@ -152,7 +115,6 @@ export default function App() {
     const savedRecord = { ...record, id: `${timestamp}-${Math.random().toString(36).slice(2, 8)}`, time };
     setHistory((current) => {
       const newHistory = [savedRecord, ...current];
-      localStorage.setItem("tradeHistory", JSON.stringify(newHistory));
       return newHistory;
     });
     saveTradeHistory(savedRecord).catch((error) => console.error("Failed to save history", error));
@@ -165,7 +127,6 @@ export default function App() {
 
   async function clearHistory() {
     setHistory([]);
-    localStorage.removeItem("tradeHistory");
     try {
       await clearTradeHistory();
     } catch (error) {

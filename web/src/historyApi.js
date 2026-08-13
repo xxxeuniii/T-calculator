@@ -1,7 +1,8 @@
 function apiBase() {
-  if (typeof window === "undefined") return "/trade-tool/api";
-  const local = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
-  return local ? "http://127.0.0.1:8000/api" : "/trade-tool/api";
+  if (typeof window === "undefined") return "http://106.53.77.119/trade-agent/api/v1";
+  return window.location.hostname === "106.53.77.119"
+    ? "/trade-agent/api/v1"
+    : "http://106.53.77.119/trade-agent/api/v1";
 }
 
 async function parseResponse(response) {
@@ -23,5 +24,5 @@ export async function saveTradeHistory(record) {
 }
 
 export async function clearTradeHistory() {
-  return parseResponse(await fetch(`${apiBase()}/trade-history`, { method: "DELETE" }));
+  return parseResponse(await fetch(`${apiBase()}/trade-history/clear`, { method: "POST" }));
 }

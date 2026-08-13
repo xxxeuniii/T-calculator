@@ -1,7 +1,8 @@
 function apiBase() {
-  if (typeof window === "undefined") return "/trade-agent/api/v1";
-  const local = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
-  return local ? "http://127.0.0.1:8000/api/v1" : "/trade-agent/api/v1";
+  if (typeof window === "undefined") return "http://106.53.77.119/trade-agent/api/v1";
+  return window.location.hostname === "106.53.77.119"
+    ? "/trade-agent/api/v1"
+    : "http://106.53.77.119/trade-agent/api/v1";
 }
 
 async function parseResponse(response) {
