@@ -75,7 +75,7 @@ jobs:
             sudo docker rm -f trade-tool-service-1 || true
             sudo docker build -t trade-tool-service:latest service
             sudo docker run -d --name trade-tool-service-1 \
-              -p 127.0.0.1:3003:8000 \
+              -p 127.0.0.1:3004:8000 \
               --env-file /opt/apps/trade-tool/service/.env \
               --add-host host.docker.internal:host-gateway \
               trade-tool-service:latest
@@ -87,7 +87,7 @@ jobs:
 
             # Nginx may need a moment to become ready after the container starts.
             for i in 1 2 3 4 5 6 7 8 9 10; do
-              if curl -fsS -o /dev/null http://127.0.0.1:3002/trade-tool/ && curl -fsS -o /dev/null http://127.0.0.1:3003/api/health; then
+              if curl -fsS -o /dev/null http://127.0.0.1:3002/trade-tool/ && curl -fsS -o /dev/null http://127.0.0.1:3004/api/health; then
                 echo "healthcheck ok (attempt $i)"
                 exit 0
               fi
