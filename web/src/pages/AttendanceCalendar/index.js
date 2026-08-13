@@ -62,7 +62,7 @@ export default function AttendanceCalendar({ attendance, onChange, onMonthChange
       <View style={styles.metrics}>
         <View style={styles.metric}><Text style={styles.metricValue}>{stats.expected}</Text><Text style={styles.metricLabel}>应出勤</Text></View>
         <View style={[styles.metric, styles.metricDivider]}><Text style={[styles.metricValue, styles.presentText]}>{stats.present}</Text><Text style={styles.metricLabel}>WIO</Text></View>
-        <View style={[styles.metric, styles.metricDivider]}><Text style={[styles.metricValue, styles.absentText]}>{stats.absent}</Text><Text style={styles.metricLabel}>WFO</Text></View>
+        <View style={[styles.metric, styles.metricDivider]}><Text style={[styles.metricValue, styles.absentText]}>{stats.absent}</Text><Text style={styles.metricLabel}>WFH</Text></View>
         <View style={[styles.metric, styles.metricDivider]}><Text style={[styles.metricValue, styles.rateText]}>{stats.rate}%</Text><Text style={styles.metricLabel}>出勤率</Text></View>
       </View>
 
@@ -95,7 +95,7 @@ export default function AttendanceCalendar({ attendance, onChange, onMonthChange
 
         <View style={styles.legend}>
           <View style={styles.legendItem}><View style={[styles.legendDot, styles.presentDot]} /><Text style={styles.legendText}>WIO</Text></View>
-          <View style={styles.legendItem}><View style={[styles.legendDot, styles.absentDot]} /><Text style={styles.legendText}>WFO</Text></View>
+          <View style={styles.legendItem}><View style={[styles.legendDot, styles.absentDot]} /><Text style={styles.legendText}>WFH</Text></View>
           <Text style={styles.formula}>出勤率 = WIO 工作日 ÷ 当月工作日</Text>
         </View>
         <View style={styles.todayButtonRow}>
