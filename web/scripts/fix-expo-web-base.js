@@ -25,7 +25,7 @@ if (!fixed.includes('rel="manifest"')) {
   fixed = fixed.replace("</head>", `    ${headTags.join("\n    ")}\n  </head>`);
 }
 
-for (const asset of ["manifest.webmanifest", "icon.svg"]) {
+for (const asset of ["manifest.webmanifest", "icon.svg", "service-worker.js"]) {
   const source = path.join(process.cwd(), asset);
   const target = path.join(outputDir, asset);
   if (fs.existsSync(source)) {
