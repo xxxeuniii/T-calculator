@@ -40,7 +40,7 @@ jobs:
 
       - name: Pack dist and service
         run: |
-          tar -czf deploy.tar.gz web/dist web/nginx.conf service
+          tar -czf deploy.tar.gz web/dist web/nginx.conf service nginx.conf
 
       - name: Upload artifact to server
         uses: appleboy/scp-action@v0.1.7
@@ -62,10 +62,13 @@ jobs:
           script: |
             set -euo pipefail
             mkdir -p /opt/apps/trade-tool/web
-            mkdir -p /opt/apps/trade-tool/service/data
+            mkdir -p /opt/apps/trade-tool/service
             cd /opt/apps/trade-tool
             tar -xzf /tmp/deploy.tar.gz
             rm -f /tmp/deploy.tar.gz
+
+            test -f /opt/apps/trade-tool/service/.env
+            chmod 600 /opt/apps/trade-tool/service/.env
 
             # Use official nginx image + volume mount, no docker build needed.
             sudo docker pull nginx:1.27-alpine
@@ -84,6 +87,10 @@ jobs:
               -v /opt/apps/trade-tool/web/dist:/usr/share/nginx/html:ro \
               -v /opt/apps/trade-tool/web/nginx.conf:/etc/nginx/conf.d/default.conf:ro \
               nginx:1.27-alpine
+
+            sudo ln -sfn /opt/apps/trade-tool/nginx.conf /etc/nginx/locations/trade-tool.conf
+            sudo nginx -t
+            sudo systemctl reload nginx
 
             # Nginx may need a moment to become ready after the container starts.
             for i in 1 2 3 4 5 6 7 8 9 10; do
