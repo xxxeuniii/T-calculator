@@ -59,6 +59,12 @@ const styles = StyleSheet.create({
     fontSize: 17,
     fontWeight: "900",
   },
+  sessionClosedText: {
+    color: "#b42318",
+    fontSize: 11,
+    fontWeight: "800",
+    marginTop: 3,
+  },
   sessionIndexNote: {
     color: palette.muted,
     fontSize: 12,
@@ -202,6 +208,21 @@ const styles = StyleSheet.create({
   },
   countdownList: {
     paddingBottom: 6,
+  },
+  countdownClosed: {
+    alignItems: "center",
+    paddingVertical: 30,
+  },
+  countdownClosedTitle: {
+    color: "#b42318",
+    fontSize: 18,
+    fontWeight: "900",
+  },
+  countdownClosedHint: {
+    color: palette.muted,
+    fontSize: 12,
+    fontWeight: "600",
+    marginTop: 6,
   },
   countdownRow: {
     paddingVertical: 12,

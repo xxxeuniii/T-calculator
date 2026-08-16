@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Linking, Modal, Pressable, Text, View } from "react-native";
+import { fetchCalendarYear } from "../../calendarApi";
 import styles from "./styles";
 
 const TV_CHART_BASE = "https://cn.tradingview.com/chart/p9kPk3Fp/";
@@ -11,6 +12,7 @@ const MARKETS = [
     region: "亚盘",
     utc: "UTC+8",
     indexNote: "上证综指 000001",
+    timeZone: "Asia/Shanghai",
     chartUrl: `${TV_CHART_BASE}?symbol=SSE%3A000001`,
     hasDst: false,
     phasesWinter: [
@@ -29,6 +31,7 @@ const MARKETS = [
     region: "亚盘",
     utc: "UTC+9",
     indexNote: "日经225",
+    timeZone: "Asia/Tokyo",
     chartUrl: `${TV_CHART_BASE}?symbol=TVC%3ANI225`,
     hasDst: false,
     phasesWinter: [
@@ -45,6 +48,7 @@ const MARKETS = [
     region: "亚盘",
     utc: "UTC+9",
     indexNote: "KOSPI",
+    timeZone: "Asia/Seoul",
     chartUrl: `${TV_CHART_BASE}?symbol=TVC%3AKOSPI`,
     hasDst: false,
     phasesWinter: [
@@ -60,6 +64,7 @@ const MARKETS = [
     utcWinter: "UTC-5",
     utcSummer: "UTC-4",
     indexNote: "纳指100 .NDX",
+    timeZone: "America/New_York",
     chartUrl: `${TV_CHART_BASE}?symbol=TVC%3ANDX`,
     hasDst: true,
     phasesWinter: [
@@ -73,6 +78,29 @@ const MARKETS = [
       { key: "open", label: "盘中", start: "21:30", end: "04:00" },
       { key: "after", label: "盘后", start: "04:00", end: "08:00" },
       { key: "break", label: "休盘", start: "08:00", end: "16:00", hint: "隔夜闭市" },
+    ],
+  },
+  {
+    id: "europe",
+    name: "欧洲",
+    region: "欧盘",
+    utcWinter: "UTC+1",
+    utcSummer: "UTC+2",
+    indexNote: "欧洲斯托克50 SX5E",
+    timeZone: "Europe/Berlin",
+    chartUrl: `${TV_CHART_BASE}?symbol=TVC%3ASX5E`,
+    hasDst: true,
+    phasesWinter: [
+      { key: "pre", label: "盘前", start: "15:00", end: "16:00" },
+      { key: "open", label: "盘中", start: "16:00", end: "00:30", hint: "欧洲主要交易时段" },
+      { key: "after", label: "盘后", start: "00:30", end: "02:00" },
+      { key: "break", label: "休盘", start: "02:00", end: "15:00", hint: "隔夜闭市" },
+    ],
+    phasesSummer: [
+      { key: "pre", label: "盘前", start: "14:00", end: "15:00" },
+      { key: "open", label: "盘中", start: "15:00", end: "23:30", hint: "欧洲主要交易时段" },
+      { key: "after", label: "盘后", start: "23:30", end: "01:00" },
+      { key: "break", label: "休盘", start: "01:00", end: "14:00", hint: "隔夜闭市" },
     ],
   },
 ];
@@ -108,6 +136,22 @@ function getBeijingParts(now = new Date()) {
     minutesOfDay: hour * 60 + minute,
     secondsOfDay: hour * 3600 + minute * 60 + second,
     label: `${map.year}-${map.month}-${map.day} ${pad2(hour)}:${pad2(minute)}:${pad2(second)}`,
+  };
+}
+
+function getMarketDate(now, timeZone) {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    weekday: "short",
+  }).formatToParts(now);
+  const map = Object.fromEntries(parts.filter((item) => item.type !== "literal").map((item) => [item.type, item.value]));
+  return {
+    year: Number(map.year),
+    key: `${map.year}-${map.month}-${map.day}`,
+    weekend: map.weekday === "Sat" || map.weekday === "Sun",
   };
 }
 
@@ -219,10 +263,23 @@ function openChart(url) {
 export default function SessionHoursScreen({ isDesktop }) {
   const [now, setNow] = useState(() => new Date());
   const [countdownMarketId, setCountdownMarketId] = useState(null);
+  const [calendarYears, setCalendarYears] = useState({});
 
   useEffect(() => {
     const timer = setInterval(() => setNow(new Date()), 1000);
     return () => clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    const years = [now.getFullYear() - 1, now.getFullYear(), now.getFullYear() + 1];
+    let active = true;
+    Promise.all(years.map((year) => fetchCalendarYear(year)))
+      .then((results) => {
+        if (!active) return;
+        setCalendarYears(Object.fromEntries(results.map((result) => [result.year, result.markets])));
+      })
+      .catch((error) => console.error("Failed to load market calendars", error));
+    return () => { active = false; };
   }, []);
 
   const beijing = useMemo(() => getBeijingParts(now), [now]);
@@ -231,10 +288,13 @@ export default function SessionHoursScreen({ isDesktop }) {
   const rows = useMemo(() => {
     const list = MARKETS.map((market, index) => {
       const phases = getPhases(market, summer);
-      const current = getCurrentPhase(phases, beijing.minutesOfDay);
+      const localDate = getMarketDate(now, market.timeZone);
+      const holiday = calendarYears[localDate.year]?.[market.id]?.includes(localDate.key) || false;
+      const closed = localDate.weekend || holiday;
+      const current = closed ? null : getCurrentPhase(phases, beijing.minutesOfDay);
       const progress =
         current != null ? getPhaseProgress(current.start, current.end, beijing.secondsOfDay) : 0;
-      const countdowns = phases.map((phase) => ({
+      const countdowns = closed ? [] : phases.map((phase) => ({
         phase,
         ...getPhaseCountdown(phase, beijing.minutesOfDay, beijing.secondsOfDay),
       }));
@@ -247,15 +307,21 @@ export default function SessionHoursScreen({ isDesktop }) {
         indexLine: getIndexLine(market, summer),
         status: getStatusLabel(current),
         active: Boolean(current),
+        closed,
+        closedReason: holiday ? "交易所假期休市" : localDate.weekend ? "周末休市" : null,
         order: index,
       };
     });
 
-    return list.sort((a, b) => {
+    const sorted = list.filter((item) => item.id !== "europe").sort((a, b) => {
       if (a.active !== b.active) return a.active ? -1 : 1;
       return a.order - b.order;
     });
-  }, [beijing.minutesOfDay, beijing.secondsOfDay, summer]);
+    const europe = list.find((item) => item.id === "europe");
+    const usIndex = sorted.findIndex((item) => item.id === "us");
+    if (europe && usIndex >= 0) sorted.splice(usIndex + 1, 0, europe);
+    return sorted;
+  }, [beijing.minutesOfDay, beijing.secondsOfDay, summer, now, calendarYears]);
 
   const countdownMarket = rows.find((item) => item.id === countdownMarketId) || null;
 
@@ -276,6 +342,7 @@ export default function SessionHoursScreen({ isDesktop }) {
                 <Text style={styles.sessionName}>
                   {market.region} · {market.name}
                 </Text>
+                {market.closedReason ? <Text style={styles.sessionClosedText}>{market.closedReason}</Text> : null}
                 {market.indexLine ? (
                   market.chartUrl ? (
                     <Pressable
@@ -354,7 +421,12 @@ export default function SessionHoursScreen({ isDesktop }) {
                   <Text style={styles.countdownCloseText}>关闭</Text>
                 </Pressable>
               </View>
-              <View style={styles.countdownList}>
+              {countdownMarket.closed ? (
+                <View style={styles.countdownClosed}>
+                  <Text style={styles.countdownClosedTitle}>{countdownMarket.closedReason}</Text>
+                  <Text style={styles.countdownClosedHint}>休市期间不运行盘口倒计时</Text>
+                </View>
+              ) : <View style={styles.countdownList}>
                 {countdownMarket.countdowns.map((item, index) => (
                   <View
                     key={`${countdownMarket.id}-${item.phase.key}-cd`}
@@ -381,7 +453,7 @@ export default function SessionHoursScreen({ isDesktop }) {
                     </View>
                   </View>
                 ))}
-              </View>
+              </View>}
             </View>
           ) : null}
         </View>

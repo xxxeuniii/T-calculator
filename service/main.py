@@ -2,8 +2,10 @@ import json
 import os
 import re
 from contextlib import closing
+from datetime import date, timedelta
 from typing import Any, Literal
 
+import holidays
 import psycopg2
 import psycopg2.extras
 from fastapi import FastAPI, HTTPException
@@ -83,6 +85,76 @@ class AttendancePayload(BaseModel):
 
 class HistoryPayload(BaseModel):
     record: dict[str, Any]
+
+
+MARKET_CALENDARS = {
+    "china": ("financial", "XSHG"),
+    "japan": ("financial", "XJPX"),
+    "korea": ("country", "KR"),
+    "us": ("financial", "XNYS"),
+    "europe": ("financial", "XETR"),
+}
+
+
+def dates_in_year(year: int):
+    current = date(year, 1, 1)
+    end = date(year + 1, 1, 1)
+    while current < end:
+        yield current
+        current += timedelta(days=1)
+
+
+@app.get("/api/calendars/{year}")
+def get_calendars(year: int):
+    """Return Chinese workday adjustments and exchange holiday dates for one year."""
+    if year < 2000 or year > 2100:
+        raise HTTPException(status_code=400, detail="year must be between 2000 and 2100")
+
+    china = holidays.country_holidays("CN", years=[year], language="zh_CN")
+    attendance_holiday_dates = {
+        day for day in china if day.year == year and not china.is_working_day(day)
+    }
+    # The library lists statutory/transfer dates but omits ordinary weekend days
+    # inside the same announced break. Expand only weekends touching that break.
+    changed = True
+    while changed:
+        changed = False
+        for current in dates_in_year(year):
+            if current.weekday() < 5 or china.is_working_day(current) or current in attendance_holiday_dates:
+                continue
+            if current - timedelta(days=1) in attendance_holiday_dates or current + timedelta(days=1) in attendance_holiday_dates:
+                attendance_holiday_dates.add(current)
+                changed = True
+
+    attendance_holidays = []
+    adjusted_workdays = []
+    for current in dates_in_year(year):
+        key = current.isoformat()
+        if current.weekday() >= 5 and china.is_working_day(current):
+            adjusted_workdays.append(key)
+        elif current in attendance_holiday_dates:
+            attendance_holidays.append(key)
+
+    market_holidays = {}
+    for market_id, (calendar_type, code) in MARKET_CALENDARS.items():
+        calendar = (
+            holidays.financial_holidays(code, years=[year])
+            if calendar_type == "financial"
+            else holidays.country_holidays(code, years=[year])
+        )
+        market_holidays[market_id] = sorted(day.isoformat() for day in calendar)
+
+    return {
+        "success": True,
+        "data": {
+            "year": year,
+            "attendance": {
+                "holidays": attendance_holidays,
+                "adjustedWorkdays": adjusted_workdays,
+            },
+            "markets": market_holidays,
+        },
+    }
 
 
 @app.get("/api/health")

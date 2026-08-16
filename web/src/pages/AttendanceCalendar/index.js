@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Pressable, Text, View } from "react-native";
+import { fetchCalendarYear } from "../../calendarApi";
 import styles from "./styles";
 
 const WEEKDAYS = ["日", "一", "二", "三", "四", "五", "六"];
@@ -15,6 +16,7 @@ function keyFor(date) {
 export default function AttendanceCalendar({ attendance, onChange, onMonthChange, isDesktop }) {
   const today = new Date();
   const [cursor, setCursor] = useState(new Date(today.getFullYear(), today.getMonth(), 1));
+  const [calendarYears, setCalendarYears] = useState({});
   const year = cursor.getFullYear();
   const month = cursor.getMonth();
   const monthKey = `${year}-${String(month + 1).padStart(2, "0")}`;
@@ -23,8 +25,16 @@ export default function AttendanceCalendar({ attendance, onChange, onMonthChange
     onMonthChange(monthKey);
   }, [monthKey]);
 
+  function getDayRule(date) {
+    const key = keyFor(date);
+    const calendar = calendarYears[date.getFullYear()];
+    const holiday = calendar?.holidays?.includes(key) || false;
+    const adjustedWorkday = calendar?.adjustedWorkdays?.includes(key) || false;
+    const weekend = date.getDay() === 0 || date.getDay() === 6;
+    return { holiday, adjustedWorkday, workday: adjustedWorkday || (!holiday && !weekend) };
+  }
+
   const days = useMemo(() => {
-    const count = new Date(year, month + 1, 0).getDate();
     const leading = new Date(year, month, 1).getDay();
     return Array.from(
       { length: 42 },
@@ -32,10 +42,25 @@ export default function AttendanceCalendar({ attendance, onChange, onMonthChange
     );
   }, [year, month]);
 
+  useEffect(() => {
+    const years = [...new Set(days.map((date) => date.getFullYear()))];
+    let active = true;
+    Promise.all(years.map((value) => fetchCalendarYear(value)))
+      .then((results) => {
+        if (!active) return;
+        setCalendarYears((current) => ({
+          ...current,
+          ...Object.fromEntries(results.map((result) => [result.year, result.attendance])),
+        }));
+      })
+      .catch((error) => console.error("Failed to load holiday calendar", error));
+    return () => { active = false; };
+  }, [days]);
+
   const stats = useMemo(() => {
     const monthPrefix = `${year}-${String(month + 1).padStart(2, "0")}`;
     const workdayKeys = days
-      .filter((date) => date.getMonth() === month && date.getDay() !== 0 && date.getDay() !== 6)
+      .filter((date) => date.getMonth() === month && getDayRule(date).workday)
       .map(keyFor);
     const entries = Object.entries(attendance || {}).filter(
       ([key]) => key.startsWith(monthPrefix) && workdayKeys.includes(key)
@@ -44,14 +69,14 @@ export default function AttendanceCalendar({ attendance, onChange, onMonthChange
     const absent = entries.filter(([, value]) => value === "absent").length;
     const expected = workdayKeys.length;
     return { present, absent, expected, rate: expected ? ((present / expected) * 100).toFixed(1) : "0.0" };
-  }, [attendance, days, year, month]);
+  }, [attendance, days, year, month, calendarYears]);
 
   function moveMonth(step) {
     setCursor(new Date(year, month + step, 1));
   }
 
   function cycleDay(date) {
-    if (date.getDay() === 0 || date.getDay() === 6) return;
+    if (!getDayRule(date).workday) return;
     const key = keyFor(date);
     const currentIndex = STATUS.indexOf(attendance?.[key]);
     onChange(key, STATUS[(currentIndex + 1) % STATUS.length]);
@@ -84,10 +109,13 @@ export default function AttendanceCalendar({ attendance, onChange, onMonthChange
             const isToday = key === keyFor(today);
             const isWeekend = date.getDay() === 0 || date.getDay() === 6;
             const isOutsideMonth = date.getMonth() !== month;
+            const dayRule = getDayRule(date);
             return (
-              <Pressable disabled={isWeekend || isOutsideMonth} key={`${key}-${index}`} onPress={() => cycleDay(date)} style={[styles.dayCell, isWeekend && !isOutsideMonth && styles.weekendCell, status && !isWeekend && styles[`${status}Cell`], isOutsideMonth && styles.outsideMonthCell, isToday && !isOutsideMonth && styles.todayCell]}>
-                <Text style={[styles.dayNumber, isWeekend && !isOutsideMonth && styles.weekendNumber, status && !isWeekend && styles[`${status}Number`], isOutsideMonth && styles.outsideMonthNumber]}>{date.getDate()}</Text>
-                {status && !isWeekend && <View style={[styles.statusDot, styles[`${status}Dot`]]} />}
+              <Pressable disabled={!dayRule.workday || isOutsideMonth} key={`${key}-${index}`} onPress={() => cycleDay(date)} style={[styles.dayCell, !dayRule.workday && !isOutsideMonth && styles.weekendCell, status && dayRule.workday && styles[`${status}Cell`], isOutsideMonth && styles.outsideMonthCell, isToday && !isOutsideMonth && styles.todayCell]}>
+                <Text style={[styles.dayNumber, !dayRule.workday && !isOutsideMonth && styles.weekendNumber, status && dayRule.workday && styles[`${status}Number`], isOutsideMonth && styles.outsideMonthNumber]}>{date.getDate()}</Text>
+                {dayRule.holiday && <Text style={[styles.dayBadge, styles.holidayBadge]}>假</Text>}
+                {dayRule.adjustedWorkday && <Text style={[styles.dayBadge, styles.workBadge]}>班</Text>}
+                {status && dayRule.workday && <View style={[styles.statusDot, styles[`${status}Dot`]]} />}
               </Pressable>
             );
           })}
@@ -96,6 +124,8 @@ export default function AttendanceCalendar({ attendance, onChange, onMonthChange
         <View style={styles.legend}>
           <View style={styles.legendItem}><View style={[styles.legendDot, styles.presentDot]} /><Text style={styles.legendText}>WIO</Text></View>
           <View style={styles.legendItem}><View style={[styles.legendDot, styles.absentDot]} /><Text style={styles.legendText}>WFH</Text></View>
+          <View style={styles.legendItem}><Text style={[styles.legendBadge, styles.holidayBadge]}>假</Text><Text style={styles.legendText}>法定假日</Text></View>
+          <View style={styles.legendItem}><Text style={[styles.legendBadge, styles.workBadge]}>班</Text><Text style={styles.legendText}>调休上班</Text></View>
           <Text style={styles.formula}>出勤率 = WIO 工作日 ÷ 当月工作日</Text>
         </View>
         <View style={styles.todayButtonRow}>
