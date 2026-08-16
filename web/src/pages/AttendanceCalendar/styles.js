@@ -6,6 +6,7 @@ const styles = StyleSheet.create({
   pageDesktop: { maxWidth: 760 },
   metrics: { flexDirection: "row", flexWrap: "wrap", paddingVertical: 4 },
   metric: { width: "33.3333%", minWidth: 0, paddingVertical: 12, paddingHorizontal: 12 },
+  metricFourColumn: { width: "25%" },
   metricDivider: { borderLeftWidth: 1, borderLeftColor: palette.line },
   metricSecondRow: { borderTopWidth: 1, borderTopColor: palette.line },
   metricValue: { color: palette.ink, fontSize: 21, fontWeight: "900" },

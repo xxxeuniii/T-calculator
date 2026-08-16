@@ -88,12 +88,12 @@ export default function AttendanceCalendar({ attendance, onChange, onMonthChange
   return (
     <View style={[styles.page, isDesktop && styles.pageDesktop]}>
       <View style={styles.metrics}>
-        <View style={styles.metric}><Text style={styles.metricValue}>{stats.expected}</Text><Text style={styles.metricLabel}>应出勤</Text></View>
+        <View style={[styles.metric, stats.leave === 0 && styles.metricFourColumn]}><Text style={styles.metricValue}>{stats.expected}</Text><Text style={styles.metricLabel}>应出勤</Text></View>
         {stats.leave > 0 && <View style={[styles.metric, styles.metricDivider]}><Text style={styles.metricValue}>{stats.actual}</Text><Text style={styles.metricLabel}>实际出勤</Text></View>}
-        <View style={[styles.metric, styles.metricDivider]}><Text style={[styles.metricValue, styles.presentText]}>{stats.present}</Text><Text style={styles.metricLabel}>WIO</Text></View>
+        <View style={[styles.metric, stats.leave === 0 && styles.metricFourColumn, styles.metricDivider]}><Text style={[styles.metricValue, styles.presentText]}>{stats.present}</Text><Text style={styles.metricLabel}>WIO</Text></View>
         {stats.leave > 0 && <View style={[styles.metric, styles.metricSecondRow]}><Text style={[styles.metricValue, styles.leaveText]}>{stats.leave}</Text><Text style={styles.metricLabel}>请假</Text></View>}
-        <View style={[styles.metric, stats.leave > 0 && styles.metricSecondRow, styles.metricDivider]}><Text style={[styles.metricValue, styles.absentText]}>{stats.absent}</Text><Text style={styles.metricLabel}>WFH</Text></View>
-        <View style={[styles.metric, styles.metricSecondRow, stats.leave > 0 && styles.metricDivider]}><Text style={[styles.metricValue, styles.rateText]}>{stats.rate}%</Text><Text style={styles.metricLabel}>出勤率</Text></View>
+        <View style={[styles.metric, stats.leave === 0 && styles.metricFourColumn, stats.leave > 0 && styles.metricSecondRow, styles.metricDivider]}><Text style={[styles.metricValue, styles.absentText]}>{stats.absent}</Text><Text style={styles.metricLabel}>WFH</Text></View>
+        <View style={[styles.metric, stats.leave === 0 && styles.metricFourColumn, stats.leave > 0 && styles.metricSecondRow, styles.metricDivider]}><Text style={[styles.metricValue, styles.rateText]}>{stats.rate}%</Text><Text style={styles.metricLabel}>出勤率</Text></View>
       </View>
 
       <View style={styles.calendar}>
@@ -133,7 +133,7 @@ export default function AttendanceCalendar({ attendance, onChange, onMonthChange
           <View style={styles.legendItem}><View style={[styles.legendDot, styles.absentDot]} /><Text style={styles.legendText}>WFH</Text></View>
           <View style={styles.legendItem}><Text style={[styles.legendBadge, styles.holidayBadge]}>假</Text><Text style={styles.legendText}>法定假日</Text></View>
           <View style={styles.legendItem}><Text style={[styles.legendBadge, styles.workBadge]}>班</Text><Text style={styles.legendText}>调休上班</Text></View>
-          <Text style={styles.formula}>出勤率 = WIO 工作日 ÷（应出勤 − 请假）</Text>
+          <Text style={styles.formula}>出勤率 = WIO 工作日 /（应出勤 − 请假）</Text>
         </View>
         <View style={styles.todayButtonRow}>
           <Pressable
