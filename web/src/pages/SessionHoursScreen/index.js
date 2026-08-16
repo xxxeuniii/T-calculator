@@ -4,6 +4,7 @@ import { fetchCalendarYear } from "../../calendarApi";
 import styles from "./styles";
 
 const TV_CHART_BASE = "https://cn.tradingview.com/chart/p9kPk3Fp/";
+const MARKET_DISPLAY_ORDER = ["us", "europe", "japan", "korea", "china"];
 
 const MARKETS = [
   {
@@ -244,6 +245,15 @@ function getCurrentPhase(phases, minutesOfDay) {
   return phases.find((phase) => isInRange(phase.start, phase.end, minutesOfDay)) || null;
 }
 
+function getMarketProximity(phases, current, secondsOfDay, closed) {
+  const tradingPhases = phases.filter((phase) => ["open", "openAm", "openPm"].includes(phase.key));
+  if (!closed && current && tradingPhases.some((phase) => phase.key === current.key)) return 0;
+  const untilNextOpen = Math.min(
+    ...tradingPhases.map((phase) => getSecondsUntilStart(phase.start, secondsOfDay))
+  );
+  return untilNextOpen + (closed ? 24 * 3600 : 0);
+}
+
 function getStatusLabel(phase) {
   if (!phase) return "闭市";
   return phase.label;
@@ -286,7 +296,7 @@ export default function SessionHoursScreen({ isDesktop }) {
   const summer = useMemo(() => isNorthernSummer(beijing), [beijing]);
 
   const rows = useMemo(() => {
-    const list = MARKETS.map((market, index) => {
+    const list = MARKETS.map((market) => {
       const phases = getPhases(market, summer);
       const localDate = getMarketDate(now, market.timeZone);
       const holiday = calendarYears[localDate.year]?.[market.id]?.includes(localDate.key) || false;
@@ -309,18 +319,14 @@ export default function SessionHoursScreen({ isDesktop }) {
         active: Boolean(current),
         closed,
         closedReason: holiday ? "交易所假期休市" : localDate.weekend ? "周末休市" : null,
-        order: index,
+        proximity: getMarketProximity(phases, current, beijing.secondsOfDay, closed),
       };
     });
 
-    const sorted = list.filter((item) => item.id !== "europe").sort((a, b) => {
-      if (a.active !== b.active) return a.active ? -1 : 1;
-      return a.order - b.order;
-    });
-    const europe = list.find((item) => item.id === "europe");
-    const usIndex = sorted.findIndex((item) => item.id === "us");
-    if (europe && usIndex >= 0) sorted.splice(usIndex + 1, 0, europe);
-    return sorted;
+    return list.sort(
+      (a, b) => a.proximity - b.proximity
+        || MARKET_DISPLAY_ORDER.indexOf(a.id) - MARKET_DISPLAY_ORDER.indexOf(b.id)
+    );
   }, [beijing.minutesOfDay, beijing.secondsOfDay, summer, now, calendarYears]);
 
   const countdownMarket = rows.find((item) => item.id === countdownMarketId) || null;
