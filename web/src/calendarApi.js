@@ -21,7 +21,7 @@ export function fetchCalendarYear(year) {
   if (!cache.has(year)) {
     cache.set(
       year,
-      parseResponse(fetch(`${apiBase()}/calendars/${year}`)).catch((error) => {
+      fetch(`${apiBase()}/calendars/${year}`).then(parseResponse).catch((error) => {
         cache.delete(year);
         throw error;
       })
