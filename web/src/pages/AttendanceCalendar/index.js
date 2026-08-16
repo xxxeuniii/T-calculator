@@ -30,8 +30,9 @@ export default function AttendanceCalendar({ attendance, onChange, onMonthChange
     const calendar = calendarYears[date.getFullYear()];
     const holiday = calendar?.holidays?.includes(key) || false;
     const adjustedWorkday = calendar?.adjustedWorkdays?.includes(key) || false;
+    const holidayName = calendar?.holidayNames?.[key] || null;
     const weekend = date.getDay() === 0 || date.getDay() === 6;
-    return { holiday, adjustedWorkday, workday: adjustedWorkday || (!holiday && !weekend) };
+    return { holiday, holidayName, adjustedWorkday, workday: adjustedWorkday || (!holiday && !weekend) };
   }
 
   const days = useMemo(() => {
@@ -115,6 +116,7 @@ export default function AttendanceCalendar({ attendance, onChange, onMonthChange
                 <Text style={[styles.dayNumber, !dayRule.workday && !isOutsideMonth && styles.weekendNumber, status && dayRule.workday && styles[`${status}Number`], isOutsideMonth && styles.outsideMonthNumber]}>{date.getDate()}</Text>
                 {dayRule.holiday && <Text style={[styles.dayBadge, styles.holidayBadge]}>假</Text>}
                 {dayRule.adjustedWorkday && <Text style={[styles.dayBadge, styles.workBadge]}>班</Text>}
+                {dayRule.holidayName && <Text style={styles.holidayName}>{dayRule.holidayName}</Text>}
                 {status && dayRule.workday && <View style={[styles.statusDot, styles[`${status}Dot`]]} />}
               </Pressable>
             );

@@ -104,6 +104,24 @@ def dates_in_year(year: int):
         current += timedelta(days=1)
 
 
+def short_china_holiday_name(name: str) -> str:
+    """Convert the library's official holiday name to a compact calendar label."""
+    labels = (
+        (("春节", "Chinese New Year"), "春节"),
+        (("除夕", "New Year's Eve"), "除夕"),
+        (("元旦", "New Year's Day"), "元旦"),
+        (("清明", "Tomb-Sweeping"), "清明"),
+        (("劳动", "Labor Day"), "五一"),
+        (("端午", "Dragon Boat"), "端午"),
+        (("中秋", "Mid-Autumn"), "中秋"),
+        (("国庆", "National Day"), "国庆"),
+    )
+    for needles, label in labels:
+        if any(needle in name for needle in needles):
+            return label
+    return "假期"
+
+
 @app.get("/api/calendars/{year}")
 def get_calendars(year: int):
     """Return Chinese workday adjustments and exchange holiday dates for one year."""
@@ -135,6 +153,19 @@ def get_calendars(year: int):
         elif current in attendance_holiday_dates:
             attendance_holidays.append(key)
 
+    holiday_names = {}
+    ordered_holidays = sorted(attendance_holiday_dates)
+    block_start = 0
+    while block_start < len(ordered_holidays):
+        block_end = block_start + 1
+        while block_end < len(ordered_holidays) and ordered_holidays[block_end] - ordered_holidays[block_end - 1] == timedelta(days=1):
+            block_end += 1
+        block = ordered_holidays[block_start:block_end]
+        official_names = " · ".join(china.get(day) for day in block if china.get(day))
+        if official_names:
+            holiday_names[block[0].isoformat()] = short_china_holiday_name(official_names)
+        block_start = block_end
+
     market_holidays = {}
     for market_id, (calendar_type, code) in MARKET_CALENDARS.items():
         calendar = (
@@ -151,6 +182,7 @@ def get_calendars(year: int):
             "attendance": {
                 "holidays": attendance_holidays,
                 "adjustedWorkdays": adjusted_workdays,
+                "holidayNames": holiday_names,
             },
             "markets": market_holidays,
         },

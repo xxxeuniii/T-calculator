@@ -34,6 +34,7 @@ const styles = StyleSheet.create({
   absentNumber: { color: palette.profitRed },
   statusDot: { position: "absolute", bottom: 5, width: 4, height: 4, borderRadius: 2 },
   dayBadge: { position: "absolute", top: 4, right: 5, width: 16, height: 16, borderRadius: 8, textAlign: "center", fontSize: 9, lineHeight: 16, fontWeight: "900", overflow: "hidden" },
+  holidayName: { position: "absolute", bottom: 3, color: "#b42318", fontSize: 8, lineHeight: 10, fontWeight: "800" },
   holidayBadge: { color: "#b42318", backgroundColor: "#fee4e2" },
   workBadge: { color: "#175cd3", backgroundColor: "#dbeafe" },
   presentDot: { backgroundColor: "#2563eb" },
