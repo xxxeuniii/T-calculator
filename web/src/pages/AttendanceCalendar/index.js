@@ -129,8 +129,8 @@ export default function AttendanceCalendar({ attendance, onChange, onMonthChange
 
         <View style={styles.legend}>
           <View style={styles.legendItem}><View style={[styles.legendDot, styles.presentDot]} /><Text style={styles.legendText}>WIO</Text></View>
-          <View style={styles.legendItem}><View style={[styles.legendDot, styles.leaveDot]} /><Text style={styles.legendText}>请假</Text></View>
           <View style={styles.legendItem}><View style={[styles.legendDot, styles.absentDot]} /><Text style={styles.legendText}>WFH</Text></View>
+          <View style={styles.legendItem}><View style={[styles.legendDot, styles.leaveDot]} /><Text style={styles.legendText}>请假</Text></View>
           <View style={styles.legendItem}><Text style={[styles.legendBadge, styles.holidayBadge]}>假</Text><Text style={styles.legendText}>法定假日</Text></View>
           <View style={styles.legendItem}><Text style={[styles.legendBadge, styles.workBadge]}>班</Text><Text style={styles.legendText}>调休上班</Text></View>
           <Text style={styles.formula}>出勤率 = WIO 工作日 /（应出勤 − 请假）</Text>

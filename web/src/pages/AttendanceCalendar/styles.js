@@ -50,7 +50,7 @@ const styles = StyleSheet.create({
   legendDot: { width: 7, height: 7, borderRadius: 4 },
   legendText: { color: palette.muted, fontSize: 11, fontWeight: "700" },
   legendBadge: { width: 16, height: 16, borderRadius: 8, textAlign: "center", fontSize: 9, lineHeight: 16, fontWeight: "900", overflow: "hidden" },
-  formula: { color: palette.muted, fontSize: 10, marginLeft: "auto" },
+  formula: { width: "100%", color: palette.muted, fontSize: 10, textAlign: "left" },
   todayButtonRow: { marginTop: 12, paddingHorizontal: 10, alignItems: "flex-start" },
   todayButton: { paddingVertical: 7, paddingHorizontal: 16, borderWidth: 1, borderColor: palette.line, borderRadius: 999, alignItems: "center", backgroundColor: palette.paper },
   todayButtonPressed: { backgroundColor: "#f4f4f4" },
