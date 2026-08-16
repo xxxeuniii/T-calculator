@@ -91,9 +91,9 @@ export default function AttendanceCalendar({ attendance, onChange, onMonthChange
         <View style={styles.metric}><Text style={styles.metricValue}>{stats.expected}</Text><Text style={styles.metricLabel}>应出勤</Text></View>
         {stats.leave > 0 && <View style={[styles.metric, styles.metricDivider]}><Text style={styles.metricValue}>{stats.actual}</Text><Text style={styles.metricLabel}>实际出勤</Text></View>}
         <View style={[styles.metric, styles.metricDivider]}><Text style={[styles.metricValue, styles.presentText]}>{stats.present}</Text><Text style={styles.metricLabel}>WIO</Text></View>
-        {stats.leave > 0 && <View style={[styles.metric, styles.metricDivider]}><Text style={[styles.metricValue, styles.leaveText]}>{stats.leave}</Text><Text style={styles.metricLabel}>请假</Text></View>}
-        <View style={[styles.metric, styles.metricDivider]}><Text style={[styles.metricValue, styles.absentText]}>{stats.absent}</Text><Text style={styles.metricLabel}>WFH</Text></View>
-        <View style={[styles.metric, styles.metricDivider]}><Text style={[styles.metricValue, styles.rateText]}>{stats.rate}%</Text><Text style={styles.metricLabel}>出勤率</Text></View>
+        {stats.leave > 0 && <View style={[styles.metric, styles.metricSecondRow]}><Text style={[styles.metricValue, styles.leaveText]}>{stats.leave}</Text><Text style={styles.metricLabel}>请假</Text></View>}
+        <View style={[styles.metric, stats.leave > 0 && styles.metricSecondRow, styles.metricDivider]}><Text style={[styles.metricValue, styles.absentText]}>{stats.absent}</Text><Text style={styles.metricLabel}>WFH</Text></View>
+        <View style={[styles.metric, styles.metricSecondRow, stats.leave > 0 && styles.metricDivider]}><Text style={[styles.metricValue, styles.rateText]}>{stats.rate}%</Text><Text style={styles.metricLabel}>出勤率</Text></View>
       </View>
 
       <View style={styles.calendar}>

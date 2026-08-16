@@ -4,9 +4,10 @@ import palette from "../../styles/theme";
 const styles = StyleSheet.create({
   page: { width: "100%", padding: 12, gap: 12 },
   pageDesktop: { maxWidth: 760 },
-  metrics: { flexDirection: "row", paddingVertical: 4 },
-  metric: { flex: 1, minWidth: 0, paddingVertical: 10, paddingHorizontal: 12 },
+  metrics: { flexDirection: "row", flexWrap: "wrap", paddingVertical: 4 },
+  metric: { width: "33.3333%", minWidth: 0, paddingVertical: 12, paddingHorizontal: 12 },
   metricDivider: { borderLeftWidth: 1, borderLeftColor: palette.line },
+  metricSecondRow: { borderTopWidth: 1, borderTopColor: palette.line },
   metricValue: { color: palette.ink, fontSize: 21, fontWeight: "900" },
   metricLabel: { color: palette.muted, fontSize: 11, fontWeight: "700", marginTop: 3 },
   presentText: { color: "#2563eb" },
